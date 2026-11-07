@@ -1,0 +1,13 @@
+node_modules/
+.env
+# OAuth tokens, Playwright login state, Homebase page snapshots (customer data)
+auth/
+snapshots/
+# local runtime: mock outbox, mock job root, the linked skill
+.hub/
+jobs/
+.claude/skills/forefront-estimate
+*.log
+# the hub's own copy of the estimating skill and its Python (setup.ps1)
+estimator/
+.venv-py/
