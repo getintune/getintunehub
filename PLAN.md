@@ -44,7 +44,17 @@ Owner: Marlys. Fill in as you learn it:
 - Email: **work email is Microsoft (Outlook / Microsoft 365)**, info@getintunemusictherapy.com. Gmail
   (getintunemusictherapy@gmail.com) is only her Google account for Google Docs/Drive. So the Gmail tab must
   become an **Outlook** tab (Microsoft Graph connector, drafts-only for Claude, same rules).
-- Calendar: (to confirm: Outlook or Google?)
+- Calendar: all her calendars are synced; Grow Therapy puts client sessions on her **marlys@** calendar (the
+  Microsoft/Outlook one). The app reads the Outlook calendar.
+- **Two mailboxes in the app:** Outlook (work: marlys@ and info@) is the main one. **Gmail stays too**, but only
+  to catch messages from her team about Google Docs (comments, shares, requests).
+- **Her team:** Kristin (admin coordinator, also reads info@), Frankie (content creation and marketing). Both
+  are on Motion. Business coach: Kris (Kristina, email possibly @gildedwithin; confirm before using).
+- **What Claude may do with Grow Therapy email (HIPAA rule, decided by Marlys):** only spot and tell her about
+  (1) a new client, shown by **initials only**, (2) a client changing a session time, (3) a new message waiting
+  in Grow, (4) Grow the company asking her to do something (re-credentialing, paperwork, etc.). Nothing else:
+  no client names, no clinical content, no summaries of client messages. Keep this as narrow as possible
+  (sender + subject + only what's needed for those four), and store only initials.
 - Tasks and team scheduling: **Motion** (usemotion.com), shared with her team. Replaces Google Tasks.
 - Team talk: **Google Chat**, and comments on **Google Docs**.
 - Booking/scheduling: Grow Therapy for therapy clients (they handle booking, billing, insurance, notes).
@@ -60,14 +70,25 @@ Owner: Marlys. Fill in as you learn it:
   the app should only need names, dates and "there's an email about this client". Anything the app sends to
   Claude goes to Anthropic, so before Claude reads client emails, check with her about a BAA (business
   associate agreement) with Anthropic or keeping client details out of what Claude sees.
-- App name and colors she wants (default: "Get In Tune Hub", same dark style as Keystone):
+- App name and colors she wants: **her brand colors** (from her website and logo, "2026 GIT Logo"):
+  indigo **#4241A0** (logo lettering; site headings #4A439E), lavender **#ADA9D3** (the music-staff lines),
+  black **#000000**, white and a very light lavender background (~#F6F6FA). Website fonts: Assistant (body),
+  Poppins, Oswald. Logo: https://static.wixstatic.com/media/8dfc58_d638206911e944a8958555422d3db51c~mv2.png
+  (2000x700 PNG, face profile + "Get In Tune" on a music staff). Name: "Get In Tune Hub" unless she says otherwise.
 
 ## Steps
 
-- [ ] **1. Get to know her business.** Ask Marlys the questions above, a few at a time, in plain words. Write the
+Changes to the steps from what we learned (2026-11-07): her work email and calendar are **Microsoft 365 /
+Outlook** (the Gmail tab becomes Outlook; Gmail stays only to catch team requests about Google Docs); tasks are
+**Motion**, not Google Tasks; her computer is a **Mac** (setup/start files need Mac versions); the main list is
+**one list per program**; Grow Therapy email follows the narrow HIPAA rule above.
+
+- [x] **1. Get to know her business.** Ask Marlys the questions above, a few at a time, in plain words. Write the
       answers above. Don't change code until you know her main list (clients/students/...) and her tools.
-- [ ] **2. Make it run as-is.** `npm install`, `npm test`, `npm run typecheck`, then `HUB_MODE=mock npm run app`.
+- [x] **2. Make it run as-is.** `npm install`, `npm test`, `npm run typecheck`, then `HUB_MODE=mock npm run app`.
       Some tests need Hunter's estimator repo (`../estimator`) for the estimating skill; they go away in step 4.
+      *Done 2026-11-07:* installs, typecheck passes, app runs in mock mode with no page errors. 70 tests pass;
+      the 6 that fail (`test/files.test.ts`, `test/sendoff.test.ts`) all need `../estimator` and go in step 4.
 - [ ] **3. Her name, her business, her app.** Add profile settings to `.env` / `src/core/config.ts`: owner name,
       business name, her email address, time zone, app name. Replace every hard-coded "Hunter", "Forefront",
       "hunter@forefrontteam.com", "America/Denver" and "Colorado" (prompts in `src/agent/`, `src/server/main.ts`,
