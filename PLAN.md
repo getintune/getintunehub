@@ -8,6 +8,31 @@ business under "About Get In Tune" so the next session knows it.
 
 Owner: Marlys. Fill in as you learn it:
 
+### From her website (getintunemusictherapy.com, read 2026-11-07)
+
+- **Who:** Marlys Woods, MS, LMFT, MT-BC: board-certified Music Therapist and licensed Marriage and Family
+  Therapist. Founded Get In Tune in 2013. Business name: Get In Tune Inc. Phone 657-221-9461; public email
+  info@getintunemusictherapy.com (she signs in as getintunemusictherapy@gmail.com). Website is on **Wix**.
+- **Tagline:** "Therapy and Coaching for Life's Big Changes." Motto "Feel It... Face It... Freedom!"
+- **Three kinds of customers** (the site's "What brings you here?"):
+  1. **Individuals:** 1:1 *Embodied Transition Coaching* (3-month program, worldwide, for digital nomads, expats,
+     slow travelers, professionals) and *Therapy* (only for people in California or Colorado; somatic,
+     IFS-informed, creative arts). Every relationship starts with a **free consult** to decide coaching vs therapy.
+     Also: group therapy for mental health and addiction recovery (has a **wait-list** and an interest form),
+     the *Suddenly Untethered* workshop for nomads (next: Fri Nov 13, 2026, 10am MT), *In Tune DIY Music
+     Therapy* self-study ($97), the *Finding Freedom Within* virtual summit (VIP package $47).
+  2. **Therapists:** *Using Music in Mental Health Recovery* Training & Certification ($997, 5 live Zoom sessions,
+     20+ CMTE credits, next cohort starts Aug 24, 2026); **Group Supervision** membership ($30/month, 1st Tuesday
+     and 3rd Monday on Zoom, recorded); *Therapist-Led DIY Music Therapy* session plans ($297).
+  3. **Treatment facilities:** contracted music therapy groups for addiction, eating-disorder and mental-health
+     treatment centers (past/present sites in Orange County, Long Beach, LA, Denver, Colorado). Uses
+     **subcontractor music therapists** who accept contracts by availability.
+- **Payments seen on the site:** Wix checkout (PayPal / Stripe / Square appear in the page code; to confirm).
+- **Time zone hint:** workshop listed in MT (Mountain Time).
+- Socials: instagram.com/getintunemusictherapy, facebook.com/GetInTuneMusicTherapy.
+
+### From Marlys
+
 - What she does:
 - Her word for the people/work she tracks (clients? students? bookings?):
 - The stages a client goes through:
