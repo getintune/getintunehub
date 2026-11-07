@@ -31,17 +31,35 @@ Owner: Marlys. Fill in as you learn it:
 - **Time zone hint:** workshop listed in MT (Mountain Time).
 - Socials: instagram.com/getintunemusictherapy, facebook.com/GetInTuneMusicTherapy.
 
-### From Marlys
+### From Marlys (2026-11-07)
 
-- What she does:
-- Her word for the people/work she tracks (clients? students? bookings?):
-- The stages a client goes through:
-- Email and calendar (Gmail/Google?):
-- Booking/scheduling app:
-- Invoicing/payments:
-- Where she keeps files/photos:
-- Computer: Windows or Mac:
-- What eats her time (what the dashboard and daily brief should focus on):
+- What she does: sees individual therapy clients through **Grow Therapy** (most of her week); moving toward
+  coaching but has no coaching clients yet. Right now also marketing the Nov 13 *Suddenly Untethered* workshop.
+- Her word for the people/work she tracks: **a separate list for each program** (therapy clients, coaching
+  clients, workshop sign-ups, certification trainees, supervision members, facilities, ...), not one big list.
+- **Grow Therapy client emails matter most:** whenever Claude reads the info@ mailbox, any email about a Grow
+  Therapy client must be pointed out to her (top of the daily brief).
+- The stages a client goes through: nothing set yet. The coaching program's stages and intake will be built
+  from a **Google Doc she already has** (ask her for it when we get there).
+- Email: **work email is Microsoft (Outlook / Microsoft 365)**, info@getintunemusictherapy.com. Gmail
+  (getintunemusictherapy@gmail.com) is only her Google account for Google Docs/Drive. So the Gmail tab must
+  become an **Outlook** tab (Microsoft Graph connector, drafts-only for Claude, same rules).
+- Calendar: (to confirm: Outlook or Google?)
+- Tasks and team scheduling: **Motion** (usemotion.com), shared with her team. Replaces Google Tasks.
+- Team talk: **Google Chat**, and comments on **Google Docs**.
+- Booking/scheduling: Grow Therapy for therapy clients (they handle booking, billing, insurance, notes).
+- Invoicing/payments: Grow Therapy (therapy clients); **Wix** (supervision membership and other website sales);
+  coaching will likely be **Stripe or Square** (not set up yet); some contractors' private-pay clients pay by
+  **PayPal**, which she wants to replace because it isn't HIPAA-compliant.
+- Where she keeps files: Google Drive / Google Docs.
+- Computer: **Mac** (the Windows .bat / .ps1 setup files need Mac versions). Time zone: **Mountain Time**
+  (America/Denver).
+- What eats her time (what the dashboard and daily brief should focus on): client sessions and marketing the
+  workshop.
+- **Privacy (HIPAA):** client health information must be handled carefully. Keep clinical notes in Grow Therapy;
+  the app should only need names, dates and "there's an email about this client". Anything the app sends to
+  Claude goes to Anthropic, so before Claude reads client emails, check with her about a BAA (business
+  associate agreement) with Anthropic or keeping client details out of what Claude sees.
 - App name and colors she wants (default: "Get In Tune Hub", same dark style as Keystone):
 
 ## Steps
