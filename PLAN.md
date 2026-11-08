@@ -154,8 +154,15 @@ Outlook** (the Gmail tab becomes Outlook; Gmail stays only to catch team request
       it writes Google Tasks, which she doesn't use, until Motion is connected) and the morning brief (on), saved in
       `.hub/settings.json`; every Claude run's `total_cost_usd` goes to `.hub/claude-costs.json`. The dashboard's
       Claude card shows this month / today by use, the switches, and the console Limits reminder. Email tasks now
-      use the fast model. `.env.example` rewritten for her (no estimating settings). In step 7: help her set the
-      monthly cap (suggest $10-20 to start).
+      use the fast model. `.env.example` rewritten for her (no estimating settings).
+      **Then (2026-11-08) Marlys chose no per-use cost:** she wanted it free to run like Hunter's (his can pass
+      requests to a ChatGPT router on his PC). We explained that subscriptions can't power the app itself, and she
+      picked "Do this in Claude": with no API key (the default), each Claude button opens her Claude app with the
+      request written out (`src/workflows/handoff.ts`, POST /api/handoff: plan my day, one person, reply to an
+      email, the Ask box), also copied to the clipboard. Background Claude features are off without a key. The
+      API key + cost meter stay as an option she can turn on later. In step 7: set up her **morning brief as a
+      scheduled task in the Claude app** (on her subscription), and check her Claude account's Gmail, Google
+      Calendar and Microsoft 365 connectors are connected.
 - [ ] **6. Her tools.** One at a time, each as a connector with a mock and tests: booking/scheduling, invoicing/
       payments, files/photos. Turn what they know into dashboard reminders and lines in the daily brief.
 - [ ] **7. On her computer.** Walk her through setup: install, `Connect Gmail` (her own Google Cloud project and

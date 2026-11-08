@@ -109,6 +109,19 @@ const server = http.createServer(async (req, res) => {
       });
     }
     // ---- Spotify: only the app's client ID lives on this computer (in .env); sign-in tokens stay in the browser.
+    // ---- "Do this in Claude": the request written out for her own Claude app (no API key needed)
+    if (p === "/api/handoff" && req.method === "POST") {
+      const b = await body(req);
+      const h = await import("../workflows/handoff.js");
+      if (b.kind === "plan") return send(res, 200, { prompt: await h.planPrompt(hub) });
+      if (b.kind === "person") return send(res, 200, { prompt: h.personPrompt(hub, hub.lists.get(String(b.id)), b.ask ? String(b.ask) : undefined) });
+      if (b.kind === "reply") {
+        const t = await hub.gmail.getThread(String(b.threadId));
+        const last = t.messages.filter((m) => !m.labelIds?.includes("DRAFT")).at(-1) ?? t.messages.at(-1)!;
+        return send(res, 200, { prompt: h.replyPrompt(hub, last) });
+      }
+      return send(res, 200, { prompt: h.askPrompt(hub, String(b.text ?? "")) });
+    }
     // ---- Claude: on/off switches for the background features, and what Claude has cost today and this month
     if (p === "/api/settings/claude" && req.method === "GET") {
       const c = await import("../agent/costs.js");

@@ -962,7 +962,7 @@ async function loadStatus() {
   $("#chips").innerHTML = [
     chip("Lists", status.lists !== "mock", status.lists === "mock" ? "Practice lists (made-up people)" : "Your lists, saved on this computer"),
     chip("Gmail", status.gmail === "google", status.gmail === "google" ? (status.gmailFull ? "Connected" : "Connected for drafts only; reconnect to send from {{APP_NAME}}") : "Not connected (practice inbox)"),
-    chip("Claude", status.agent, status.agent ? `On · requests go to ${(status.claude?.endpoint || "").replace(/^https?:\/\//, "")}${status.claude?.ignored?.length ? `. Ignored a setting on this computer that tried to send them elsewhere: ${status.claude.ignored.map((r) => r.name + (r.host ? " → " + r.host : "")).join(", ")}` : ""}` : "Off: no Anthropic API key on this computer"),
+    chip("Claude", true, status.agent ? `In the app · requests go to ${(status.claude?.endpoint || "").replace(/^https?:\/\//, "")}${status.claude?.ignored?.length ? `. Ignored a setting on this computer that tried to send them elsewhere: ${status.claude.ignored.map((r) => r.name + (r.host ? " → " + r.host : "")).join(", ")}` : ""}` : "Opens in your Claude app (your subscription, no extra cost)"),
   ].join("");
 }
 
@@ -971,7 +971,7 @@ const progName = (id) => lists.programs.find((p) => p.id === id)?.name || id;
 function needRow(n) {
   const when = n.kind === "next" ? (n.days > 0 ? `<span style="color:var(--bad)">${n.days} day${n.days === 1 ? "" : "s"} overdue</span>` : "due today") : `${n.days} days at ${esc(n.stage)}`;
   return `<div class="rem"><div class="l"><div class="ttl"><a href="#" data-do="person" data-id="${esc(n.id)}">${esc(n.name)}</a> · ${esc(n.title)}</div><div class="small muted">${esc(n.list)} · <span class="stage">${esc(n.stage)}</span> · ${when}</div></div>
-    <div class="r"><button class="btn small" data-do="person" data-id="${esc(n.id)}">Open</button>${status.agent && n.program !== "therapy" ? `<button class="btn small" data-do="claude" data-p="${esc(`Help me with ${n.name} (${n.list}, id ${n.id}): ${n.title}. Look them up, check my recent email with them, and draft what's needed in Gmail (draft only).`)}">Help with Claude</button>` : ""}</div></div>`;
+    <div class="r"><button class="btn small" data-do="person" data-id="${esc(n.id)}">Open</button>${n.program !== "therapy" ? `<button class="btn small" data-do="claude" data-id="${esc(n.id)}" data-ask="${esc(n.title)}" data-p="${esc(`Help me with ${n.name} (${n.list}, id ${n.id}): ${n.title}. Look them up, check my recent email with them, and draft what's needed in Gmail (draft only).`)}">${CLAUDE_LABEL()}</button>` : ""}</div></div>`;
 }
 async function loadToday() {
   let d;
@@ -986,7 +986,7 @@ async function loadToday() {
   const open = (id) => d.lists.find((l) => l.id === id)?.open ?? 0;
   $("#today").innerHTML = `
     <div class="todayhead"><div style="flex:1;min-width:240px"><h2>Good ${new Date().getHours() < 12 ? "morning" : new Date().getHours() < 17 ? "afternoon" : "evening"}, {{FIRST}}</h2><div class="dateline">${esc(longDate)}</div></div>
-      <button class="btn primary" id="plan" ${status.agent ? "" : "disabled title='Claude is off on this computer'"}>Plan my day with Claude</button></div>
+      <button class="btn primary" id="plan">Plan my day with Claude</button></div>
     <div id="brief"></div>
     <div class="strip">
       ${w ? tile("workshop", w.total, `signed up · ${w.event}${w.newToday ? ` · ${w.newToday} new today` : ""}`, false) : tile("workshop", 0, "workshop sign-ups")}
@@ -1022,7 +1022,7 @@ async function loadToday() {
 // Claude's costs and the switches for what it does on its own.
 const money = (n) => "$" + (n < 1 && n > 0 ? n.toFixed(2) : n.toFixed(2));
 function claudeCard(c) {
-  if (!c.hasKey) return `<div class="card"><h3>Claude</h3><p class="muted" style="margin:0">Claude is off on this computer: no Anthropic API key yet. We'll add it when the app is set up on your Mac. Until then nothing is charged.</p></div>`;
+  if (!c.hasKey) return `<div class="card"><h3>Claude</h3><p style="margin:0">The <b>Do this in Claude</b> buttons open your own Claude app with the request written out. Your subscription covers it: <b>no extra cost</b>.</p><p class="small muted" style="margin:8px 0 0">Nothing runs in the background and nothing is charged here.</p></div>`;
   return `<div class="card" id="claudecard"><h3>Claude</h3>
     <div class="wsbig"><b>${money(c.costs.month)}</b> this month · ${money(c.costs.today)} today</div>
     ${c.costs.byUse.length ? `<table class="tbl"><tbody>${c.costs.byUse.map((x) => `<tr><td>${esc(x.label)} <span class="small muted">${x.runs} run${x.runs === 1 ? "" : "s"}</span></td><td class="num">${money(x.usd)}</td></tr>`).join("")}</tbody></table>` : `<p class="small muted">No Claude runs yet this month.</p>`}
@@ -1044,7 +1044,7 @@ document.addEventListener("click", async (e) => {
   try {
     if (b.dataset.do === "person") { showTab("lists"); openPerson(b.dataset.id); }
     if (b.dataset.do === "thread") { if (!mailLoaded) await loadMail(); showTab("mail"); openThread(b.dataset.thread); }
-    if (b.dataset.do === "claude") { await askClaude(b.dataset.p); }
+    if (b.dataset.do === "claude") { if (!status.agent && b.dataset.id) await handoff({ kind: "person", id: b.dataset.id, ask: b.dataset.ask || undefined }); else await askClaude(b.dataset.p); }
     if (b.dataset.do === "gocal") showTab("cal");
     if (b.dataset.do === "taskdone") { await api(`/api/tasks/${encodeURIComponent(b.dataset.list)}/${encodeURIComponent(b.dataset.task)}`, { method: "PATCH", body: { completed: true } }); b.closest(".row")?.remove(); log("Task done."); }
   } catch (err) { log(err.message, "t-err"); }
@@ -1098,7 +1098,7 @@ function renderPerson() {
       <div class="jobmeta">${esc(p.name)} · ${esc(e.stage)} for ${daysSince(e.stageSince) ?? 0} days · added ${fmtDate(e.createdAt)}</div>
       <div class="actions">
         ${e.email ? `<button class="btn" data-pact="email">Email…</button><button class="btn" data-pact="mails">Their emails</button>` : ""}
-        ${status.agent && !p.initialsOnly ? `<button class="btn" data-do="claude" data-p="${esc(`Look at ${e.name} on my ${p.name} list (id ${e.id}) and my recent email with them, then tell me the next step and draft any email that's needed (draft only).`)}">What's next? (Claude)</button>` : ""}
+        ${!p.initialsOnly ? `<button class="btn" data-do="claude" data-id="${esc(e.id)}" data-p="${esc(`Look at ${e.name} on my ${p.name} list (id ${e.id}) and my recent email with them, then tell me the next step and draft any email that's needed (draft only).`)}">What's next? ${status.agent ? "(Claude)" : "(opens Claude)"}</button>` : ""}
         <button class="btn" data-pact="remove" style="margin-left:auto">Remove…</button>
       </div>
     </div>
@@ -1416,7 +1416,7 @@ async function openThread(id) {
           ${m.draft ? `<div class="gm-draftacts"><button class="gm-pill send" type="button" data-dsend="${esc(m.id)}">${msI("send")}Send…</button><button class="gm-pill" type="button" data-dedit="${i}">${msI("edit")}Edit</button><button class="gm-pill" type="button" data-ddel="${esc(m.id)}">${msI("delete")}Delete draft</button></div>` : ""}
           ${m.attachments.length ? `<div class="gm-atts">${m.attachments.map((a) => `<a class="gm-att" href="/api/mail/attachment/${esc(m.id)}/${esc(a.id)}?name=${encodeURIComponent(a.filename)}" target="_blank">${msI(/\.pdf$/i.test(a.filename) ? "picture_as_pdf" : /\.(jpe?g|png|gif|heic)$/i.test(a.filename) ? "image" : "attach_file")}<span>${esc(a.filename)}</span></a>`).join("")}</div>` : ""}
         </div></div>`).join("")}
-      <div class="gm-replies"><button class="gm-pill" id="replybtn" type="button">${msI("reply")}Reply</button><button class="gm-pill" id="replyall" type="button">${msI("reply_all")}Reply all</button><button class="gm-pill" id="fwd" type="button">${msI("forward")}Forward</button>${status.agent ? `<button class="gm-pill ai" id="claudereply" type="button">${msI("auto_awesome")}Draft reply with Claude</button>` : ""}</div>
+      <div class="gm-replies"><button class="gm-pill" id="replybtn" type="button">${msI("reply")}Reply</button><button class="gm-pill" id="replyall" type="button">${msI("reply_all")}Reply all</button><button class="gm-pill" id="fwd" type="button">${msI("forward")}Forward</button><button class="gm-pill ai" id="claudereply" type="button">${msI("auto_awesome")}${status.agent ? "Draft reply with Claude" : "Draft reply in Claude"}</button></div>
     </div>`;
   $("#gm-back").onclick = () => { showList(); loadThreads(); };
   $$("#reader .gm-msg.col").forEach((el) => el.addEventListener("click", () => el.classList.remove("col"), { once: true }));
@@ -1448,7 +1448,7 @@ async function openThread(id) {
   $("#replybtn").onclick = () => openCompose({ reply: true, to: replyTo(), subject: re, body: quote(last), threadId: t.id, inReplyTo: last.messageIdHeader });
   $("#replyall").onclick = () => openCompose({ reply: true, to: [replyTo(), ...last.to].map(addrOf).filter((a) => a.toLowerCase() !== me).filter((a, i, arr) => arr.indexOf(a) === i).join(", "), cc: last.cc.map(addrOf).filter((a) => a.toLowerCase() !== me).join(", "), subject: re, body: quote(last), threadId: t.id, inReplyTo: last.messageIdHeader, job: job?.jobNumber });
   $("#fwd").onclick = () => openCompose({ subject: `Fwd: ${last.subject}`, body: `\n\n---------- Forwarded message ---------\nFrom: ${last.from}\nDate: ${last.date}\nSubject: ${last.subject}\nTo: ${last.to.join(", ")}\n\n${last.body}` });
-  $("#claudereply") && ($("#claudereply").onclick = () => askClaude(`Read Gmail thread ${t.id} and draft my reply in Gmail as a draft in that thread, in my voice. Don't send it.`));
+  $("#claudereply") && ($("#claudereply").onclick = () => !status.agent ? handoff({ kind: "reply", threadId: t.id }) : askClaude(`Read Gmail thread ${t.id} and draft my reply in Gmail as a draft in that thread, in my voice. Don't send it.`));
 }
 $("#reader").addEventListener("click", async (e) => {
   const ds = e.target.closest("[data-dsend]"), dd = e.target.closest("[data-ddel]"), de = e.target.closest("[data-dedit]");
@@ -2015,8 +2015,21 @@ setInterval(() => { if (spState?.is_playing && spState.item) { spState.progress_
 // ============================================================= Claude
 // ---- Asking Claude: a draft opens in Gmail; anything else answers in a popup (with buttons to the people it's about).
 const asking = new Map();
+// ---- "Do this in Claude": with no API key in the app (the normal setup), requests open in her own Claude app,
+// written out and ready; her subscription covers them. The request is also copied, in case it needs pasting.
+const CLAUDE_LABEL = () => (status.agent ? "Help with Claude" : "Do this in Claude");
+async function handoff(req) {
+  let prompt;
+  try { prompt = (await api("/api/handoff", { method: "POST", body: req })).prompt; } catch (e) { log(e.message, "t-err"); return; }
+  let copied = false;
+  try { await navigator.clipboard.writeText(prompt); copied = true; } catch {}
+  const url = prompt.length < 6000 ? `https://claude.ai/new?q=${encodeURIComponent(prompt)}` : "https://claude.ai/new";
+  window.open(url, "_blank", "noopener");
+  snack(copied ? "Opened Claude with your request. If the box is empty, paste it (⌘V), then press Enter." : "Opened Claude. Press Enter to send your request.");
+  log("Opened in Claude: " + prompt.split("\n").find((l) => l.trim() && !l.startsWith("I'm "))?.slice(0, 90));
+}
 async function askClaude(prompt) {
-  if (!status.agent) { log("Claude is off on this computer (no Anthropic API key).", "t-err"); return; }
+  if (!status.agent) return handoff({ kind: "ask", text: prompt });
   const r = await api("/api/ask", { method: "POST", body: { prompt } });
   log("› " + prompt);
   asking.set(r.id, prompt);
@@ -2149,6 +2162,7 @@ zgrips(); for (const k of Object.keys(ZONES)) zapply(k);
 // The dashboard keeps one line ("Today's brief: 3 of 11 done · Open"). Ticks are saved with the brief, so a new
 // brief (the 7 AM one, or Plan again) starts with nothing ticked.
 async function startPlan() {
+  if (!status.agent) return handoff({ kind: "plan" });
   try { await api("/api/plan", { method: "POST" }); } catch (e) { log(e.message, "t-err"); }
   showTab("brief");
 }
@@ -2160,7 +2174,7 @@ async function renderBrief() {
   const page = $("#briefpage"), line = $("#brief");
   const today = p.startedAt && new Date().toDateString() === new Date(p.startedAt).toDateString();
   const sch = p.schedule && /^\d/.test(p.schedule.at) ? `Runs on its own at ${new Date(`2000-01-01T${p.schedule.at.padStart(5, "0")}`).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}${p.schedule.days === "1-5" ? " on weekdays" : p.schedule.days === "0-6" ? " every day" : ""}` : "";
-  const planBtn = status.agent ? `<button class="btn ${p.state === "none" ? "primary" : ""}" id="briefplan" ${p.state === "running" ? "disabled" : ""}>${p.state === "running" ? "Planning your day…" : p.state === "none" ? "Plan my day with Claude" : "Plan again"}</button>` : "";
+  const planBtn = !status.agent ? `<button class="btn primary" id="briefplan">Plan my day in Claude</button>` : `<button class="btn ${p.state === "none" ? "primary" : ""}" id="briefplan" ${p.state === "running" ? "disabled" : ""}>${p.state === "running" ? "Planning your day…" : p.state === "none" ? "Plan my day with Claude" : "Plan again"}</button>`;
   // The checklist: every list item in the brief gets a box.
   let total = 0, doneN = 0, html = "";
   if (p.state === "done") {
@@ -2183,7 +2197,7 @@ async function renderBrief() {
     const stamp = p.startedAt ? `${p.trigger === "morning" ? "Made on its own · " : ""}${today ? "Today" : when.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}, ${when.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}` : "";
     page.innerHTML = `<div class="bhead"><div style="flex:1;min-width:220px"><h2>Today's brief</h2><div class="dateline">${esc(stamp)}${stamp && sch ? " · " : ""}${esc(sch)}${p.startedAt && !today ? ` · <b>from an earlier day</b>` : ""}</div></div>${planBtn}</div>
       ${p.state === "done" && total ? `<div class="bprog"><div class="bar"><span style="width:${Math.round((doneN / total) * 100)}%"></span></div><b>${doneN} of ${total} done</b>${doneN ? `<button class="linkbtn" data-do="briefclear">Untick all</button>` : ""}</div>` : ""}
-      <div class="card brief ${p.state}">${p.state === "none" ? `<p class="muted" style="margin:0">No brief yet. ${status.agent ? "Press <b>Plan my day with Claude</b>, or wait for the morning one." : "Claude is off on this computer."}</p>`
+      <div class="card brief ${p.state}">${p.state === "none" ? `<p class="muted" style="margin:0">No brief yet. ${status.agent ? "Press <b>Plan my day with Claude</b>, or wait for the morning one." : "Press <b>Plan my day in Claude</b>: it opens your Claude app with today's lists, sign-ups and calendar, and Claude writes your brief there."}</p>`
         : p.state === "running" ? `<div class="bwork"><span class="spin"></span>Claude is going through your lists, inbox, calendar and tasks…</div>${p.steps.length ? `<div class="bsteps">${p.steps.slice(-5).map((x) => `<div>${esc(x)}</div>`).join("")}</div>` : ""}`
         : p.state === "error" ? `<div class="small" style="color:var(--bad)">${esc(p.error || "Claude couldn't finish the plan.")}</div>`
         : `<div class="btext">${html}</div>`}</div>`;
@@ -2193,6 +2207,7 @@ async function renderBrief() {
     line.innerHTML = p.state === "none" ? "" : `<button class="briefline" type="button" data-do="gobrief">${msI("checklist")}<span>Today's brief: ${p.state === "running" ? "Claude is working on it…" : p.state === "error" ? "didn't finish" : total ? `<b>${doneN} of ${total} done</b>${today ? "" : " (from an earlier day)"}` : "ready"}</span><span class="go">Open →</span></button>`;
   }
   const btn = $("#plan");
+  if (btn && !status.agent) btn.textContent = "Plan my day in Claude";
   if (btn && status.agent) { btn.disabled = p.state === "running"; btn.textContent = p.state === "running" ? "Planning your day…" : p.state === "none" ? "Plan my day with Claude" : "Plan again"; }
 }
 document.addEventListener("change", async (e) => {

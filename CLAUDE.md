@@ -36,4 +36,9 @@ DocuSketch, adjusters, Hunter's name) is still in the code: replace or remove it
   subscription, so don't wire it to her subscription. Her subscription is for Claude Code: you, changing the app.
   Keep the app's Claude costs low: the fast model for routine work, background features switchable off, and a
   cost meter (see PLAN.md).
+- **Marlys chose no per-use cost (2026-11-08):** normally there is NO API key. Every Claude button is "Do this in
+  Claude": the app writes the request (`src/workflows/handoff.ts`) and opens it in her own Claude app
+  (claude.ai/new?q=..., also copied to the clipboard), where her subscription and connectors cover it. Don't
+  route the app through her subscription, a ChatGPT router or any other workaround; the API-key path stays
+  available but off. New Claude features need a handoff version first.
 - Keep it simple. Prefer small, working steps she can try over big rewrites.
