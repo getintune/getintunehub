@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { copyFileSync, existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import path from "node:path";
+import { TIME_ZONE } from "../../core/config.js";
 import { PROGRAMS, toInitials, type Entry, type EntryPatch, type ListsClient, type NewEntry, type Program } from "./types.js";
 
 /**
@@ -155,7 +156,7 @@ export class MockLists extends LocalLists {
       const raw = JSON.parse(readFileSync(fixture, "utf8"));
       // Dates in the fixture are days ago (e.g. -3), so the practice data always looks current.
       const at = (d: unknown) => (typeof d === "number" ? new Date(Date.now() + d * 864e5).toISOString() : String(d ?? new Date().toISOString()));
-      const day = (d: unknown) => (typeof d === "number" ? at(d).slice(0, 10) : String(d ?? ""));
+      const day = (d: unknown) => (typeof d === "number" ? new Date(Date.now() + d * 864e5).toLocaleDateString("en-CA", { timeZone: TIME_ZONE }) : String(d ?? ""));
       const entries = (raw.entries as any[]).map((e, i) => ({
         id: e.id ?? `mock-${i + 1}`,
         program: e.program,

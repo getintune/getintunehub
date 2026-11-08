@@ -1,4 +1,3 @@
-import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import dotenv from "dotenv";
@@ -52,22 +51,15 @@ export interface Config {
   hubRoot: string;
   mode: Mode;
   profile: Profile;
-  estimatorDir: string;
-  skillDir: string;
-  jobsRoot: string;
-  python: string;
   anthropicApiKey: string;
   model: string;
   /** A fast, cheaper model for small jobs like one-line email summaries. */
   fastModel: string;
-  homebase: { driver: "mock" | "browser" | "api"; url: string; apiToken: string; authFile: string; me: string };
   gmail: { driver: "mock" | "google"; clientId: string; clientSecret: string; address: string; tokenFile: string };
-  companycam: { driver: "mock" | "rest"; token: string };
-  docusketch: { downloadsDir: string };
   spotify: { clientId: string };
-  /** Drive times for calendar events: where the day's driving starts. */
+  /** Drive times for calendar events: where the day's driving starts (HUB_DAY_START_ADDRESS, e.g. home). */
   travel: { start: string };
-  /** Where mocks keep their state (mock outbox, mock Homebase writes). */
+  /** The app's own working files (practice data, the brief, caches). */
   stateDir: string;
   /** Her own data (the lists): HUB_DATA_DIR, default the app's data/ folder (never uploaded). */
   dataDir: string;
@@ -79,7 +71,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env, root = HUB_ROOT
   const e = (k: string, d = "") => (env[k] ?? "").trim() || d;
   const mode: Mode = e("HUB_MODE", "live") === "mock" ? "mock" : "live";
   const live = mode === "live";
-  const isWin = process.platform === "win32";
 
   const owner = e("HUB_OWNER_NAME", DEFAULT_PROFILE.owner);
   const tz = e("HUB_TIME_ZONE", DEFAULT_PROFILE.timeZone);
@@ -94,36 +85,18 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env, root = HUB_ROOT
   };
   TIME_ZONE = profile.timeZone;
 
-  const estimatorDir = e("ESTIMATOR_DIR", isWin ? "C:\\Games\\Estimator" : path.join(root, "..", "estimator"));
-  const skillDir = e("SKILL_DIR", path.join(estimatorDir, "skill", "forefront-estimate"));
   const stateDir = path.join(root, ".hub");
 
-  let anthropicApiKey = e("ANTHROPIC_API_KEY");
-  const keyFile = path.join(estimatorDir, "data", "api_key.txt");
-  if (!anthropicApiKey && existsSync(keyFile)) anthropicApiKey = readFileSync(keyFile, "utf8").trim();
-
-  const hbDriver = e("HOMEBASE_DRIVER", e("HOMEBASE_API_TOKEN") ? "api" : "browser") as Config["homebase"]["driver"];
+  const anthropicApiKey = e("ANTHROPIC_API_KEY");
   const gmailReady = !!(e("GOOGLE_CLIENT_ID") && e("GOOGLE_CLIENT_SECRET"));
-  const ccToken = e("COMPANYCAM_TOKEN");
 
   return {
     hubRoot: root,
     mode,
     profile,
-    estimatorDir,
-    skillDir,
-    jobsRoot: e("JOBS_ROOT", live ? (isWin ? "C:\\Jobs" : path.join(root, "jobs")) : path.join(stateDir, "jobs")),
-    python: e("PYTHON", isWin ? "py" : "python3"),
     anthropicApiKey,
     model: e("HUB_MODEL", "claude-opus-5-5"),
     fastModel: e("HUB_FAST_MODEL", "claude-haiku-5-5"),
-    homebase: {
-      driver: !live ? "mock" : hbDriver === "api" && !e("HOMEBASE_API_TOKEN") ? "mock" : hbDriver,
-      url: e("HOMEBASE_URL", "https://homebase.forefrontteam.com").replace(/\/$/, ""),
-      apiToken: e("HOMEBASE_API_TOKEN"),
-      authFile: path.join(root, "auth", "homebase.json"),
-      me: e("HOMEBASE_ME", owner),
-    },
     gmail: {
       driver: live && gmailReady ? "google" : "mock",
       clientId: e("GOOGLE_CLIENT_ID"),
@@ -131,20 +104,9 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env, root = HUB_ROOT
       address: e("GMAIL_ADDRESS", "getintunemusictherapy@gmail.com"),
       tokenFile: path.join(root, "auth", "google-token.json"),
     },
-    companycam: { driver: live && ccToken ? "rest" : "mock", token: ccToken },
     spotify: { clientId: e("SPOTIFY_CLIENT_ID") },
-    travel: { start: e("HUB_DAY_START_ADDRESS", officeAddress(skillDir)) },
-    docusketch: { downloadsDir: e("DOWNLOADS_DIR", path.join(env.USERPROFILE || env.HOME || root, "Downloads")) },
+    travel: { start: e("HUB_DAY_START_ADDRESS") },
     stateDir,
     dataDir: e("HUB_DATA_DIR", path.join(root, "data")),
   };
-}
-
-/** Forefront's office, from the estimating skill's company.json (where the day's driving starts by default). */
-function officeAddress(skillDir: string): string {
-  try {
-    return JSON.parse(readFileSync(path.join(skillDir, "assets", "company.json"), "utf8")).address ?? "";
-  } catch {
-    return "";
-  }
 }

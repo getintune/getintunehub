@@ -36,7 +36,7 @@ function step(n: number, text: string) {
 
 /** Google's "Download JSON" for a Desktop client lands in Downloads as client_secret_<id>.json. */
 function findClientJson(): { id: string; secret: string; file: string } | null {
-  const dl = loadConfig().docusketch.downloadsDir;
+  const dl = path.join(process.env.HOME || process.env.USERPROFILE || ".", "Downloads");
   if (!existsSync(dl)) return null;
   const files = readdirSync(dl)
     .filter((f) => /^client_secret_.*\.json$/i.test(f))
@@ -114,20 +114,4 @@ export async function connectGmail() {
     console.log(`Google Tasks didn't answer: ${(e as Error).message}\n  If it says the API isn't enabled, enable it (step 5) and run Connect Gmail again.`);
   }
   console.log(`Restart ${app} (close its window, open it again) to use it.`);
-}
-
-export async function connectCompanyCam() {
-  console.log("Connecting CompanyCam.");
-  step(1, "In CompanyCam (signed in as an admin) open the menu > Company Settings > Integrations (or Access Tokens / API).");
-  console.log("   Create a new access token named Keystone and copy it.");
-  console.log("   If there's no such page on your plan, ask CompanyCam support for 'a v2 API access token'.");
-  openBrowser("https://app.companycam.com/");
-  const token = await ask("\n2. Paste the token here and press Enter: ");
-  if (!token) throw new Error("No token; run Connect CompanyCam again when you have one.");
-  const res = await fetch("https://api.companycam.com/v2/users/current", { headers: { Authorization: `Bearer ${token}`, Accept: "application/json" } });
-  if (!res.ok) throw new Error(`CompanyCam didn't accept that token (${res.status}). Check you copied all of it and try again.`);
-  const me: any = await res.json();
-  setEnv({ COMPANYCAM_TOKEN: token });
-  console.log(`\nCompanyCam is connected as ${[me.first_name, me.last_name].filter(Boolean).join(" ") || me.email_address || "you"}.`);
-  console.log("Restart Keystone (close its window, open the desktop icon) to use it.");
 }

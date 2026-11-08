@@ -1,25 +1,24 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
-import type { Contact, HbPerson } from "../connectors/homebase/types.js";
 import type { Message } from "../connectors/gmail/types.js";
 import type { Hub } from "../hub.js";
-import { isAutomated } from "./reminders.js";
+import { isAutomated } from "./mailkind.js";
 
 /**
- * The owner's contacts, built up on their own: every person who shows up on an email the app reads (from, to, cc), the
- * people on each job in Homebase (with their role on the job), and Homebase's own contact records when he looks
- * someone up. Each person fills out as more turns up: phones from email signatures, title and company from
- * Homebase, the jobs they're on, when they last emailed. Kept in .hub/contacts.json.
+ * The owner's contacts, built up on their own: every person who shows up on an email the app reads (from, to, cc).
+ * Each person fills out as more turns up: phones from email signatures, when they last emailed. Which of her lists
+ * they're on (coaching client, workshop sign-up, ...) is looked up from the lists when they're shown. Kept in
+ * .hub/contacts.json.
  */
 export interface Person {
-  id: string; // the first email seen, lowercased, or "hb:<Homebase id>" when there's no email
+  id: string; // the first email seen, lowercased
   name: string;
   emails: string[];
-  phones: { number: string; label?: string; from: "homebase" | "email" | "job" }[];
+  phones: { number: string; label?: string; from: "email" | "list" }[];
   title?: string;
   company?: string;
-  homebaseId?: string;
-  jobs: { jobNumber: number; name: string; role: string }[];
+  /** Her lists this person is on (filled in when shown, never stored). */
+  lists?: { id: string; program: string; list: string; stage: string }[];
   emailCount: number;
   firstSeen: string;
   lastSeen: string;
@@ -78,37 +77,35 @@ const cleanName = (n: string) => {
   return titleCase(m ? `${m[2]} ${m[1]}` : s);
 };
 
-/** Addresses that aren't people worth keeping: the owner's own addresses, Homebase's office+ boxes, no-reply senders. */
+/** Addresses that aren't people worth keeping: the owner's own addresses and no-reply senders. */
 function skip(hub: Hub, email: string, display = "") {
   const mine = [hub.cfg.gmail.address, hub.cfg.profile.email].map((a) => a.toLowerCase());
-  return !email || mine.includes(email) || /^office\+\d+@/i.test(email) || isAutomated(display ? `${display} <${email}>` : email, "", "");
+  return !email || mine.includes(email) || isAutomated(display ? `${display} <${email}>` : email, "", "");
 }
 
-function find(s: Store, o: { email?: string; homebaseId?: string }): Person | undefined {
+function find(s: Store, o: { email?: string }): Person | undefined {
   if (o.email) {
     const e = o.email.toLowerCase();
     const hit = s.people[e] ?? Object.values(s.people).find((p) => p.emails.includes(e));
     if (hit) return hit;
   }
-  if (o.homebaseId) return Object.values(s.people).find((p) => p.homebaseId === o.homebaseId);
   return undefined;
 }
 
-function upsert(hub: Hub, o: { email?: string; name?: string; homebaseId?: string; at?: string }): Person | null {
+function upsert(hub: Hub, o: { email?: string; name?: string; at?: string }): Person | null {
   const s = load(hub);
   const email = o.email?.toLowerCase();
-  if (!email && !o.homebaseId) return null;
+  if (!email) return null;
   const now = o.at ?? new Date().toISOString();
-  let p = find(s, { email, homebaseId: o.homebaseId });
+  let p = find(s, { email });
   if (!p) {
-    p = { id: email ?? `hb:${o.homebaseId}`, name: "", emails: [], phones: [], jobs: [], emailCount: 0, firstSeen: now, lastSeen: now };
+    p = { id: email, name: "", emails: [], phones: [], emailCount: 0, firstSeen: now, lastSeen: now };
     s.people[p.id] = p;
   }
   if (email && !p.emails.includes(email)) p.emails.push(email);
   const n = o.name ? cleanName(o.name) : "";
   // Keep the fullest name seen (a real name beats "jsmith" and one-word names).
   if (n && (!p.name || (n.split(" ").length > p.name.split(" ").length && n.length > p.name.length))) p.name = n;
-  if (o.homebaseId) p.homebaseId = o.homebaseId;
   if (now > p.lastSeen) p.lastSeen = now;
   return p;
 }
@@ -119,7 +116,6 @@ function addPhone(p: Person, number: string, from: Person["phones"][number]["fro
   const have = p.phones.find((x) => digits(x.number) === d);
   if (have) {
     if (label && !have.label) have.label = label;
-    if (from === "homebase") have.from = "homebase";
     return;
   }
   p.phones.push({ number: fmtPhone(number), label, from });
@@ -170,57 +166,26 @@ export function signaturePhones(body: string): { number: string; label?: string 
   return out.slice(0, 3);
 }
 
-/** The people on a job in Homebase, with their role on it. */
-export function noteJobContacts(hub: Hub, jobNumber: number, jobName: string, contacts: Contact[]) {
-  for (const c of contacts) {
-    const e = c.email?.toLowerCase();
-    if (e && skip(hub, e)) continue;
-    const p = upsert(hub, { email: e || undefined, name: c.name, homebaseId: c.id });
-    if (!p) continue;
-    if (c.phone) addPhone(p, c.phone, "job");
-    if (c.title && !p.title) p.title = c.title;
-    if (c.company && !p.company) p.company = c.company;
-    const role = c.roles?.filter((r) => r !== "Primary").join(", ") || (c.role === "customer" ? "Customer" : c.role === "adjuster" ? "Adjuster" : "Contact");
-    const j = p.jobs.find((x) => x.jobNumber === jobNumber);
-    if (j) Object.assign(j, { name: jobName, role });
-    else p.jobs.push({ jobNumber, name: jobName, role });
-  }
-  save(hub);
-}
-
-/** Homebase's record for these people: title, company and phones fill in. */
-export function noteHomebasePeople(hub: Hub, people: HbPerson[]) {
-  for (const h of people) {
-    const e = h.email?.toLowerCase();
-    if (e && skip(hub, e)) continue;
-    const p = upsert(hub, { email: e, name: h.name, homebaseId: h.id });
-    if (!p) continue;
-    if (h.title) p.title = h.title;
-    if (h.company) p.company = h.company;
-    for (const ph of h.phones) addPhone(p, ph.number, "homebase", ph.label && ph.label !== "main" ? ph.label : undefined);
-  }
-  save(hub);
-}
-
 export function allContacts(hub: Hub): Person[] {
   return Object.values(load(hub).people).sort((a, b) => b.lastSeen.localeCompare(a.lastSeen));
 }
 
-/**
- * Finds people by name, email, company, phone or job (#3226 or the job's name). With `homebase`, Homebase's search
- * runs too and whatever it knows is merged in first, so the answer is as full as it can be.
- */
-export async function findContacts(hub: Hub, q: string, o: { homebase?: boolean; limit?: number } = {}): Promise<Person[]> {
+/** Which of her lists a person is on, matched by email (initials-only lists never have emails, so never match). */
+export function withLists(hub: Hub, p: Person): Person {
+  const emails = new Set(p.emails);
+  const on = hub.lists.list().filter((e) => e.email && emails.has(e.email.toLowerCase()));
+  return { ...p, lists: on.map((e) => ({ id: e.id, program: e.program, list: hub.lists.program(e.program).name, stage: e.stage })) };
+}
+
+/** Finds people by name, email, company, phone, or a list they're on ("workshop", "coaching"). */
+export async function findContacts(hub: Hub, q: string, o: { limit?: number } = {}): Promise<Person[]> {
   const query = q.trim();
-  if (o.homebase && query.length >= 3 && hub.homebase.searchContacts) {
-    const hb = await hub.homebase.searchContacts(query.replace(/^#/, "")).catch(() => []);
-    noteHomebasePeople(hub, hb);
-  }
-  const words = query.toLowerCase().replace(/^#/, "").split(/\s+/).filter(Boolean);
+  const words = query.toLowerCase().split(/\s+/).filter(Boolean);
   const qd = digits(query);
-  const hay = (p: Person) => [p.name, ...p.emails, p.company, p.title, ...p.jobs.flatMap((j) => [`#${j.jobNumber}`, String(j.jobNumber), j.name, j.role]), ...p.phones.map((x) => digits(x.number))].join(" ").toLowerCase();
-  const list = allContacts(hub).filter((p) => !words.length || words.every((w) => hay(p).includes(w)) || (qd.length >= 4 && p.phones.some((x) => digits(x.number).includes(qd))));
-  // Best first: name starts with the query, then people on jobs, then most recent.
-  const score = (p: Person) => (words.length && p.name.toLowerCase().split(" ").some((n) => n.startsWith(words[0])) ? 2 : 0) + (p.jobs.length ? 1 : 0);
+  const all = allContacts(hub).map((p) => withLists(hub, p));
+  const hay = (p: Person) => [p.name, ...p.emails, p.company, p.title, ...(p.lists ?? []).flatMap((l) => [l.list, l.program, l.stage]), ...p.phones.map((x) => digits(x.number))].join(" ").toLowerCase();
+  const list = all.filter((p) => !words.length || words.every((w) => hay(p).includes(w)) || (qd.length >= 4 && p.phones.some((x) => digits(x.number).includes(qd))));
+  // Best first: name starts with the query, then people on her lists, then most recent.
+  const score = (p: Person) => (words.length && p.name.toLowerCase().split(" ").some((n) => n.startsWith(words[0])) ? 2 : 0) + (p.lists?.length ? 1 : 0);
   return list.sort((a, b) => score(b) - score(a) || b.lastSeen.localeCompare(a.lastSeen)).slice(0, o.limit ?? 200);
 }

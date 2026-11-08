@@ -1,53 +1,50 @@
 import { query, type Options, type SDKMessage } from "@anthropic-ai/claude-agent-sdk";
 import { claudeEnv } from "./env.js";
-import path from "node:path";
-import { STAGES } from "../core/job.js";
+import { mkdirSync } from "node:fs";
 import type { Hub } from "../hub.js";
 import { makeGuard } from "./guard.js";
 import { hubTools, SERVER } from "./tools.js";
 
-export function systemPrompt(hub: Hub, jobNumber?: number): string {
-  const c = hub.cfg;
-  const p = c.profile;
+export function systemPrompt(hub: Hub): string {
+  const p = hub.cfg.profile;
   const me = p.first;
-  return `You are ${p.owner}'s assistant inside ${p.appName}, her own app for running ${p.business} (email, calendar, tasks and clients in one place). ${p.about}. Today and all times are in ${p.timeZone}.
+  const lists = hub.lists.programs().map((x) => `  - ${x.name} (${x.id}): ${x.stages.join(" > ")}${x.hint ? `. ${x.hint}` : ""}`).join("\n");
+  return `You are ${p.owner}'s assistant inside ${p.appName}, her own app for running ${p.business} (email, calendar, tasks and her client lists in one place). ${p.about}. All times are in ${p.timeZone}.
 
 How ${p.appName} is organized:
-- Every job has a folder under ${c.jobsRoot}, named "<job#> <Last Name>", with job.json (read/write it with the app's tools) and sketch/, photos/, estimate/, email/, notes/. Put estimate outputs in estimate/.
-- Homebase (Forefront's system of record) is reached only through the mcp__hub__homebase_* tools. Stages: ${STAGES.join(" > ")}.
-- Every email is a Gmail DRAFT made with mcp__hub__gmail_create_draft; it BCCs office+<job#>@forefrontteam.com so Homebase logs it. You cannot send email. ${me} sends drafts herself.
-- Homebase's proposal amount and submitted date are set by mcp__hub__hub_sync AFTER ${me} has sent the send-off (it uses the real send date). Don't set them before the email has gone out unless ${me} asks.
-- Google Tasks: mcp__hub__tasks_* (due dates only, no times).
-- Google Calendar: mcp__hub__calendar_* (read events, find free time, book / move / delete; booking asks ${me}). Times are ${p.timeZone}.
-- CompanyCam photos: mcp__hub__companycam_* (download to photos/, then look through them with the skill's photo_sheets.py). DocuSketch: mcp__hub__docusketch_find_sketch.
+- Her lists, one per program (mcp__hub__lists_*). Each person has a stage, contact details, notes and a next step with a date:
+${lists}
+- What needs her right now: mcp__hub__needs_me. Counts per list and workshop sign-ups by source: mcp__hub__lists_counts.
+- Email: every email you write is a Gmail DRAFT (mcp__hub__gmail_create_draft). You cannot send email. ${me} sends drafts herself.
+- Calendar: mcp__hub__calendar_* (read events, find free time, book / move / delete; changes ask ${me} first).
+- Tasks: mcp__hub__tasks_* (due dates only, no times).
+- Contacts: mcp__hub__contacts_find (everyone from her email, and which lists they're on).
 
-Estimating: ALL estimating rules live in the forefront-estimate skill. Load it with the Skill tool for anything about scoping, pricing, converting an Xactimate PDF, revising, customer wording, the photo report, or the send-off email's wording, and follow it exactly. Run its scripts from ${path.join(c.skillDir, "scripts")} with \`${c.python}\` (e.g. \`${c.python} "${path.join(c.skillDir, "scripts", "render.py")}" estimate.json --out "<job folder>\\estimate"\`). The outputs folder is the job's estimate/ folder, not /mnt/user-data/outputs. In the app, attach PDFs to drafts by file path (the skill's base64 and Chrome steps don't apply). Use mcp__hub__photo_report for the photo report.
+Privacy: ${me} is a licensed therapist. Therapy clients (Grow Therapy) are kept by initials only, and their clinical details stay in Grow. Never write a therapy client's full name, diagnosis or session content anywhere, and don't put therapy clients in emails. Coaching and workshops are coaching, not therapy.
 
-Ask before anything irreversible; the Homebase tools and estimate overwrites will also ask ${me} themselves. Keep replies short: ${me} reads them between client sessions.${jobNumber ? `\n\nThis conversation is about job #${jobNumber} (folder: ${hub.jobs.folder(jobNumber)}).` : ""}`;
+Ask before anything that changes something; the app's tools also ask ${me} themselves. Keep replies short and plain: ${me} reads them between client sessions.`;
 }
 
-export function agentOptions(hub: Hub, extra: Partial<Options> = {}, jobNumber?: number): Options {
-  const linked = hub.skill.link(hub.cfg.hubRoot);
+export function agentOptions(hub: Hub, extra: Partial<Options> = {}): Options {
   return {
-    cwd: hub.cfg.hubRoot,
-    additionalDirectories: [hub.cfg.jobsRoot, hub.cfg.skillDir, path.dirname(linked)],
-    settingSources: ["project"],
-    skills: ["forefront-estimate"],
+    cwd: hub.cfg.stateDir,
+    settingSources: [],
     model: hub.cfg.model,
     mcpServers: { [SERVER]: hubTools(hub) },
     canUseTool: makeGuard(hub),
     permissionMode: "default",
-    systemPrompt: { type: "preset", preset: "claude_code", append: systemPrompt(hub, jobNumber) },
+    systemPrompt: { type: "preset", preset: "claude_code", append: systemPrompt(hub) },
     env: claudeEnv(hub),
     ...extra,
   };
 }
 
 /** Runs one request through the agent, printing its progress. Returns the final text. */
-export async function ask(hub: Hub, prompt: string, opts: { jobNumber?: number; onMessage?: (m: SDKMessage) => void } = {}): Promise<string> {
-  if (!hub.cfg.anthropicApiKey) throw new Error("No Anthropic API key: set ANTHROPIC_API_KEY in .env (or save it in the Estimator app's Settings).");
+export async function ask(hub: Hub, prompt: string, opts: { onMessage?: (m: SDKMessage) => void } = {}): Promise<string> {
+  if (!hub.cfg.anthropicApiKey) throw new Error("No Anthropic API key: add ANTHROPIC_API_KEY to the .env file in the app's folder.");
+  mkdirSync(hub.cfg.stateDir, { recursive: true });
   let final = "";
-  for await (const m of query({ prompt, options: agentOptions(hub, {}, opts.jobNumber) })) {
+  for await (const m of query({ prompt, options: agentOptions(hub) })) {
     opts.onMessage?.(m);
     if (m.type === "assistant") {
       for (const b of m.message.content) {
@@ -65,4 +62,31 @@ export async function ask(hub: Hub, prompt: string, opts: { jobNumber?: number; 
 function summarize(input: unknown): string {
   const s = JSON.stringify(input);
   return s.length > 140 ? `${s.slice(0, 140)}…` : s;
+}
+
+/** One line for each step Claude takes, shown while it works ("Looking at your lists", "Drafting an email"). */
+export function describeTool(name: string, input: Record<string, unknown>): string {
+  const short = name.replace(`mcp__${SERVER}__`, "");
+  const steps: Record<string, string> = {
+    lists_find: "Looking at your lists",
+    lists_counts: "Counting your lists",
+    lists_add: "Adding someone to a list",
+    lists_update: "Updating someone on a list",
+    lists_add_note: "Adding a note",
+    needs_me: "Checking what needs you",
+    contacts_find: "Looking up a contact",
+    gmail_search: "Searching your email",
+    gmail_read_thread: "Reading an email",
+    gmail_create_draft: `Drafting an email${input.subject ? `: "${String(input.subject)}"` : ""}`,
+    calendar_events: "Looking at your calendar",
+    calendar_free_time: "Finding free time",
+    calendar_create_event: "Adding a calendar event",
+    calendar_update_event: "Changing a calendar event",
+    calendar_delete_event: "Removing a calendar event",
+    tasks_list: "Looking at your tasks",
+    tasks_create: "Adding a task",
+    tasks_update: "Updating a task",
+    TodoWrite: "Planning the steps",
+  };
+  return steps[short] ?? short.replace(/_/g, " ");
 }

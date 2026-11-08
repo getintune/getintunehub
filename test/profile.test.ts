@@ -33,6 +33,8 @@ describe("her name in the app", () => {
     const p = systemPrompt(hub);
     expect(p).toContain("Marlys Woods's assistant inside Get In Tune Hub");
     expect(p).toContain("America/Denver");
-    expect(p).not.toMatch(/Hunter|Keystone/);
+    expect(p).not.toMatch(/Hunter|Keystone|Homebase|estimat/i);
+    expect(p).toContain("Workshop sign-ups (workshop)");
+    expect(p).toContain("initials only");
   });
 });
