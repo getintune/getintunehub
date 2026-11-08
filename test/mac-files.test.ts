@@ -17,4 +17,13 @@ describe("Mac setup and start files", () => {
     expect(readFileSync(file("Setup Get In Tune Hub.command"), "utf8")).toContain("https://github.com/getintune/getintunehub.git");
     expect(readFileSync(file("Start Get In Tune Hub.command"), "utf8")).toContain("http://127.0.0.1:4317");
   });
+
+  it("setup installs what's missing itself, and the start file updates the app each time", () => {
+    const setup = readFileSync(file("Setup Get In Tune Hub.command"), "utf8");
+    expect(setup).toContain("https://nodejs.org/dist/index.json");
+    expect(setup).toContain("git-credential-manager");
+    expect(setup).toContain("plan B");
+    const start = readFileSync(file("Start Get In Tune Hub.command"), "utf8");
+    expect(start).toMatch(/checkout -- package-lock\.json.*git pull --ff-only/);
+  });
 });

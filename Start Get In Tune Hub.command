@@ -16,8 +16,8 @@ if nc -z 127.0.0.1 4317 >/dev/null 2>&1; then
 fi
 
 # Get the latest version (skipped quietly when offline).
-export GIT_TERMINAL_PROMPT=0
-git pull --ff-only --quiet >/dev/null 2>&1 && npm install --no-audit --no-fund --loglevel=error >/dev/null 2>&1
+export GIT_TERMINAL_PROMPT=0 GCM_INTERACTIVE=never
+git checkout -- package-lock.json >/dev/null 2>&1; git pull --ff-only --quiet >/dev/null 2>&1 && npm install --no-audit --no-fund --loglevel=error >/dev/null 2>&1
 
 (sleep 5; open "http://127.0.0.1:4317") &
 echo "Get In Tune Hub is running at http://127.0.0.1:4317"

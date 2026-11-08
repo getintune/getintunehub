@@ -198,4 +198,11 @@ Outlook** (the Gmail tab becomes Outlook; Gmail stays only to catch team request
       each (workshop name read from the email). Still to do with her: run it, check Grow/Wix/Eventbrite wording
       against real emails, Motion API access on her plan, morning brief as a Claude scheduled task, the
       coaching-not-therapy reminder (see top).
+      *Then (2026-11-08):* Marlys asked Claude to handle all GitHub actions and make install simple. Setup is now
+      **one file** she downloads from the chat and right-click > Opens: it waits for Apple's Command Line Tools,
+      installs Node.js LTS and GitHub's sign-in helper (Git Credential Manager, browser sign-in) with her Mac
+      password, clones to ~/Get In Tune Hub, sets up, adds the Desktop icon. The Start file pulls updates each time
+      (resetting package-lock.json first). GitHub Desktop is plan B in SETUP-ON-MAC.md. Not testable here: the GCM
+      asset lookup (api.github.com is blocked in this workspace) and the clone; the rest was dry-run. Claude merged
+      the PR into main itself (fast-forward push), at her request.
 - [ ] **8. Tidy up.** Remove anything left from Keystone that she doesn't use. README in plain words for her.
