@@ -1,0 +1,14 @@
+{
+  "_note": "Made-up Motion tasks for practice mode. startHour = hours from the start of today (Motion's scheduled time); dueInDays = days from today. No real data.",
+  "tasks": [
+    { "id": "mt1", "name": "Post the workshop reminder on Instagram", "startHour": 9, "duration": 30, "dueInDays": 0 },
+    { "id": "mt2", "name": "Review Frankie's countdown posts", "startHour": 11.5, "duration": 30, "dueInDays": 1 },
+    { "id": "mt3", "name": "Workshop slides: final run-through", "startHour": 15, "duration": 60, "dueInDays": 3 },
+    { "id": "mt4", "name": "Send Tom the coaching program details", "startHour": 16.5, "duration": 20, "dueInDays": -1 },
+    { "id": "mt5", "name": "Draft the coaching intake form from the Google Doc", "startHour": 34, "duration": 90, "dueInDays": 4 },
+    { "id": "mt6", "name": "Add Eventbrite sign-ups to the Wix list", "assignee": "Kristin Example", "startHour": 10, "duration": 30, "dueInDays": 0 },
+    { "id": "mt7", "name": "Schedule Grow intake for J.R.", "assignee": "Kristin Example", "startHour": 13, "duration": 15, "dueInDays": 1 },
+    { "id": "mt8", "name": "Three workshop countdown posts", "assignee": "Frankie Example", "startHour": 9, "duration": 120, "dueInDays": 1 },
+    { "id": "mt9", "name": "Workshop recap email (after Nov 13)", "assignee": "Frankie Example", "startHour": 130, "duration": 60, "dueInDays": 6 }
+  ]
+}

@@ -13,6 +13,8 @@ describe("Do this in Claude", () => {
     expect(p).toContain("plus 1 therapy admin item");
     expect(p).not.toContain("K.L.");
     expect(p).toContain("- New client: J.R.");
+    expect(p).toContain("My Motion tasks today");
+    expect(p).toContain("Post the workshop reminder on Instagram");
     expect(p).not.toMatch(/Jordan|Rivera|Aetna/);
     expect(p).toMatch(/drafts only/);
   });

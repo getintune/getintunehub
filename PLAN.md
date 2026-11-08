@@ -175,7 +175,14 @@ Outlook** (the Gmail tab becomes Outlook; Gmail stays only to catch team request
         "Open in Outlook"). Sign-up suggestions from Wix/Eventbrite emails, added to the workshop list when she clicks
         Add. Plan my day in Claude includes the Grow alerts. Calendar stays on Google for now (she says all her
         calendars are synced).
-      - [ ] Motion (tasks with Kristin and Frankie), in place of Google Tasks; then switch "tasks from email" to Motion.
+      - [x] **Motion (2026-11-08):** Marlys loves that Motion fits tasks into her schedule and moves them, so Motion
+        keeps doing that; the app never moves, edits or deletes Motion tasks. `src/connectors/motion` (Motion API,
+        MOTION_API_KEY; practice tasks in `fixtures/motion.json`), `src/workflows/motion.ts`. Dashboard "Today" shows
+        what Motion scheduled today plus overdue, with an "Add a task to Motion" box; **Add to Motion** buttons on
+        Needs you, a person's next step and work emails; every add shows a Yes/No card with the name to edit first.
+        "Team in Motion" (folded) shows Kristin's and Frankie's tasks this week, read-only. Plan my day in Claude
+        includes her Motion day. Google Tasks is no longer on the dashboard. In step 7: check her Motion plan
+        includes API access, and the real task fields match. Later maybe: "tasks from email" into Motion.
       - [ ] Payments (Stripe or Square) once she picks one; the PayPal-for-contractors change (HIPAA).
       - [ ] The coaching intake/stages from her Google Doc.
 - [ ] **7. On her computer.** Walk her through setup: install, `Connect Gmail` (her own Google Cloud project and

@@ -58,6 +58,8 @@ export interface Config {
   gmail: { driver: "mock" | "google"; clientId: string; clientSecret: string; address: string; tokenFile: string };
   /** Work email in Microsoft 365 (read-only): marlys@ and the shared info@ mailbox. */
   outlook: { driver: "mock" | "microsoft"; clientId: string; tenant: string; tokenFile: string; mailboxes: string[] };
+  /** Motion (tasks and scheduling): MOTION_API_KEY from Motion → Settings → API. */
+  motion: { driver: "mock" | "motion"; apiKey: string; workspaceId: string };
   spotify: { clientId: string };
   /** Drive times for calendar events: where the day's driving starts (HUB_DAY_START_ADDRESS, e.g. home). */
   travel: { start: string };
@@ -113,6 +115,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env, root = HUB_ROOT
       tokenFile: path.join(root, "auth", "microsoft-token.json"),
       mailboxes: e("OUTLOOK_MAILBOXES", `${profile.email},info@getintunemusictherapy.com`).split(",").map((x) => x.trim().toLowerCase()).filter(Boolean),
     },
+    motion: { driver: live && e("MOTION_API_KEY") ? "motion" : "mock", apiKey: e("MOTION_API_KEY"), workspaceId: e("MOTION_WORKSPACE_ID") },
     spotify: { clientId: e("SPOTIFY_CLIENT_ID") },
     travel: { start: e("HUB_DAY_START_ADDRESS") },
     stateDir,

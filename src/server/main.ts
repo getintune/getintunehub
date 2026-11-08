@@ -144,6 +144,19 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, { ok: true });
     }
 
+    // ---- Motion: Motion schedules; the app shows its plan and hands it new tasks (after she says Yes)
+    if (p === "/api/motion/add" && req.method === "POST") {
+      const b = await body(req);
+      const name = String(b.name ?? "").trim();
+      if (!name) return send(res, 400, { error: "The task needs a name." });
+      const dueDate = /^\d{4}-\d{2}-\d{2}$/.test(String(b.dueDate ?? "")) ? String(b.dueDate) : undefined;
+      return send(res, 202, task(`Add to Motion: ${name.slice(0, 60)}`, async () => {
+        const t = await (await import("../workflows/motion.js")).addToMotion(hub, { name, dueDate, duration: Number(b.duration) || undefined, description: b.description ? String(b.description) : undefined });
+        hub.say(t ? `Added "${t.name}" to Motion. Motion will fit it into your schedule.` : "Not added to Motion.");
+        if (t) bus.emit({ type: "changed", what: "calendar" });
+      }));
+    }
+
     // ---- "Do this in Claude": the request written out for her own Claude app (no API key needed)
     if (p === "/api/handoff" && req.method === "POST") {
       const b = await body(req);
@@ -199,8 +212,13 @@ const server = http.createServer(async (req, res) => {
       dayStart.setHours(0, 0, 0, 0);
       const dayEnd = new Date(dayStart.getTime() + 864e5);
       const schedule = hub.calendar.connected() ? await hub.calendar.events({ start: dayStart.toISOString(), end: dayEnd.toISOString() }).catch(() => []) : [];
-      const todayStr = new Date().toLocaleDateString("en-CA", { timeZone: TIME_ZONE });
-      const tasksDue = hub.tasks.connected() ? (await hub.tasks.tasks().catch(() => [])).filter((t) => !t.completed && t.due && t.due <= todayStr).sort((a, b) => (a.due ?? "").localeCompare(b.due ?? "")) : [];
+      const mo = await import("../workflows/motion.js");
+      let motion: unknown = null, team: unknown[] = [], motionError = "";
+      try {
+        [motion, team] = await Promise.all([mo.motionToday(hub), mo.motionTeam(hub)]);
+      } catch (e) {
+        motionError = (e as Error).message;
+      }
       const recent = hub.lists
         .list()
         .slice(0, 8)
@@ -221,8 +239,10 @@ const server = http.createServer(async (req, res) => {
         ...listCounts(hub),
         schedule,
         travel: await import("../workflows/travel.js").then(async (t) => t.travelFor(hub, schedule, { calendars: await myCalendars() })).catch(() => ({})),
-        tasksDue,
-        tasksConnected: hub.tasks.connected(),
+        motion,
+        team,
+        motionError,
+        motionKind: hub.motion.kind,
         calendarConnected: hub.calendar.connected(),
         recent,
       });

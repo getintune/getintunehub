@@ -8,6 +8,7 @@ import { makeCalendar, type CalendarClient } from "./connectors/calendar/index.j
 import { makeTasks, type TasksClient } from "./connectors/tasks/index.js";
 import { makeLists, type ListsClient } from "./connectors/lists/index.js";
 import { makeWorkMail, type WorkMailClient } from "./connectors/outlook/index.js";
+import { makeMotion, type MotionClient } from "./connectors/motion/index.js";
 
 /** Everything a workflow or agent tool needs, in one place. Tests build one from mocks. */
 export interface Hub {
@@ -18,6 +19,8 @@ export interface Hub {
   outlook: WorkMailClient;
   gmail: MailClient;
   calendar: CalendarClient;
+  /** Motion: her tasks (and the team's), scheduled by Motion. */
+  motion: MotionClient;
   tasks: TasksClient;
   travel: TravelClient;
   approver: Approver;
@@ -31,6 +34,7 @@ export function makeHub(cfg: Config = loadConfig(), approver: Approver = new Cli
     outlook: makeWorkMail(cfg),
     gmail: makeGmail(cfg),
     calendar: makeCalendar(cfg),
+    motion: makeMotion(cfg),
     tasks: makeTasks(cfg),
     travel: makeTravel(cfg),
     approver,
@@ -48,6 +52,7 @@ export function describe(hub: Hub): string[] {
     `outlook     ${hub.outlook.kind === "mock" ? "practice mail" : `${hub.cfg.outlook.mailboxes.join(", ")}${hub.outlook.connected() ? "" : "  (!) not signed in: Connect Outlook"}`}`,
     `gmail       ${hub.gmail.kind}${hub.gmail.kind === "mock" ? `  (drafts go to ${path.join(c.stateDir, "outbox")})` : ` ${c.gmail.address}`}`,
     `calendar    ${hub.calendar.kind}${hub.calendar.kind === "google" && !hub.calendar.connected() ? "  (!) reconnect Google to add Calendar" : ""}`,
+    `motion      ${hub.motion.kind === "mock" ? "practice tasks" : "connected"}`,
     `tasks       ${hub.tasks.kind}${hub.tasks.kind === "google" && !hub.tasks.connected() ? "  (!) reconnect Google to add Tasks" : ""}`,
   ];
 }

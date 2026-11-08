@@ -42,10 +42,14 @@ export async function planPrompt(hub: Hub, now = new Date()): Promise<string> {
     const hm = (iso: string) => new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: TIME_ZONE });
     lines.push("", "Today's calendar:", ...(ev.length ? ev.map((e) => `- ${e.allDay ? "all day" : hm(e.start)}: ${e.title}`) : ["- nothing booked"]));
   } else lines.push("", "Check my calendar for today.");
-  if (hub.tasks.connected()) {
-    const day = now.toLocaleDateString("en-CA", { timeZone: TIME_ZONE });
-    const ts = (await hub.tasks.tasks().catch(() => [])).filter((t) => !t.completed && t.due && t.due <= day);
-    if (ts.length) lines.push("", "Tasks due today or overdue:", ...ts.map((t) => `- ${t.title}${t.due! < day ? " (overdue)" : ""}`));
+  try {
+    const { motionToday } = await import("./motion.js");
+    const m = await motionToday(hub, now);
+    const hm = (iso: string) => new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: TIME_ZONE });
+    if (m.scheduled.length || m.overdue.length)
+      lines.push("", "My Motion tasks today (Motion schedules them; don't move them):", ...m.scheduled.map((t) => `- ${hm(t.scheduledStart!)}: ${t.name}`), ...m.overdue.map((t) => `- overdue: ${t.name}`));
+  } catch {
+    /* Motion not reachable: the brief goes on without it */
   }
   lines.push(
     "",
