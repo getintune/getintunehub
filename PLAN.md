@@ -83,6 +83,15 @@ Owner: Marlys. Fill in as you learn it:
   Poppins, Oswald. Logo: https://static.wixstatic.com/media/8dfc58_d638206911e944a8958555422d3db51c~mv2.png
   (2000x700 PNG, face profile + "Get In Tune" on a music staff). Name: "Get In Tune Hub" unless she says otherwise.
 
+## Reminders for Marlys
+
+- **When the app is set up on her Mac (end of step 7), remind her** to add a "coaching, not therapy" line to her
+  workshop/coaching emails and registration page (she asked for this on 2026-11-08). Suggested wording: *"This
+  workshop is coaching and education, not therapy, and attending does not create a therapist–client relationship.
+  If you're in crisis, please contact local emergency services, or find a free helpline in your country at
+  findahelpline.com (in the US, call or text 988)."* Also suggest she asks her liability insurer what wording they
+  recommend for an LMFT offering coaching.
+
 ## Steps
 
 Changes to the steps from what we learned (2026-11-07): her work email and calendar are **Microsoft 365 /
