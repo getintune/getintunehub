@@ -1,5 +1,6 @@
 import { AT_OR_PAST_PROPOSAL } from "../core/job.js";
 import type { Hub } from "../hub.js";
+import { TIME_ZONE } from "../core/config.js";
 
 export interface SyncResult {
   jobNumber: number;
@@ -93,7 +94,7 @@ export async function sync(hub: Hub, only?: number, opts: { checkOnly?: boolean 
 }
 
 /** Homebase dates are local (Colorado) calendar dates. */
-export function toLocalDate(iso: string, tz = "America/Denver"): string {
+export function toLocalDate(iso: string, tz = TIME_ZONE): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(iso));
 }
 

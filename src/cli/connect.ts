@@ -56,20 +56,21 @@ function findClientJson(): { id: string; secret: string; file: string } | null {
 
 export async function connectGmail() {
   const cfg = loadConfig();
-  console.log("Connecting Gmail (hunter@forefrontteam.com) for Keystone's Mail tab: reading, drafts, archive/labels, and sending when you press Send.");
+  const app = cfg.profile.appName;
+  console.log(`Connecting Gmail (${cfg.gmail.address}) for ${app}'s Gmail tab: reading, drafts, archive/labels, and sending when you press Send.`);
   if (!cfg.gmail.clientId) {
-    console.log("Google needs a one-time 'app' entry for Keystone. Each page opens in your browser; sign in as hunter@forefrontteam.com.");
-    step(1, "Create a project named Keystone (Create).");
+    console.log(`Google needs a one-time 'app' entry for ${app}. Each page opens in your browser; sign in as ${cfg.gmail.address}.`);
+    step(1, `Create a project named ${app} (Create).`);
     openBrowser("https://console.cloud.google.com/projectcreate");
     await ask("   Press Enter when it's created... ");
-    step(2, "Make sure Keystone is the selected project at the top, then click Enable on the Gmail API.");
+    step(2, `Make sure ${app} is the selected project at the top, then click Enable on the Gmail API.`);
     openBrowser("https://console.cloud.google.com/apis/library/gmail.googleapis.com");
     await ask("   Press Enter when it says API enabled... ");
-    step(3, "Click Get started: app name Keystone, your email, Audience = Internal, your email again, agree, Create.");
-    console.log("   (If Internal is greyed out, pick External and add hunter@forefrontteam.com as a test user.)");
+    step(3, `Click Get started: app name ${app}, your email, Audience = External (a personal Gmail can't pick Internal), your email again, agree, Create.`);
+    console.log(`   Then under Audience > Test users, add ${cfg.gmail.address}.`);
     openBrowser("https://console.cloud.google.com/auth/overview");
     await ask("   Press Enter when it's done... ");
-    step(4, "Create client: Application type = Desktop app, name Keystone, Create. Then click Download JSON.");
+    step(4, `Create client: Application type = Desktop app, name ${app}, Create. Then click Download JSON.`);
     openBrowser("https://console.cloud.google.com/auth/clients/create");
     await ask("   Press Enter once the JSON file is downloaded (or if you'd rather paste the ID and secret)... ");
 
@@ -85,7 +86,7 @@ export async function connectGmail() {
   }
 
   // Calendar and Tasks are APIs of their own: each needs one Enable click in the same Google project.
-  step(5, "Turn on the Google Calendar API and the Google Tasks API: click Enable on each page that opens (check Keystone is the project at the top).");
+  step(5, `Turn on the Google Calendar API and the Google Tasks API: click Enable on each page that opens (check ${app} is the project at the top).`);
   openBrowser("https://console.cloud.google.com/apis/library/calendar-json.googleapis.com");
   openBrowser("https://console.cloud.google.com/apis/library/tasks.googleapis.com");
   await ask("   Press Enter when both say API enabled (or Manage)... ");
@@ -112,7 +113,7 @@ export async function connectGmail() {
   } catch (e) {
     console.log(`Google Tasks didn't answer: ${(e as Error).message}\n  If it says the API isn't enabled, enable it (step 5) and run Connect Gmail again.`);
   }
-  console.log("Restart Keystone (close its window, open the desktop icon) to use it.");
+  console.log(`Restart ${app} (close its window, open it again) to use it.`);
 }
 
 export async function connectCompanyCam() {

@@ -7,9 +7,51 @@ export const HUB_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)
 
 export type Mode = "mock" | "live";
 
+/** Who the app is for. Everything that names the owner, the business or the time zone reads it from here. */
+export interface Profile {
+  /** Full name, e.g. "Marlys Woods". */
+  owner: string;
+  /** First name, used in prompts and Yes/No cards ("Marlys declined"). */
+  first: string;
+  /** Business name, e.g. "Get In Tune". */
+  business: string;
+  /** One sentence about the business, for Claude's prompts. */
+  about: string;
+  /** Her main work email address. */
+  email: string;
+  /** IANA time zone for every date and time the app shows or reads. */
+  timeZone: string;
+  /** The app's name on the page and in messages. */
+  appName: string;
+}
+
+export const DEFAULT_PROFILE: Profile = {
+  owner: "Marlys Woods",
+  first: "Marlys",
+  business: "Get In Tune",
+  about:
+    "Get In Tune (Get In Tune Inc.) offers music therapy, therapy and coaching for life's big changes: 1:1 therapy and transition coaching, group therapy, workshops for nomads and expats, training and group supervision for therapists, and music therapy for treatment centers",
+  email: "marlys@getintunemusictherapy.com",
+  timeZone: "America/Denver",
+  appName: "Get In Tune Hub",
+};
+
+/** The time zone in use (set by loadConfig from HUB_TIME_ZONE). Read it at call time, not at import time. */
+export let TIME_ZONE = DEFAULT_PROFILE.timeZone;
+
+function validTimeZone(tz: string): boolean {
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: tz });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export interface Config {
   hubRoot: string;
   mode: Mode;
+  profile: Profile;
   estimatorDir: string;
   skillDir: string;
   jobsRoot: string;
@@ -29,13 +71,26 @@ export interface Config {
   stateDir: string;
 }
 
-/** Reads .env from the Keystone folder (never committed) and fills in defaults. Mock wherever credentials are missing. */
+/** Reads .env from the app folder (never committed) and fills in defaults. Mock wherever credentials are missing. */
 export function loadConfig(env: NodeJS.ProcessEnv = process.env, root = HUB_ROOT): Config {
   if (env === process.env) dotenv.config({ path: path.join(root, ".env"), quiet: true } as dotenv.DotenvConfigOptions);
   const e = (k: string, d = "") => (env[k] ?? "").trim() || d;
   const mode: Mode = e("HUB_MODE", "live") === "mock" ? "mock" : "live";
   const live = mode === "live";
   const isWin = process.platform === "win32";
+
+  const owner = e("HUB_OWNER_NAME", DEFAULT_PROFILE.owner);
+  const tz = e("HUB_TIME_ZONE", DEFAULT_PROFILE.timeZone);
+  const profile: Profile = {
+    owner,
+    first: e("HUB_OWNER_FIRST_NAME", owner.split(/\s+/)[0] || owner),
+    business: e("HUB_BUSINESS_NAME", DEFAULT_PROFILE.business),
+    about: e("HUB_BUSINESS_ABOUT", DEFAULT_PROFILE.about),
+    email: e("HUB_OWNER_EMAIL", DEFAULT_PROFILE.email),
+    timeZone: validTimeZone(tz) ? tz : DEFAULT_PROFILE.timeZone,
+    appName: e("HUB_APP_NAME", DEFAULT_PROFILE.appName),
+  };
+  TIME_ZONE = profile.timeZone;
 
   const estimatorDir = e("ESTIMATOR_DIR", isWin ? "C:\\Games\\Estimator" : path.join(root, "..", "estimator"));
   const skillDir = e("SKILL_DIR", path.join(estimatorDir, "skill", "forefront-estimate"));
@@ -52,6 +107,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env, root = HUB_ROOT
   return {
     hubRoot: root,
     mode,
+    profile,
     estimatorDir,
     skillDir,
     jobsRoot: e("JOBS_ROOT", live ? (isWin ? "C:\\Jobs" : path.join(root, "jobs")) : path.join(stateDir, "jobs")),
@@ -64,13 +120,13 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env, root = HUB_ROOT
       url: e("HOMEBASE_URL", "https://homebase.forefrontteam.com").replace(/\/$/, ""),
       apiToken: e("HOMEBASE_API_TOKEN"),
       authFile: path.join(root, "auth", "homebase.json"),
-      me: e("HOMEBASE_ME", "Hunter Patterson"),
+      me: e("HOMEBASE_ME", owner),
     },
     gmail: {
       driver: live && gmailReady ? "google" : "mock",
       clientId: e("GOOGLE_CLIENT_ID"),
       clientSecret: e("GOOGLE_CLIENT_SECRET"),
-      address: e("GMAIL_ADDRESS", "hunter@forefrontteam.com"),
+      address: e("GMAIL_ADDRESS", "getintunemusictherapy@gmail.com"),
       tokenFile: path.join(root, "auth", "google-token.json"),
     },
     companycam: { driver: live && ccToken ? "rest" : "mock", token: ccToken },

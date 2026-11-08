@@ -6,7 +6,7 @@ import { createInterface } from "node:readline/promises";
  */
 export interface Approver {
   confirm(action: string, details?: string[]): Promise<boolean>;
-  /** Like confirm, but shows `text` for Hunter to edit; resolves the (edited) text, or null for no. */
+  /** Like confirm, but shows `text` for the owner to edit; resolves the (edited) text, or null for no. */
   confirmText?(action: string, details: string[], text: string): Promise<string | null>;
 }
 

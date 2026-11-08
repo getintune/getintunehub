@@ -1,10 +1,10 @@
 import type { Hub } from "../hub.js";
 
 /**
- * The environment Keystone gives Claude. Claude's tools obey settings like ANTHROPIC_BASE_URL that send every
+ * The environment the app gives Claude. Claude's tools obey settings like ANTHROPIC_BASE_URL that send every
  * request to another server; add-ons that run "Claude Code with ChatGPT" (or another model) set them system-wide.
- * Keystone ignores any it inherits from the PC, so its requests (with your email and job data) go to Anthropic
- * unless you choose otherwise in Keystone's own .env: HUB_CLAUDE_BASE_URL=<url> to use a specific endpoint, or
+ * the app ignores any it inherits from the PC, so its requests (with your email and client data) go to Anthropic
+ * unless you choose otherwise in the app's own .env: HUB_CLAUDE_BASE_URL=<url> to use a specific endpoint, or
  * HUB_ALLOW_CLAUDE_REDIRECT=1 to keep whatever the PC sets.
  */
 export const REDIRECT_VARS = [
@@ -27,7 +27,7 @@ export const REDIRECT_VARS = [
 
 const allowAll = () => process.env.HUB_ALLOW_CLAUDE_REDIRECT === "1";
 
-/** Redirect settings found on this PC that Keystone is ignoring (names and the host they point to). */
+/** Redirect settings found on this PC that the app is ignoring (names and the host they point to). */
 export function ignoredRedirects(env: NodeJS.ProcessEnv = process.env): { name: string; host: string }[] {
   if (allowAll()) return [];
   return REDIRECT_VARS.filter((k) => (env[k] ?? "").trim()).map((k) => {

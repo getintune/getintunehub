@@ -8,8 +8,8 @@ afterEach(() => {
   Object.assign(process.env, keep);
 });
 
-describe("where Keystone's Claude requests go", () => {
-  it("ignores a redirect set on the PC and goes to Anthropic with Keystone's key", () => {
+describe("where the app's Claude requests go", () => {
+  it("ignores a redirect set on the PC and goes to Anthropic with the app's key", () => {
     delete process.env.HUB_ALLOW_CLAUDE_REDIRECT;
     delete process.env.HUB_CLAUDE_BASE_URL;
     process.env.ANTHROPIC_BASE_URL = "http://127.0.0.1:3456/chatgpt-router";
@@ -24,7 +24,7 @@ describe("where Keystone's Claude requests go", () => {
     expect(ignoredRedirects().map((r) => r.name)).toEqual(["ANTHROPIC_BASE_URL", "ANTHROPIC_AUTH_TOKEN"]);
     expect(ignoredRedirects()[0].host).toBe("127.0.0.1:3456");
   });
-  it("uses an endpoint only when Keystone's own settings ask for it", () => {
+  it("uses an endpoint only when the app's own settings ask for it", () => {
     process.env.ANTHROPIC_BASE_URL = "http://elsewhere.example";
     process.env.HUB_CLAUDE_BASE_URL = "https://my-proxy.example";
     const { hub } = testHub();

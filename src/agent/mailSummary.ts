@@ -88,10 +88,11 @@ async function summarizeBatch(hub: Hub, batch: { id: string; historyId?: string;
     if (!th || !last) continue;
     const fromMe = last.from.toLowerCase().includes(me);
     const body = last.body.replace(/\r/g, "").split(/\n(?:On .+wrote:|-{2,}\s*(?:Original|Forwarded) Message)/)[0].replace(/\s+/g, " ").trim().slice(0, 1200);
-    items.push({ t, text: `Subject: ${last.subject}\nFrom: ${fromMe ? "Hunter (me)" : last.from}\nTo: ${last.to.join(", ")}\n${th.messages.length > 1 ? `(${th.messages.length} messages in the conversation; this is the latest)\n` : ""}${body}` });
+    items.push({ t, text: `Subject: ${last.subject}\nFrom: ${fromMe ? `${hub.cfg.profile.first} (me)` : last.from}\nTo: ${last.to.join(", ")}\n${th.messages.length > 1 ? `(${th.messages.length} messages in the conversation; this is the latest)\n` : ""}${body}` });
   }
   if (!items.length) return 0;
-  const prompt = `Hunter Patterson is an estimator at Forefront Building + Restoration (Colorado reconstruction after water/fire damage). For each email below, write ONE line of 10 words or fewer that tells him what it is at a glance: what it's about and what it asks or says. Plain and specific, no quotes, no trailing period, don't start with "Email" or the sender's name. Use the job or street when it helps. If Hunter wrote it, say what he sent or asked ("Sent Wegener the revised estimate and Xactimate"). Newsletters, receipts and notifications get a short label ("QuickBooks receipt for Home Depot order").
+  const p = hub.cfg.profile;
+  const prompt = `${p.owner}: ${p.about}. For each email below, write ONE line of 10 words or fewer that tells her what it is at a glance: what it's about and what it asks or says. Plain and specific, no quotes, no trailing period, don't start with "Email" or the sender's name. If ${p.first} wrote it, say what she sent or asked ("Sent Frankie the workshop post edits"). Newsletters, receipts and notifications get a short label ("Wix receipt for supervision membership").
 
 ${items.map((x, i) => `#${i + 1}\n${x.text}`).join("\n\n---\n\n")}`;
   let out: { n: number; summary: string }[] = [];

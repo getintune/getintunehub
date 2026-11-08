@@ -3,7 +3,7 @@ import { createReadStream, existsSync, mkdirSync, readdirSync, readFileSync, sta
 import http, { type IncomingMessage, type ServerResponse } from "node:http";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { loadConfig } from "../core/config.js";
+import { loadConfig, TIME_ZONE } from "../core/config.js";
 import { describe, makeHub, type Hub } from "../hub.js";
 import { MockGmail } from "../connectors/gmail/mock.js";
 import { intakeAddress } from "../connectors/homebase/types.js";
@@ -25,9 +25,10 @@ import { EventBus, WebApprover } from "./events.js";
 import { Studio } from "../agent/studio.js";
 import { allContacts, findContacts, noteAddresses, noteMessages } from "../workflows/contacts.js";
 import { BRIEF, briefDue } from "../workflows/brief.js";
+import { renderPage } from "./page.js";
 
 /**
- * Keystone's screen: a local web app on 127.0.0.1 (the desktop window will load the same thing). Every action runs the
+ * The app's screen: a local web app on 127.0.0.1 (the desktop window will load the same thing). Every action runs the
  * same workflows as the CLI; anything that changes Homebase, sends an email or overwrites an estimate asks first.
  */
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -155,7 +156,7 @@ async function photosView(n: number) {
   const job = hub.jobs.exists(n) ? hub.jobs.get(n) : null;
   if (!job?.companycamProjectId) return { linked: false, photos: [] };
   const [project, photos] = await Promise.all([hub.photos.project?.(job.companycamProjectId).catch(() => null) ?? Promise.resolve(null), hub.photos.listPhotos(job.companycamProjectId)]);
-  // Mock photos are local files; serve those through Keystone. Real ones load straight from CompanyCam.
+  // Mock photos are local files; serve those through the app. Real ones load straight from CompanyCam.
   const src = (u: string) => (/^https?:/.test(u) ? u : `/api/fixture-photo/${encodeURIComponent(path.basename(u))}`);
   return {
     linked: true,
@@ -173,7 +174,7 @@ async function mailThread(id: string) {
   const t = await hub.gmail.getThread(id);
   noteMessages(hub, t.messages);
   // Which job is this about? Homebase's suggest door, from the addresses, job numbers and streets in it.
-  const addresses = [...new Set(t.messages.flatMap((m) => [m.from, ...m.to, ...m.cc]).map((a) => a.match(/[\w.+-]+@[\w.-]+/)?.[0]?.toLowerCase()).filter((a): a is string => !!a && !a.endsWith("@forefrontteam.com")))];
+  const addresses = [...new Set(t.messages.flatMap((m) => [m.from, ...m.to, ...m.cc]).map((a) => a.match(/[\w.+-]+@[\w.-]+/)?.[0]?.toLowerCase()).filter((a): a is string => !!a && !a.endsWith("@forefrontteam.com") && a !== cfg.profile.email.toLowerCase()))];
   const text = t.messages.map((m) => `${m.subject} ${m.body}`).join(" ");
   const numbers = [...new Set([...text.matchAll(/(?:#|job\s*)(\d{4})\b/gi)].map((x) => x[1]))];
   const streets = [...new Set([...text.matchAll(/\b\d{2,6}\s+(?:[NSEW]\.?\s+)?[A-Z][a-z]+(?:\s[A-Z][a-z]+)?\s(?:St|Street|Ave|Avenue|Ct|Court|Dr|Drive|Rd|Road|Ln|Lane|Way|Blvd|Cir|Circle|Pl|Place|Pkwy|Trl|Ter)\b/g)].map((x) => x[0]))].slice(0, 10);
@@ -206,12 +207,17 @@ const server = http.createServer(async (req, res) => {
   try {
     if (p === "/" || p === "/index.html") {
       res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" });
-      return res.end(readFileSync(path.join(HERE, "ui.html")));
+      return res.end(renderPage(readFileSync(path.join(HERE, "ui.html"), "utf8"), cfg.profile, { GMAIL: cfg.gmail.address }));
+    }
+    if (p === "/logo.png" || p === "/favicon.png") {
+      res.writeHead(200, { "Content-Type": "image/png", "Cache-Control": "max-age=3600" });
+      return res.end(readFileSync(path.join(cfg.hubRoot, "assets", p === "/logo.png" ? "logo.png" : "icon.png")));
     }
     if (p === "/api/events") return bus.attach(res);
     if (p === "/api/status") {
       const ce = await import("../agent/env.js");
       return send(res, 200, {
+        profile: { owner: cfg.profile.owner, first: cfg.profile.first, business: cfg.profile.business, appName: cfg.profile.appName, email: cfg.profile.email, timeZone: cfg.profile.timeZone },
         claude: { endpoint: ce.claudeEndpoint(), ignored: ce.ignoredRedirects() },
         lines: describe(hub),
         homebase: hub.homebase.kind,
@@ -227,7 +233,7 @@ const server = http.createServer(async (req, res) => {
         jobsRoot: cfg.jobsRoot,
       });
     }
-    // ---- Spotify: only the app's client ID lives on Keystone (in .env); sign-in tokens stay in the browser.
+    // ---- Spotify: only the app's client ID lives on this computer (in .env); sign-in tokens stay in the browser.
     if (p === "/api/settings/spotify" && req.method === "GET") return send(res, 200, { clientId: cfg.spotify.clientId });
     if (p === "/api/settings/spotify" && req.method === "POST") {
       const b = await body(req);
@@ -277,7 +283,7 @@ const server = http.createServer(async (req, res) => {
       dayStart.setHours(0, 0, 0, 0);
       const dayEnd = new Date(dayStart.getTime() + 864e5);
       const schedule = hub.calendar.connected() ? await hub.calendar.events({ start: dayStart.toISOString(), end: dayEnd.toISOString() }).catch(() => []) : [];
-      const todayStr = new Date().toLocaleDateString("en-CA", { timeZone: "America/Denver" });
+      const todayStr = new Date().toLocaleDateString("en-CA", { timeZone: TIME_ZONE });
       const tasksDue = hub.tasks.connected() ? (await hub.tasks.tasks().catch(() => [])).filter((t) => !t.completed && t.due && t.due <= todayStr).sort((a, b) => (a.due ?? "").localeCompare(b.due ?? "")) : [];
       return send(res, 200, {
         totals: {
@@ -549,7 +555,7 @@ const server = http.createServer(async (req, res) => {
       await hub.gmail.modifyThread?.(t[1], b);
       return send(res, 200, { ok: true });
     }
-    // A draft in a thread: Send (only after Hunter confirms, with the recipients in front of him) or Delete.
+    // A draft in a thread: Send (only after the owner confirms, with the recipients in front of her) or Delete.
     const dr = p.match(/^\/api\/mail\/drafts\/([\w-]+)\/(send|delete|save)$/);
     if (dr && req.method === "POST") {
       const msgId = dr[1];
@@ -586,7 +592,7 @@ const server = http.createServer(async (req, res) => {
         bus.emit({ type: "changed", what: "mail" });
         return send(res, 200, { ok: true });
       }
-      if (hub.gmail.fullAccess && !hub.gmail.fullAccess()) return send(res, 400, { error: "Gmail needs to be reconnected once to send from Keystone: double-click Connect Gmail." });
+      if (hub.gmail.fullAccess && !hub.gmail.fullAccess()) return send(res, 400, { error: `Gmail needs to be reconnected once to send from ${cfg.profile.appName}: double-click Connect Gmail.` });
       return send(res, 202, task(`Send draft "${m?.subject ?? ""}"`, undefined, async () => {
         const lines = m ? [`To: ${m.to.join(", ")}`, m.cc.length ? `Cc: ${m.cc.join(", ")}` : "", `Subject: ${m.subject}`, m.attachments.length ? `Attached: ${m.attachments.map((a) => a.filename).join(", ")}` : ""].filter(Boolean) : [];
         if (!(await approver.confirm("Send this draft now?", lines))) return hub.say("Not sent. It's still a draft.");
@@ -606,7 +612,7 @@ const server = http.createServer(async (req, res) => {
     if (p === "/api/mail/send" && req.method === "POST") {
       const b = await body(req);
       if (!hub.gmail.send) return send(res, 400, { error: "This Gmail connection can't send." });
-      if (hub.gmail.fullAccess && !hub.gmail.fullAccess()) return send(res, 400, { error: "Gmail needs to be reconnected once to send from Keystone: double-click Connect Gmail." });
+      if (hub.gmail.fullAccess && !hub.gmail.fullAccess()) return send(res, 400, { error: `Gmail needs to be reconnected once to send from ${cfg.profile.appName}: double-click Connect Gmail.` });
       const split = (s: unknown) => String(s ?? "").split(/[,;]/).map((x) => x.trim()).filter(Boolean);
       const d = { to: split(b.to), cc: split(b.cc), bcc: split(b.bcc), subject: String(b.subject ?? ""), body: String(b.body ?? ""), attachments: resolveAttachments(b.attachments), threadId: b.threadId || undefined, inReplyTo: b.inReplyTo || undefined };
       if (!d.to.length) return send(res, 400, { error: "Add at least one recipient." });
@@ -627,7 +633,7 @@ const server = http.createServer(async (req, res) => {
     // ---- calendar
     if (p === "/api/cal/calendars") return send(res, 200, await hub.calendar.calendars());
     if (p === "/api/mail/generated") {
-      // The Gmail tab's "Claude drafts" folder: drafts Keystone made, shaped like the thread list.
+      // The Gmail tab's "Claude drafts" folder: drafts the app made, shaped like the thread list.
       const { openGeneratedDrafts } = await import("../workflows/generated.js");
       const list = await openGeneratedDrafts(hub);
       const qq = q("q").toLowerCase();
@@ -664,7 +670,7 @@ const server = http.createServer(async (req, res) => {
     if (p === "/api/cal/events" && req.method === "POST") {
       const b = await body(req);
       const ev = await hub.calendar.create(b);
-      if (b.jobNumber && hub.jobs.exists(Number(b.jobNumber))) hub.jobs.log(Number(b.jobNumber), `Calendar: ${b.title} on ${new Date(b.start).toLocaleString("en-US", { timeZone: "America/Denver" })}`);
+      if (b.jobNumber && hub.jobs.exists(Number(b.jobNumber))) hub.jobs.log(Number(b.jobNumber), `Calendar: ${b.title} on ${new Date(b.start).toLocaleString("en-US", { timeZone: TIME_ZONE })}`);
       bus.emit({ type: "changed", what: "calendar" });
       return send(res, 200, ev);
     }
@@ -755,7 +761,7 @@ const server = http.createServer(async (req, res) => {
       const b = await body(req);
       if (!cfg.anthropicApiKey) return send(res, 400, { error: "Claude is off on this machine (no Anthropic API key). Set ANTHROPIC_API_KEY in .env, or save it in the Estimator app." });
       const job = b.job ? Number(b.job) : undefined;
-      // The answer comes back as an "answer" event with what Keystone should show: the drafts made (to open in Gmail),
+      // The answer comes back as an "answer" event with what the page should show: the drafts made (to open in Gmail),
       // the jobs and contacts Claude looked at (for buttons on the popup), and Claude's reply.
       const id = crypto.randomUUID();
       const prompt = String(b.prompt);
@@ -798,7 +804,7 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-// ---- background sync: every 15 minutes while Keystone is open (read-only toward Homebase and Gmail)
+// ---- background sync: every 15 minutes while the app is open (read-only toward Homebase and Gmail)
 let lastSync: SyncAllResult | null = null;
 let syncRunning = false;
 function runSyncAll() {
@@ -864,11 +870,11 @@ if (INBOX_MINUTES > 0 && hub.gmail.kind === "google") {
 const port = Number(process.env.HUB_PORT || 4317);
 const host = process.env.HUB_HOST || "127.0.0.1";
 server.listen(port, host, () => {
-  console.log(`Keystone running at http://${host === "0.0.0.0" ? "localhost" : host}:${port}`);
+  console.log(`${cfg.profile.appName} running at http://${host === "0.0.0.0" ? "localhost" : host}:${port}`);
   for (const l of describe(hub)) console.log(`  ${l}`);
   void import("../agent/env.js").then((ce) => {
     console.log(`  claude      requests go to ${ce.claudeEndpoint()}`);
-    for (const r of ce.ignoredRedirects()) console.log(`  NOTE: ignored ${r.name}${r.host ? ` (${r.host})` : ""} set on this PC; it would send Keystone's Claude requests somewhere else. Set HUB_CLAUDE_BASE_URL in .env if you really want that.`);
+    for (const r of ce.ignoredRedirects()) console.log(`  NOTE: ignored ${r.name}${r.host ? ` (${r.host})` : ""} set on this PC; it would send the app's Claude requests somewhere else. Set HUB_CLAUDE_BASE_URL in .env if you really want that.`);
   });
 });
 
@@ -909,7 +915,7 @@ function startPlan(trigger: "button" | "morning"): { taskId: string } | { error:
   if (!cfg.anthropicApiKey) return { error: "Claude is off on this machine (no Anthropic API key).", code: 400 };
   if (readPlan().state === "running") return { error: "Claude is already planning your day.", code: 409 };
   const list = reminders(hub, { needsUpload: new Set((lastSync?.needsUpload ?? []).map((x) => x.jobNumber)) });
-  const buildPrompt = (myDayNote: string) => `Plan my day. Here is everything Keystone thinks needs me, as JSON (kind, job, title, detail, days waiting):\n${JSON.stringify(list.slice(0, 60))}\n\n${myDayNote}\n\nThis brief is only for me and my time. Rules:\n- Use ONLY the calendar events and tasks listed above. They are mine: my own calendar (not shared team calendars) and my own Google Tasks. Don't look up other calendars or tasks with Keystone's tools, and leave out other people's meetings and to-dos.\n- Every line in the brief is something I do. If something waits on someone else, either write it as my action (\"Ask Shannon whether the selections went out\") or leave it out.\n\nFor the top replies and follow-ups, read the thread or the job (Keystone's tools) and draft the email in Gmail for me (drafts only; I'll send).\n\nEmail buttons: whenever a line is about a specific email conversation and you know its Gmail thread id (the threadId in the JSON above, a thread you read or searched, or the threadId a draft you made returned), end that line with {email:THREAD_ID}, e.g. \"1. #3184 Wegener: reply to Andrew about the revised scope {email:18c2f0a9b7e1d234}\". Keystone turns it into a View email button. Never invent an id; leave it off when you don't have one.\n\nGo buttons: end every line that's about a job with {go:JOB#:PLACE}, where PLACE is where I'd start the work: estimator (writing, pricing or revising an estimate, agreement, photo report), selections (the owner's finish picks and budgets), notes (team notes), photos, files (documents), or job (anything else). E.g. \"2. #3226 Augustine: start the estimate from the ESX {go:3226:estimator}\". Keystone turns it into a button that takes me there.\n\nYour final reply is my brief for the day, shown at the top of my dashboard. Write it in this shape, in markdown, and nothing else:\n**Today at a glance:** one or two sentences (what's booked, how many things are waiting, the one thing that matters most).\n\n**Do in this order**\n1. #<job> <Name>: what to do (one line each, most urgent first: an adjuster or homeowner waiting on me beats a stale job; money-heavy proposals before small ones).\n\n**On the calendar:** the day's appointments, one line each (skip if none).\n\n**Drafts ready in Gmail:** one line per draft you made (skip if none).`;
+  const buildPrompt = (myDayNote: string) => `Plan my day. Here is everything ${cfg.profile.appName} thinks needs me, as JSON (kind, job, title, detail, days waiting):\n${JSON.stringify(list.slice(0, 60))}\n\n${myDayNote}\n\nThis brief is only for me and my time. Rules:\n- Use ONLY the calendar events and tasks listed above. They are mine: my own calendar (not shared team calendars) and my own Google Tasks. Don't look up other calendars or tasks with the app's tools, and leave out other people's meetings and to-dos.\n- Every line in the brief is something I do. If something waits on someone else, either write it as my action (\"Ask Shannon whether the selections went out\") or leave it out.\n\nFor the top replies and follow-ups, read the thread or the job (the app's tools) and draft the email in Gmail for me (drafts only; I'll send).\n\nEmail buttons: whenever a line is about a specific email conversation and you know its Gmail thread id (the threadId in the JSON above, a thread you read or searched, or the threadId a draft you made returned), end that line with {email:THREAD_ID}, e.g. \"1. #3184 Wegener: reply to Andrew about the revised scope {email:18c2f0a9b7e1d234}\". The app turns it into a View email button. Never invent an id; leave it off when you don't have one.\n\nGo buttons: end every line that's about a job with {go:JOB#:PLACE}, where PLACE is where I'd start the work: estimator (writing, pricing or revising an estimate, agreement, photo report), selections (the owner's finish picks and budgets), notes (team notes), photos, files (documents), or job (anything else). E.g. \"2. #3226 Augustine: start the estimate from the ESX {go:3226:estimator}\". The app turns it into a button that takes me there.\n\nYour final reply is my brief for the day, shown at the top of my dashboard. Write it in this shape, in markdown, and nothing else:\n**Today at a glance:** one or two sentences (what's booked, how many things are waiting, the one thing that matters most).\n\n**Do in this order**\n1. #<job> <Name>: what to do (one line each, most urgent first: an adjuster or homeowner waiting on me beats a stale job; money-heavy proposals before small ones).\n\n**On the calendar:** the day's appointments, one line each (skip if none).\n\n**Drafts ready in Gmail:** one line per draft you made (skip if none).`;
   const plan: Plan = { state: "running", startedAt: new Date().toISOString(), text: "", steps: [], trigger };
   savePlan(plan);
 
@@ -940,7 +946,7 @@ function startPlan(trigger: "button" | "morning"): { taskId: string } | { error:
 }
 
 // ---- the morning brief: on its own at 7:00 AM Denver time on weekdays (HUB_BRIEF_TIME=off stops it,
-// HUB_BRIEF_DAYS=0-6 for every day). If Keystone wasn't open at 7, it runs as soon as it opens, until 5 PM.
+// HUB_BRIEF_DAYS=0-6 for every day). If the app wasn't open at 7, it runs as soon as it opens, until 5 PM.
 function checkBrief() {
   const last = readPlan();
   if (!cfg.anthropicApiKey || last.state === "running" || !briefDue(new Date(), "startedAt" in last ? last : null)) return;
@@ -955,7 +961,7 @@ const planFile = () => path.join(cfg.stateDir, "plan.json");
 function readPlan(): Plan | { state: "none" } {
   try {
     const p: Plan = JSON.parse(readFileSync(planFile(), "utf8"));
-    // A run that was going when Keystone closed never finished.
+    // A run that was going when the app closed never finished.
     if (p.state === "running" && Date.now() - Date.parse(p.startedAt) > 20 * 60_000) return { ...p, state: "error", error: "That plan didn't finish. Try again." };
     return p;
   } catch {
@@ -976,7 +982,7 @@ async function travelNote(): Promise<string> {
     d1.setHours(24, 0, 0, 0);
     const ev = await hub.calendar.events({ start: d0.toISOString(), end: d1.toISOString() });
     const legs = await (await import("../workflows/travel.js")).travelFor(hub, ev, { calendars: await myCalendars() });
-    const hm = (iso: string) => new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: "America/Denver" });
+    const hm = (iso: string) => new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: TIME_ZONE });
     const lines = ev.filter((e) => legs[e.id]).map((e) => { const g = legs[e.id]; return `- ${hm(e.start)} ${e.title} at ${g.to}: ${g.minutes} min drive from ${g.fromLabel}${g.rush ? " (rush hour)" : ""}, leave by ${hm(g.leaveBy)}${g.late ? `; ${g.late} min short coming straight from ${g.fromLabel}` : ""}`; });
     return lines.length ? `\n\nDrive times for today's appointments (already worked out; use them, and put the leave-by time on each calendar line of the brief; call out any that are short):\n${lines.join("\n")}` : "";
   } catch {
@@ -1004,8 +1010,8 @@ async function myDay(): Promise<string> {
   d0.setHours(0, 0, 0, 0);
   d1.setDate(d1.getDate() + 3);
   d1.setHours(24, 0, 0, 0);
-  const day = (iso: string) => new Date(iso.length === 10 ? `${iso}T12:00:00` : iso).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "America/Denver" });
-  const hm = (iso: string) => new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: "America/Denver" });
+  const day = (iso: string) => new Date(iso.length === 10 ? `${iso}T12:00:00` : iso).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: TIME_ZONE });
+  const hm = (iso: string) => new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: TIME_ZONE });
   if (hub.calendar.connected()) {
     const mine = await myCalendars();
     const ev = (await hub.calendar.events({ start: d0.toISOString(), end: d1.toISOString() }).catch(() => []))
@@ -1014,8 +1020,8 @@ async function myDay(): Promise<string> {
     lines.push("My calendar (my own calendar only), today and the next 3 days:", ...(ev.length ? ev.map((e) => `- ${day(e.start)} ${e.allDay ? "all day" : `${hm(e.start)}-${hm(e.end)}`}: ${e.title}${e.location ? ` @ ${e.location}` : ""}${e.myResponse === "tentative" ? " (maybe)" : ""}`) : ["- nothing booked"]));
   } else lines.push("My calendar: not connected.");
   if (hub.tasks.connected()) {
-    const today = new Date().toLocaleDateString("en-CA", { timeZone: "America/Denver" });
-    const soon = new Date(Date.now() + 86400_000).toLocaleDateString("en-CA", { timeZone: "America/Denver" });
+    const today = new Date().toLocaleDateString("en-CA", { timeZone: TIME_ZONE });
+    const soon = new Date(Date.now() + 86400_000).toLocaleDateString("en-CA", { timeZone: TIME_ZONE });
     const ts = (await hub.tasks.tasks().catch(() => [])).filter((t) => !t.completed && t.due && t.due <= soon).sort((a, b) => (a.due ?? "").localeCompare(b.due ?? ""));
     lines.push("", "My Google Tasks due by tomorrow (and overdue):", ...(ts.length ? ts.map((t) => `- ${t.title}${t.due! < today ? ` (overdue since ${day(t.due!)})` : t.due === today ? " (due today)" : " (due tomorrow)"}`) : ["- none"]));
   } else lines.push("", "My Google Tasks: not connected.");

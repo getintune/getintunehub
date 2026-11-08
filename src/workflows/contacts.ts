@@ -6,7 +6,7 @@ import type { Hub } from "../hub.js";
 import { isAutomated } from "./reminders.js";
 
 /**
- * Hunter's contacts, built up on their own: every person who shows up on an email Keystone reads (from, to, cc), the
+ * The owner's contacts, built up on their own: every person who shows up on an email the app reads (from, to, cc), the
  * people on each job in Homebase (with their role on the job), and Homebase's own contact records when he looks
  * someone up. Each person fills out as more turns up: phones from email signatures, title and company from
  * Homebase, the jobs they're on, when they last emailed. Kept in .hub/contacts.json.
@@ -78,10 +78,10 @@ const cleanName = (n: string) => {
   return titleCase(m ? `${m[2]} ${m[1]}` : s);
 };
 
-/** Addresses that aren't people worth keeping: Hunter himself, Homebase's office+ boxes, no-reply senders. */
+/** Addresses that aren't people worth keeping: the owner's own addresses, Homebase's office+ boxes, no-reply senders. */
 function skip(hub: Hub, email: string, display = "") {
-  const me = hub.cfg.gmail.address.toLowerCase();
-  return !email || email === me || /^office\+\d+@/i.test(email) || isAutomated(display ? `${display} <${email}>` : email, "", "");
+  const mine = [hub.cfg.gmail.address, hub.cfg.profile.email].map((a) => a.toLowerCase());
+  return !email || mine.includes(email) || /^office\+\d+@/i.test(email) || isAutomated(display ? `${display} <${email}>` : email, "", "");
 }
 
 function find(s: Store, o: { email?: string; homebaseId?: string }): Person | undefined {

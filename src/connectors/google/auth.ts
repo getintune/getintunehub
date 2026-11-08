@@ -6,8 +6,8 @@ import path from "node:path";
 import { google } from "googleapis";
 
 /**
- * One Google sign-in for Keystone: Gmail (read, label, send, drafts) and Google Calendar (read and write events).
- * The token lives in auth/google-token.json (never committed). Signing in again adds any scope Keystone gained since.
+ * One Google sign-in for the app: Gmail (read, label, send, drafts) and Google Calendar (read and write events).
+ * The token lives in auth/google-token.json (never committed). Signing in again adds any scope the app gained since.
  */
 export const SCOPES = {
   gmailModify: "https://www.googleapis.com/auth/gmail.modify",
@@ -47,7 +47,7 @@ export class GoogleAuth {
   client(): OAuth {
     const hit = shared.get(this.opts.tokenFile);
     if (hit) return hit;
-    if (!existsSync(this.opts.tokenFile)) throw new Error("Google isn't connected yet. Double-click Connect Gmail in the Keystone folder (forefront-hub).");
+    if (!existsSync(this.opts.tokenFile)) throw new Error("Google isn't connected yet. Double-click Connect Gmail in the app's folder.");
     const oauth = new google.auth.OAuth2(this.opts.clientId, this.opts.clientSecret);
     oauth.setCredentials(JSON.parse(readFileSync(this.opts.tokenFile, "utf8")));
     oauth.on("tokens", (t) => {
@@ -69,7 +69,7 @@ export class GoogleAuth {
       server.on("request", (req, res) => {
         const u = new URL(req.url ?? "/", redirect);
         const c = u.searchParams.get("code");
-        res.end(c ? "Gmail, Google Calendar and Google Tasks are connected to the Forefront hub. You can close this tab." : `Error: ${u.searchParams.get("error")}`);
+        res.end(c ? "Gmail, Google Calendar and Google Tasks are connected to Get In Tune Hub. You can close this tab." : `Error: ${u.searchParams.get("error")}`);
         c ? resolve(c) : reject(new Error(u.searchParams.get("error") ?? "no code"));
       });
       console.log(`Opening Google sign-in. If it doesn't open, paste this into your browser:\n${url}\n`);

@@ -93,6 +93,6 @@ export function buildMime(d: DraftInput & { from: string; messageId: string; sig
   return [...headers, "", ...parts].join("\r\n");
 }
 
-export function newMessageId(domain = "forefrontteam.com"): string {
+export function newMessageId(domain = "getintunemusictherapy.com"): string {
   return `<hub-${crypto.randomUUID()}@${domain}>`;
 }

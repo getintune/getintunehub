@@ -3,37 +3,37 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Keystone</title>
-<link rel="icon" href="data:image/svg+xml,<svg viewBox='0 13 44 25' xmlns='http://www.w3.org/2000/svg'><path d='M3.00 37.00A19 19 0 0 1 5.89 26.93L13.10 31.44A10.5 10.5 0 0 0 11.50 37.00Z M6.25 26.38A19 19 0 0 1 11.93 20.89L16.44 28.10A10.5 10.5 0 0 0 13.30 31.13Z M12.50 20.55A19 19 0 0 1 17.40 18.56L19.46 26.81A10.5 10.5 0 0 0 16.75 27.91Z M26.60 18.56A19 19 0 0 1 31.50 20.55L27.25 27.91A10.5 10.5 0 0 0 24.54 26.81Z M32.07 20.89A19 19 0 0 1 37.75 26.38L30.70 31.13A10.5 10.5 0 0 0 27.56 28.10Z M38.11 26.93A19 19 0 0 1 41.00 37.00L32.50 37.00A10.5 10.5 0 0 0 30.90 31.44Z' fill='%230e1526' opacity='.55'/><path d='M17.59 16.26L26.41 16.26L23.72 27.25L20.28 27.25Z' fill='%230e1526'/></svg>">
+<title>{{APP_NAME}}</title>
+<link rel="icon" type="image/png" href="/favicon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600;700&family=Figtree:wght@400;500;600;700;800&family=Roboto:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;500;600;700;800&family=Poppins:wght@400;500;600&family=Figtree:wght@400;500;600;700;800&family=Roboto:wght@400;500;700&display=swap">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0..1,0&display=block">
 <style>
   /*
-   * Layout after Homebase (sidebar nav + breadcrumb bar + white cards, stat strip, stage table), with the colors
-   * flipped: light sidebar, dark navy work area. data-theme="homebase" switches to Homebase's own (unflipped) colors.
+   * Get In Tune colors, from the logo and getintunemusictherapy.com: indigo #4241A0, lavender #ADA9D3, black and
+   * white on a very light lavender. Default theme "tune" is light; data-theme="night" is a dark indigo version.
    */
   :root {
-    --side-bg: #0a1020; --side-ink: #e6e9f0; --side-muted: #8b95a8; --side-active: #18223a;
-    --bg: #0e1526; --panel: #151e33; --panel-2: #1b2640; --ink: #e9ecf2; --muted: #95a0b3; --line: #253150; --soft: #18223a;
-    --brand: #e9ecf2; --brand-ink: #0e1526;
-    --accent: #e9ecf2; --accent-ink: #0e1526; --link: #b4cdff; --focus: #b4cdff;
-    --ok: #6fc394; --warn: #e6ad55; --bad: #f08479; --pill: #212c49;
-    --shadow: none; color-scheme: dark;
-    --sans: "Jost", "Segoe UI", system-ui, -apple-system, Roboto, sans-serif; --mono: ui-monospace, Consolas, Menlo, monospace;
+    --side-bg: #ffffff; --side-ink: #2b2960; --side-muted: #7b78a6; --side-active: #ecebf7;
+    --bg: #f6f6fa; --panel: #ffffff; --panel-2: #f9f8fd; --ink: #1d1b3a; --muted: #67648c; --line: #e1dff0; --soft: #f0eff8;
+    --brand: #4241a0; --brand-ink: #ffffff;
+    --accent: #4241a0; --accent-ink: #ffffff; --link: #4241a0; --focus: #4241a0;
+    --ok: #2e7d4f; --warn: #a86400; --bad: #b3261e; --pill: #ecebf7;
+    --shadow: 0 1px 2px rgba(66, 65, 160, .08); color-scheme: light;
+    --sans: "Assistant", "Segoe UI", system-ui, -apple-system, Roboto, sans-serif; --head: "Poppins", var(--sans); --mono: ui-monospace, Consolas, Menlo, monospace;
   }
-  /* Homebase's layout with its colors flipped: light sidebar, dark work area. */
-  :root[data-theme="flipped"] { --side-bg: #f2f1ee; --side-ink: #141d33; --side-muted: #5d6578; --side-active: #e3e1db; }
-  :root[data-theme="homebase"] {
-    --side-bg: #121a2e; --side-ink: #eceef3; --side-muted: #a3acbd; --side-active: #1f2b47;
-    --bg: #f2f1ee; --panel: #ffffff; --panel-2: #f7f6f3; --ink: #1a2133; --muted: #686f7e; --line: #dedbd3; --soft: #eeece7;
-    --brand: #121a2e; --brand-ink: #eceef3;
-    --accent: #121a2e; --accent-ink: #ffffff; --link: #1f3f86; --focus: #1f3f86;
-    --ok: #2e7d4f; --warn: #a86400; --bad: #b3261e; --pill: #ebe9e3; color-scheme: light;
+  :root[data-theme="night"] {
+    --side-bg: #13122a; --side-ink: #e6e5f5; --side-muted: #9d9bc4; --side-active: #25234a;
+    --bg: #18173a; --panel: #201f47; --panel-2: #262553; --ink: #ecebf7; --muted: #a5a3c9; --line: #34326a; --soft: #24234d;
+    --brand: #ada9d3; --brand-ink: #18173a;
+    --accent: #ada9d3; --accent-ink: #18173a; --link: #c5c2ee; --focus: #c5c2ee;
+    --ok: #6fc394; --warn: #e6ad55; --bad: #f08479; --pill: #2c2a5c;
+    --shadow: none; color-scheme: dark;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; }
   body { background: var(--bg); color: var(--ink); font: 15px/1.45 var(--sans); }
+  h1, h2 { font-family: var(--head); font-weight: 600; color: var(--brand); }
   button, input, select, textarea { font: inherit; color: inherit; }
   a { color: var(--link); }
   [hidden] { display: none !important; }
@@ -42,9 +42,10 @@
   /* ---- left nav (Homebase's sidebar, flipped light) */
   .side-nav { background: var(--side-bg); color: var(--side-ink); display: flex; flex-direction: column; min-height: 0; padding: 22px 0 14px; }
   .logo { display: grid; justify-items: center; gap: 2px; padding: 0 16px 22px; color: var(--side-ink); text-decoration: none; }
-  .logo svg { width: 44px; height: 40px; }
-  .logo b { font-size: 21px; letter-spacing: 1.5px; font-weight: 700; }
-  .logo span { font-size: 8px; letter-spacing: 5px; color: var(--side-muted); }
+  .logo img { width: 170px; height: auto; display: block; }
+  :root[data-theme="night"] .logo img { filter: invert(1) hue-rotate(180deg) brightness(1.3); }
+  .logo span { font: 600 9px/1 var(--head); letter-spacing: 6px; color: var(--side-muted); margin-top: 4px; }
+  .app.z-nav .logo img { width: 44px; height: 44px; object-fit: cover; object-position: left center; }
   nav.tabs { display: grid; gap: 2px; padding: 0 8px; }
   nav.tabs button { background: transparent; border: 0; color: var(--side-ink); text-align: left; padding: 8px 10px; border-radius: 6px; cursor: pointer; font-weight: 500; font-size: 15px; display: flex; gap: 12px; align-items: center; position: relative; white-space: nowrap; }
   nav.tabs button .ms { font-size: 21px; flex: none; }
@@ -205,7 +206,7 @@
   .banner { background: var(--soft); border-left: 3px solid var(--ink); padding: 10px 14px; border-radius: 0 4px 4px 0; font-size: 14px; }
 
   /* ---- Gmail tab: laid out and colored like Gmail (dark), scoped here */
-  .gm { /* Gmail's layout in Keystone's own colors (follows the theme switch) */
+  .gm { /* Gmail's layout in the app's own colors (follows the theme switch) */
     --g-bg: var(--bg); --g-panel: var(--panel); --g-row: color-mix(in srgb, var(--panel) 55%, var(--bg)); --g-unread: color-mix(in srgb, var(--link) 14%, var(--panel-2)); --g-new: var(--link); --g-hover: var(--soft); --g-line: var(--line); --g-tx: var(--ink); --g-sub: color-mix(in srgb, var(--ink) 78%, var(--muted)); --g-mut: var(--muted);
     --g-compose: var(--accent); --g-compose-tx: var(--accent-ink); --g-sel: var(--panel-2); --g-sel-tx: var(--ink); --g-blue: var(--link); --g-star: #e8b931; --g-field: var(--panel-2); --g-chip: var(--soft);
     background: var(--g-bg); color: var(--g-tx); height: 100%; display: grid; grid-template-columns: var(--w-gm, 256px) minmax(0, 1fr); grid-template-rows: 64px minmax(0, 1fr); font: 14px/1.4 var(--sans); }
@@ -462,7 +463,7 @@
   @media (max-width: 860px) {
     .app { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); }
     .side-nav { flex-direction: row; align-items: center; padding: 8px 12px; gap: 8px; overflow-x: auto; }
-    .logo { padding: 0; grid-auto-flow: column; gap: 6px; } .logo svg { width: 26px; height: 24px; } .logo b { font-size: 15px; } .logo span { display: none; }
+    .logo { padding: 0; grid-auto-flow: column; gap: 6px; } .logo img { width: 110px; } .logo span { display: none; }
     nav.tabs { grid-auto-flow: column; padding: 0; } .navlabel, .recent, .side-search, .side-foot { display: none; }
     .split { grid-template-columns: 1fr; grid-template-rows: 38vh 1fr; }
     aside { border-right: 0; border-bottom: 1px solid var(--line); }
@@ -543,7 +544,7 @@
   .zmenu:hover { background: var(--soft); color: var(--ink); }
   .zmenu .ms { font-size: 22px; }
   /* folded hub menu: an icon rail */
-  .app.z-nav .logo b, .app.z-nav .logo span, .app.z-nav .navlabel, .app.z-nav .recent, .app.z-nav .side-search, .app.z-nav .side-foot, .app.z-nav nav.tabs .nm, .app.z-nav .mini div, .app.z-nav .mini button { display: none; }
+  .app.z-nav .logo span, .app.z-nav .navlabel, .app.z-nav .recent, .app.z-nav .side-search, .app.z-nav .side-foot, .app.z-nav nav.tabs .nm, .app.z-nav .mini div, .app.z-nav .mini button { display: none; }
   .app.z-nav .logo { padding: 0 0 18px; }
   .app.z-nav nav.tabs button { justify-content: center; padding: 10px 0; }
   .app.z-nav nav.tabs .count { position: absolute; top: 2px; right: 6px; margin: 0; font-size: 10px; padding: 0 5px; }
@@ -753,7 +754,7 @@
 <body>
 <div class="app">
   <nav class="side-nav" aria-label="Hub">
-    <a class="logo" href="#" id="logo"><svg viewBox="0 13 44 25" aria-hidden="true"><path d="M3.00 37.00A19 19 0 0 1 5.89 26.93L13.10 31.44A10.5 10.5 0 0 0 11.50 37.00Z M6.25 26.38A19 19 0 0 1 11.93 20.89L16.44 28.10A10.5 10.5 0 0 0 13.30 31.13Z M12.50 20.55A19 19 0 0 1 17.40 18.56L19.46 26.81A10.5 10.5 0 0 0 16.75 27.91Z M26.60 18.56A19 19 0 0 1 31.50 20.55L27.25 27.91A10.5 10.5 0 0 0 24.54 26.81Z M32.07 20.89A19 19 0 0 1 37.75 26.38L30.70 31.13A10.5 10.5 0 0 0 27.56 28.10Z M38.11 26.93A19 19 0 0 1 41.00 37.00L32.50 37.00A10.5 10.5 0 0 0 30.90 31.44Z" fill="currentColor" opacity=".55"/><path d="M17.59 16.26L26.41 16.26L23.72 27.25L20.28 27.25Z" fill="currentColor"/></svg><b>KEYSTONE</b><span>BY FOREFRONT</span></a>
+    <a class="logo" href="#" id="logo"><img src="/logo.png" alt="{{BUSINESS}}"><span>HUB</span></a>
     <nav class="tabs" id="tabs">
       <button data-tab="today" class="active" title="Dashboard"><span class="ms">space_dashboard</span><span class="nm">Dashboard</span> <span class="count" id="todaycount" hidden></span></button>
       <button data-tab="brief" title="Today's brief"><span class="ms">checklist</span><span class="nm">Brief</span> <span class="count" id="briefcount" hidden></span></button>
@@ -768,7 +769,7 @@
     <div class="navlabel" id="wherelabel" style="margin-top:auto">Where you were</div>
     <div class="recent" id="recent" style="margin-top:0"></div>
     <div class="side-search"><input type="search" id="globalq" placeholder="Search everything"></div>
-    <div class="side-foot"><button type="button" id="themebtn">Homebase colors</button><span class="tsize" title="Text size"><button type="button" data-tsize="-1" aria-label="Smaller text">A−</button><button type="button" data-tsize="1" aria-label="Larger text">A+</button></span></div>
+    <div class="side-foot"><button type="button" id="themebtn">Theme</button><span class="tsize" title="Text size"><button type="button" data-tsize="-1" aria-label="Smaller text">A−</button><button type="button" data-tsize="1" aria-label="Larger text">A+</button></span></div>
   </nav>
   <div class="mainc">
   <div class="topbar">
@@ -821,7 +822,7 @@
         <button class="gm-ib" type="button" data-zone-toggle="gm" title="Main menu"><span class="ms">menu</span></button>
         <div class="gm-brand"><span class="ms fill">mail</span>Gmail</div>
         <label class="gm-search"><span class="ms">search</span><input type="search" id="mq" placeholder="Search mail" aria-label="Search mail"><button class="gm-ib" type="button" id="mq-clear" title="Clear search" hidden><span class="ms">close</span></button></label>
-        <div class="gm-acct" id="gm-acct" title="hunter@forefrontteam.com">H</div>
+        <div class="gm-acct" id="gm-acct" title="{{GMAIL}}">{{INITIAL}}</div>
       </div>
       <nav class="gm-rail" id="labels" aria-label="Mail folders"></nav>
       <div class="gm-main" id="gm-main">
@@ -898,7 +899,7 @@
 
   <footer class="askbar">
     <form id="askform">
-      <button type="button" class="btn" id="addfiles" title="Add files to a job (or drag them anywhere onto Keystone)">Add files</button>
+      <button type="button" class="btn" id="addfiles" title="Add files to a job (or drag them anywhere onto {{APP_NAME}})">Add files</button>
       <textarea id="prompt" rows="1" placeholder="Ask Claude, or drop files here, e.g. “who's waiting on me?”, “draft a follow-up to the Wegener homeowner”"></textarea>
       <button class="btn primary">Ask</button>
     </form>
@@ -952,7 +953,7 @@
   <div class="more">
     <div class="row"><input type="text" id="pl-link" placeholder="Paste a Spotify playlist, album, podcast or song link" style="flex:1"><button class="btn small primary" id="pl-play" type="button">Play</button></div>
     <div class="row small" id="pl-saved"></div>
-    <div class="row"><button class="btn small" id="pl-audible" type="button">Open Audible</button><span class="small muted">Audible plays in its own small window (it can't be shown inside Keystone).</span></div>
+    <div class="row"><button class="btn small" id="pl-audible" type="button">Open Audible</button><span class="small muted">Audible plays in its own small window (it can't be shown inside {{APP_NAME}}).</span></div>
     <span class="small muted">Sign in to Spotify in this browser for full songs; otherwise Spotify plays previews.</span>
   </div>
 </div>
@@ -975,7 +976,7 @@
   </div>
   <div class="small muted" id="ev-meta"></div>
   <input type="hidden" id="ev-id"><input type="hidden" id="ev-calid">
-  </div><div class="foot"><button class="btn" value="delete" id="ev-del">Delete</button><button class="btn" type="button" id="ev-hide" style="margin-right:auto" title="Hide it in Keystone only. Google Calendar and everyone who looks at your calendar still see it.">Hide on my screen</button><button class="btn" value="cancel">Cancel</button><button class="btn primary" value="save">Save</button></div></form></dialog>
+  </div><div class="foot"><button class="btn" value="delete" id="ev-del">Delete</button><button class="btn" type="button" id="ev-hide" style="margin-right:auto" title="Hide it in {{APP_NAME}} only. Google Calendar and everyone who looks at your calendar still see it.">Hide on my screen</button><button class="btn" value="cancel">Cancel</button><button class="btn primary" value="save">Save</button></div></form></dialog>
 
 <dialog id="taskdlg"><form method="dialog"><div class="in">
   <h4 id="tk-h">Task</h4>
@@ -1075,7 +1076,7 @@ async function loadStatus() {
   const chip = (label, on, title) => `<span class="chip ${on ? "" : "off"}" title="${esc(title)}">${on ? "●" : "○"} ${label}</span>`;
   $("#chips").innerHTML = [
     chip("Homebase", status.homebase !== "mock", `Homebase: ${status.homebase}`),
-    chip("Gmail", status.gmail === "google", status.gmail === "google" ? (status.gmailFull ? "Connected" : "Connected for drafts only; reconnect to send from Keystone") : "Not connected (test inbox)"),
+    chip("Gmail", status.gmail === "google", status.gmail === "google" ? (status.gmailFull ? "Connected" : "Connected for drafts only; reconnect to send from {{APP_NAME}}") : "Not connected (test inbox)"),
     chip("CompanyCam", status.companycam === "rest", status.companycam === "rest" ? "Connected" : "Not connected"),
     chip("Claude", status.agent, status.agent ? `On · requests go to ${(status.claude?.endpoint || "").replace(/^https?:\/\//, "")}${status.claude?.ignored?.length ? `. Ignored a setting on this PC that tried to send them elsewhere: ${status.claude.ignored.map((r) => r.name + (r.host ? " → " + r.host : "")).join(", ")}` : ""}` : "Off: no Anthropic API key on this machine"),
   ].join("");
@@ -1122,7 +1123,7 @@ async function loadToday() {
   $("#today").innerHTML = `
     <div class="todayhead"><div style="flex:1;min-width:240px"><h2>Dashboard</h2><div class="dateline">${esc(longDate)} · ${t.open} open jobs${d.lastSync ? ` · synced ${fmtWhen(d.lastSync)}` : ""}</div></div>
       <button class="btn primary" id="plan" ${status.agent ? "" : "disabled title='Claude is off on this machine'"}>Plan my day with Claude</button></div>
-    ${!d.autoFiling ? `<div class="banner">Incoming job emails file themselves to Homebase once Gmail is fully connected${status.gmail === "google" ? ": double-click <b>Connect Gmail</b> in the Keystone folder (forefront-hub) once more and click Allow" : ""}.</div>` : ""}
+    ${!d.autoFiling ? `<div class="banner">Incoming job emails file themselves to Homebase once Gmail is fully connected${status.gmail === "google" ? ": double-click <b>Connect Gmail</b> in the {{APP_NAME}} folder once more and click Allow" : ""}.</div>` : ""}
     <div id="brief"></div>
     <div class="strip">
       ${tile("reply", t.waiting, "waiting on your reply", true)}
@@ -1153,7 +1154,7 @@ async function loadToday() {
         <div class="card"><h3><span><span class="muted small">02</span> Proposals out</span><span class="small muted">largest first</span></h3>
           ${d.proposals.length ? `<table class="tbl"><tbody>${d.proposals.map((x) => `<tr><td><a href="#" data-do="open" data-n="${x.jobNumber}">#${x.jobNumber} ${esc(x.name)}</a>${x.waiting ? ` <span class="tag in">reply</span>` : ""}<div class="small muted">${x.lastTouch ? esc(x.lastTouch) : "no activity"}</div></td><td class="num">${usd(x.amount) || "—"}<div class="small muted">${daysSince(x.lastTouchAt) ?? "?"}d quiet</div></td></tr>`).join("")}</tbody></table>` : `<p class="muted">None out.</p>`}</div>
         <div class="card"><h3><span><span class="muted small">03</span> Recent activity</span></h3>
-          ${d.activity.length ? `<ul class="items">${d.activity.map((a) => `<li><a href="#" data-do="open" data-n="${a.jobNumber}">#${a.jobNumber} ${esc(a.name)}</a> <span class="small muted">${fmtWhen(a.at)}</span><div class="small">${esc(a.what)}</div></li>`).join("")}</ul>` : `<p class="muted">Nothing yet. Activity from Keystone shows here.</p>`}</div>
+          ${d.activity.length ? `<ul class="items">${d.activity.map((a) => `<li><a href="#" data-do="open" data-n="${a.jobNumber}">#${a.jobNumber} ${esc(a.name)}</a> <span class="small muted">${fmtWhen(a.at)}</span><div class="small">${esc(a.what)}</div></li>`).join("")}</ul>` : `<p class="muted">Nothing yet. Activity from {{APP_NAME}} shows here.</p>`}</div>
       </div>
     </div>`;
   $("#plan")?.addEventListener("click", startPlan);
@@ -1458,10 +1459,10 @@ function renderFiles(el) {
       ${hb.docs.length ? `<ul class="items">${hb.docs.map((d) => `<li><span class="tag">${esc(d.kind)}</span> <a href="${d.localFile ? fileUrl(d.localFile) : `/api/jobs/${n}/hbdoc/${d.id}`}" target="_blank">${esc(d.title || d.fileName)}</a><div class="small muted">${fmtDate(d.createdAt)}${d.createdBy ? " · " + esc(d.createdBy) : ""}</div></li>`).join("")}</ul>` : `<p class="muted">No files on the job in Homebase.</p>`}
       ${hb.toUpload.length ? `<p class="small muted" style="margin:10px 0 0">Not in Homebase yet: ${hb.toUpload.map((f) => esc(f.name)).join(", ")}</p>` : ""}</div>
     <div class="card"><h3>Added files <button class="btn small" data-act="addfiles">Add files</button></h3>
-      ${(files.files || []).length || (files.photosAdded || []).length ? `<ul class="items">${(files.files || []).map((f) => `<li><a href="${fileUrl("files/" + f.name)}" target="_blank">${esc(f.name)}</a> <span class="small muted">${fmtDate(f.modified)}</span></li>`).join("")}${(files.photosAdded || []).slice(0, 12).map((f) => `<li><a href="${fileUrl("photos/" + f.name)}" target="_blank">${esc(f.name)}</a> <span class="tag">photo</span></li>`).join("")}</ul>` : `<p class="muted">Drag files anywhere onto Keystone, or use Add files.</p>`}</div>
+      ${(files.files || []).length || (files.photosAdded || []).length ? `<ul class="items">${(files.files || []).map((f) => `<li><a href="${fileUrl("files/" + f.name)}" target="_blank">${esc(f.name)}</a> <span class="small muted">${fmtDate(f.modified)}</span></li>`).join("")}${(files.photosAdded || []).slice(0, 12).map((f) => `<li><a href="${fileUrl("photos/" + f.name)}" target="_blank">${esc(f.name)}</a> <span class="tag">photo</span></li>`).join("")}</ul>` : `<p class="muted">Drag files anywhere onto {{APP_NAME}}, or use Add files.</p>`}</div>
     <div class="card"><h3>Email attachments</h3>
       ${(files.attachments || []).length ? `<ul class="items">${files.attachments.slice(0, 40).map((f) => `<li><a href="${fileUrl("email/attachments/" + f.name)}" target="_blank">${esc(f.name.split("/").pop())}</a><div class="small muted">${esc(f.name.split("/")[0])}</div></li>`).join("")}</ul>` : `<p class="muted">Attachments from emails filed to this job land here.</p>`}</div>
-    <div class="card"><h3>Sketch</h3>${(files.sketch || []).length ? `<ul class="items">${files.sketch.map((f) => `<li><a href="${fileUrl("sketch/" + f.name)}">${esc(f.name)}</a></li>`).join("")}</ul>` : `<p class="muted">No ESX yet. Download it from DocuSketch; Keystone picks it up from Downloads.</p>`}</div>
+    <div class="card"><h3>Sketch</h3>${(files.sketch || []).length ? `<ul class="items">${files.sketch.map((f) => `<li><a href="${fileUrl("sketch/" + f.name)}">${esc(f.name)}</a></li>`).join("")}</ul>` : `<p class="muted">No ESX yet. Download it from DocuSketch; {{APP_NAME}} picks it up from Downloads.</p>`}</div>
   </div>`;
 }
 
@@ -1510,11 +1511,11 @@ async function loadMail() {
   const inbox = labels.find((l) => l.id === "INBOX");
   $("#mailcount").textContent = inbox?.unread || ""; $("#mailcount").hidden = !inbox?.unread;
   $("#labels").innerHTML = `<button class="gm-compose" id="compose" type="button">${msI("edit")}<span class="nm">Compose</span></button>` +
-    GLABELS.filter(([id]) => labels.some((l) => l.id === id) || ["INBOX", "STARRED", "SENT", "DRAFT", "HUB_DRAFTS"].includes(id)).map(([id, nm, ic]) => `<button class="gm-lab ${id === mailLabel ? "on" : ""} ${id === "HUB_DRAFTS" ? "gen" : ""}" data-label="${id}" type="button" ${id === "HUB_DRAFTS" ? 'title="Drafts Claude and Keystone made for you. Review, then send."' : ""}>${msI(ic, id === mailLabel)}<span class="nm">${nm}</span>${id === "INBOX" && inbox?.unread ? `<b>${inbox.unread}</b>` : id === "HUB_DRAFTS" && genCount ? `<b class="gc">${genCount}</b>` : ""}</button>`).join("") +
+    GLABELS.filter(([id]) => labels.some((l) => l.id === id) || ["INBOX", "STARRED", "SENT", "DRAFT", "HUB_DRAFTS"].includes(id)).map(([id, nm, ic]) => `<button class="gm-lab ${id === mailLabel ? "on" : ""} ${id === "HUB_DRAFTS" ? "gen" : ""}" data-label="${id}" type="button" ${id === "HUB_DRAFTS" ? 'title="Drafts Claude and {{APP_NAME}} made for you. Review, then send."' : ""}>${msI(ic, id === mailLabel)}<span class="nm">${nm}</span>${id === "INBOX" && inbox?.unread ? `<b>${inbox.unread}</b>` : id === "HUB_DRAFTS" && genCount ? `<b class="gc">${genCount}</b>` : ""}</button>`).join("") +
     (user.length ? `<div class="gm-labh">Labels</div>` + user.map((l) => `<button class="gm-lab ${l.id === mailLabel ? "on" : ""}" data-label="${esc(l.id)}" type="button">${msI("label")}<span class="nm">${esc(l.name)}</span></button>`).join("") : "");
   if (typeof zgrips === "function") zgrips(); // the folder list was redrawn: put its resize edge back
   $("#compose").addEventListener("click", () => openCompose({}));
-  if (status.gmail === "google" && !status.gmailFull) $("#gm-main").insertAdjacentHTML("afterbegin", `<div class="gm-banner" style="margin-top:12px">Gmail is connected for drafts only. To read, send and archive here, double-click <b>Connect Gmail</b> in the Keystone folder (forefront-hub) once more and click Allow.</div>`);
+  if (status.gmail === "google" && !status.gmailFull) $("#gm-main").insertAdjacentHTML("afterbegin", `<div class="gm-banner" style="margin-top:12px">Gmail is connected for drafts only. To read, send and archive here, double-click <b>Connect Gmail</b> in the {{APP_NAME}} folder once more and click Allow.</div>`);
   if (status.gmail === "mock") $("#gm-main").insertAdjacentHTML("afterbegin", `<div class="gm-banner" style="margin-top:12px">This is a test inbox: Gmail isn't connected on this machine.</div>`);
   showList();
   loadThreads();
@@ -1704,7 +1705,7 @@ async function saveDraftInline(i, thenSend) {
 }
 
 // ---- who's on an email: every address visible, one click copies it
-const ME_ADDR = "hunter@forefrontteam.com";
+const ME_ADDR = "{{GMAIL}}";
 function addrChip(x) {
   const a = addrOf(x), n = nameOf(x), me = a.toLowerCase() === ME_ADDR;
   return `<button type="button" class="achip" data-copy="${esc(a)}" title="Copy ${esc(a)}">${me ? "me" : `${n && n.toLowerCase() !== a.toLowerCase() ? `${esc(n)} ` : ""}<span>${esc(a)}</span>`}</button>`;
@@ -1775,7 +1776,7 @@ async function openThread(id) {
     };
   });
   $$("#reader .gm-more[data-q]").forEach((b) => (b.onclick = () => { b.nextElementSibling.hidden = !b.nextElementSibling.hidden; }));
-  const me = "hunter@forefrontteam.com";
+  const me = "{{GMAIL}}";
   const quote = (m) => `\n\nOn ${new Date(m.date).toLocaleString("en-US")}, ${m.from} wrote:\n${m.body.split("\n").map((l) => "> " + l).join("\n")}`;
   const replyTo = () => { const from = addrOf(last.from); return from.toLowerCase() === me ? last.to.join(", ") : from; };
   const re = /^re:/i.test(last.subject) ? last.subject : `Re: ${last.subject}`;
@@ -1874,16 +1875,17 @@ $("#filedlg").addEventListener("close", async () => {
   $("#attached").innerHTML = recentFiles.slice(-6).map((x) => `<span class="tag">📎 #${x.job} ${esc(x.name)}</span>`).join("");
 });
 
-// ============================================================= theme: dark (default) / flipped / Homebase
-const THEMES = [["dark", "Dark"], ["flipped", "Light sidebar"], ["homebase", "Homebase colors"]];
+// ============================================================= theme: Get In Tune (light, default) / Night
+const THEMES = [["tune", "Get In Tune"], ["night", "Night"]];
 function applyTheme(t) {
-  if (t === "dark") document.documentElement.removeAttribute("data-theme"); else document.documentElement.setAttribute("data-theme", t);
+  if (!THEMES.some(([k]) => k === t)) t = "tune";
+  if (t === "tune") document.documentElement.removeAttribute("data-theme"); else document.documentElement.setAttribute("data-theme", t);
   const next = THEMES[(THEMES.findIndex(([k]) => k === t) + 1) % THEMES.length];
-  $("#themebtn").textContent = `Theme: ${THEMES.find(([k]) => k === t)[1]} (switch to ${next[1].toLowerCase()})`;
+  $("#themebtn").textContent = `Theme: ${THEMES.find(([k]) => k === t)[1]} (switch to ${next[1]})`;
   $("#themebtn").dataset.next = next[0];
 }
 $("#themebtn").addEventListener("click", () => { const t = $("#themebtn").dataset.next; store.set("theme", t); applyTheme(t); });
-applyTheme(store.get("theme", "dark"));
+applyTheme(store.get("theme", "tune"));
 
 // ============================================================= player: Spotify (embedded) + Audible (its own window)
 function spotifyEmbed(link) {
@@ -1909,7 +1911,7 @@ $("#pl-play").addEventListener("click", () => { const l = $("#pl-link").value.tr
 $("#pl-link").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); $("#pl-play").click(); } });
 $("#pl-audible").addEventListener("click", () => {
   const w = window.open("https://www.audible.com/library/titles", "audible", "width=460,height=780");
-  if (!w) log("Your browser blocked the Audible window. Allow pop-ups for Keystone, or open audible.com/library.", "t-err");
+  if (!w) log("Your browser blocked the Audible window. Allow pop-ups for {{APP_NAME}}, or open audible.com/library.", "t-err");
 });
 (() => { renderSaved(); const now = store.get("spotifyNow", null); if (now && spotifyEmbed(now)) { $("#pl-spotify").src = spotifyEmbed(now); $("#pl-spotify").hidden = false; } if (store.get("playerOpen", false)) $("#player").hidden = false; })();
 
@@ -1927,7 +1929,7 @@ function calRange() {
   const first = new Date(calDate.getFullYear(), calDate.getMonth(), 1); const s = startOfWeek(first); return { start: s, end: new Date(s.getTime() + 42 * 864e5), days: 42 };
 }
 async function loadCal() {
-  if (status.gmail === "google" && !status.calendarConnected) $("#cal-body").innerHTML = `<div class="empty">Google Calendar isn't connected yet. Double-click <b>Connect Gmail</b> in the Keystone folder (forefront-hub): it turns on Calendar and Tasks and asks you to Allow.</div>`;
+  if (status.gmail === "google" && !status.calendarConnected) $("#cal-body").innerHTML = `<div class="empty">Google Calendar isn't connected yet. Double-click <b>Connect Gmail</b> in the {{APP_NAME}} folder: it turns on Calendar and Tasks and asks you to Allow.</div>`;
   try { cals = await api("/api/cal/calendars"); } catch (e) { cals = []; }
   try { taskLists = status.tasksConnected === false ? [] : await api("/api/tasks/lists"); } catch { taskLists = []; }
   $("#ev-cal").innerHTML = cals.filter((c) => c.writable).map((c) => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join("");
@@ -2175,11 +2177,11 @@ async function spLogin() {
   sessionStorage.setItem("sp:verifier", verifier); sessionStorage.setItem("sp:state", state);
   location.href = `https://accounts.spotify.com/authorize?${new URLSearchParams({ client_id: spClientId, response_type: "code", redirect_uri: SP_REDIRECT, code_challenge_method: "S256", code_challenge: challenge, scope: SP_SCOPES, state })}`;
 }
-// The Client ID comes from Keystone's .env. Load it before any token call: the sign-in redirect lands before the
+// The Client ID comes from {{APP_NAME}}'s .env. Load it before any token call: the sign-in redirect lands before the
 // Music tab has been drawn, and a blank client_id makes Spotify answer "invalid_client".
 async function spEnsureClient() {
   if (!spClientId) { try { spClientId = (await api("/api/settings/spotify")).clientId || ""; } catch {} }
-  if (!spClientId) throw new Error("No Spotify Client ID saved in Keystone yet. Open Music to set it up.");
+  if (!spClientId) throw new Error("No Spotify Client ID saved in {{APP_NAME}} yet. Open Music to set it up.");
   return spClientId;
 }
 async function spTokenRequest(params) {
@@ -2187,8 +2189,8 @@ async function spTokenRequest(params) {
   const r = await fetch("https://accounts.spotify.com/api/token", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ client_id, ...params }) });
   const j = await r.json().catch(() => ({}));
   if (!r.ok) {
-    if (j.error === "invalid_client") throw new Error("Spotify doesn't recognize the Client ID saved in Keystone. In Music, click \"Change Client ID\" and paste it again from your app's Settings on developer.spotify.com.");
-    if (j.error === "invalid_grant" && params.grant_type === "refresh_token") { spTok.clear(); throw new Error("Spotify signed Keystone out. Log in again in Music."); }
+    if (j.error === "invalid_client") throw new Error("Spotify doesn't recognize the Client ID saved in {{APP_NAME}}. In Music, click \"Change Client ID\" and paste it again from your app's Settings on developer.spotify.com.");
+    if (j.error === "invalid_grant" && params.grant_type === "refresh_token") { spTok.clear(); throw new Error("Spotify signed {{APP_NAME}} out. Log in again in Music."); }
     throw new Error(j.error_description || j.error || "Spotify sign-in failed");
   }
   const old = spTok.get() || {};
@@ -2221,11 +2223,11 @@ async function sp(path, opts = {}) {
 function spLoadSDK() {
   if (spSDK || document.getElementById("sp-sdk")) return;
   window.onSpotifyWebPlaybackSDKReady = () => {
-    spSDK = new Spotify.Player({ name: "Keystone", getOAuthToken: async (cb) => cb(await spToken()), volume: store.get("spvol", 0.6) });
+    spSDK = new Spotify.Player({ name: "{{APP_NAME}}", getOAuthToken: async (cb) => cb(await spToken()), volume: store.get("spvol", 0.6) });
     spSDK.addListener("ready", ({ device_id }) => { spDevice = device_id; spRefreshState(); });
     spSDK.addListener("not_ready", () => { spDevice = null; });
     spSDK.addListener("player_state_changed", () => spRefreshState());
-    spSDK.addListener("account_error", () => log("Playing inside Keystone needs Spotify Premium. You can still control Spotify on your phone or computer from here.", "t-err"));
+    spSDK.addListener("account_error", () => log("Playing inside {{APP_NAME}} needs Spotify Premium. You can still control Spotify on your phone or computer from here.", "t-err"));
     spSDK.addListener("authentication_error", () => { spTok.clear(); renderMusic(); });
     spSDK.addListener("initialization_error", ({ message }) => log(`Spotify player: ${message}`, "t-err"));
     spSDK.connect();
@@ -2251,22 +2253,22 @@ async function renderMusic() {
   const root = $("#sp");
   if (!spForceSetup) { try { spClientId = (await api("/api/settings/spotify")).clientId; } catch {} }
   if (location.hostname === "localhost") {
-    root.innerHTML = `<div class="sp-main" style="grid-column:1/-1;grid-row:1/-1"><div class="sp-setup"><h1>Music</h1><p>Spotify only signs in at <code>127.0.0.1</code>, not <code>localhost</code>. Open Keystone at <a href="http://127.0.0.1:${location.port}/">http://127.0.0.1:${location.port}</a> (the desktop icon does from now on).</p></div></div>`; return;
+    root.innerHTML = `<div class="sp-main" style="grid-column:1/-1;grid-row:1/-1"><div class="sp-setup"><h1>Music</h1><p>Spotify only signs in at <code>127.0.0.1</code>, not <code>localhost</code>. Open {{APP_NAME}} at <a href="http://127.0.0.1:${location.port}/">http://127.0.0.1:${location.port}</a> (the desktop icon does from now on).</p></div></div>`; return;
   }
   if (!spClientId) {
     root.innerHTML = `<div class="sp-main" style="grid-column:1/-1;grid-row:1/-1"><div class="sp-setup"><h1>Connect Spotify</h1>
       <p>One time, about 2 minutes. Spotify asks every app to register itself; this registration is yours alone.</p>
       <ol><li>Open <a href="https://developer.spotify.com/dashboard" target="_blank" rel="noopener">developer.spotify.com/dashboard</a> and log in with your Spotify account. Click <b>Create app</b>.</li>
-      <li>App name <b>Keystone</b>, any description. Redirect URI: <code>${esc(SP_REDIRECT)}</code> (click <b>Add</b>). Tick <b>Web API</b> and <b>Web Playback SDK</b>, agree, <b>Save</b>.</li>
+      <li>App name <b>{{APP_NAME}}</b>, any description. Redirect URI: <code>${esc(SP_REDIRECT)}</code> (click <b>Add</b>). Tick <b>Web API</b> and <b>Web Playback SDK</b>, agree, <b>Save</b>.</li>
       <li>Open the app's <b>Settings</b>, copy the <b>Client ID</b>, and paste it here:</li></ol>
       <input type="text" id="sp-cid" placeholder="Client ID (32 letters and numbers)">
       <button class="sp-green" id="sp-save">Save and sign in</button>
-      <p style="color:#b3b3b3;font-size:13px">Playing music inside Keystone needs Spotify Premium. Without it, Keystone still shows your library and controls Spotify on your phone or computer.</p></div></div>`;
+      <p style="color:#b3b3b3;font-size:13px">Playing music inside {{APP_NAME}} needs Spotify Premium. Without it, {{APP_NAME}} still shows your library and controls Spotify on your phone or computer.</p></div></div>`;
     $("#sp-save").onclick = async () => { try { await api("/api/settings/spotify", { method: "POST", body: { clientId: $("#sp-cid").value } }); spClientId = $("#sp-cid").value.trim(); spForceSetup = false; spTok.clear(); await spLogin(); } catch (e) { log(e.message, "t-err"); } };
     return;
   }
   if (!spTok.get()) {
-    root.innerHTML = `<div class="sp-main" style="grid-column:1/-1;grid-row:1/-1"><div class="sp-setup"><h1>Music</h1><p>Sign in to Spotify to bring your playlists and library into Keystone.</p>${spLastErr ? `<p style="color:#f3727f">${esc(spLastErr)}</p>` : ""}<button class="sp-green" id="sp-login">Log in to Spotify</button><p style="margin-top:18px"><button class="sp-pill" id="sp-cidchange" type="button">Change Client ID</button></p></div></div>`;
+    root.innerHTML = `<div class="sp-main" style="grid-column:1/-1;grid-row:1/-1"><div class="sp-setup"><h1>Music</h1><p>Sign in to Spotify to bring your playlists and library into {{APP_NAME}}.</p>${spLastErr ? `<p style="color:#f3727f">${esc(spLastErr)}</p>` : ""}<button class="sp-green" id="sp-login">Log in to Spotify</button><p style="margin-top:18px"><button class="sp-pill" id="sp-cidchange" type="button">Change Client ID</button></p></div></div>`;
     $("#sp-login").onclick = () => spLogin().catch((e) => log(`Spotify: ${e.message}`, "t-err"));
     $("#sp-cidchange").onclick = () => { spClientId = ""; spForceSetup = true; renderMusic(); }; return;
   }
@@ -2335,7 +2337,7 @@ async function renderViewInner() {
       ${tracks.map((t, i) => `<tr class="tr ${spState?.item?.uri === t.uri ? "now" : ""}" data-uri="${esc(t.uri)}" data-i="${i}"><td>${i + 1}</td><td><div class="tt">${t.album?.images?.length ? `<img src="${esc(t.album.images.at(-1).url)}" alt="" loading="lazy">` : ""}<div style="min-width:0"><b>${esc(t.name)}</b>${esc(t.artists.map((a) => a.name).join(", "))}</div></div></td><td>${esc(t.album?.name || "")}</td><td>${fmtMs(t.duration_ms)}</td></tr>`).join("")}</tbody></table></div>`;
     $("#sp-playall").onclick = () => spPlayList(0);
     $("#sp-shufall").onclick = async () => { await spCmd("/me/player/shuffle?state=true"); spPlayList(tracks.length ? Math.floor(Math.random() * tracks.length) : 0); };
-    if (noList) $(".sp-tracks tbody").innerHTML = `<tr><td colspan="4" style="padding:18px 8px;color:var(--sp-sub)">Spotify won't share this playlist's song list with Keystone (it only does for playlists you own or edit). Press Play to play the whole playlist.</td></tr>`;
+    if (noList) $(".sp-tracks tbody").innerHTML = `<tr><td colspan="4" style="padding:18px 8px;color:var(--sp-sub)">Spotify won't share this playlist's song list with {{APP_NAME}} (it only does for playlists you own or edit). Press Play to play the whole playlist.</td></tr>`;
   } else if (spView.kind === "search") {
     m.innerHTML = top + `<div class="sp-msg">Searching…</div>`;
     const r = await sp(`/search?${new URLSearchParams({ q: spView.q, type: "track,playlist,album,artist", limit: "10" })}`);
@@ -2548,7 +2550,7 @@ function renderEstSide() {
 function renderEstLog() {
   const d = estData, log = $("#est-log");
   if (!d) { log.innerHTML = `<div class="hello"><h3>Estimator</h3>Pick a job on the left, then ask Claude for an estimate, agreement, selections sign-off or photo report, the same way you would in chat.</div>`; $("#est-quick").innerHTML = ""; return; }
-  if (!d.claude) log.innerHTML = `<div class="hello"><h3>Claude is off on this machine</h3>Add your Anthropic API key (ANTHROPIC_API_KEY in Keystone's .env, or save it in the Estimator app's Settings), then restart Keystone.</div>`;
+  if (!d.claude) log.innerHTML = `<div class="hello"><h3>Claude is off on this machine</h3>Add your Anthropic API key (ANTHROPIC_API_KEY in {{APP_NAME}}'s .env), then restart {{APP_NAME}}.</div>`;
   else if (!d.turns.length) log.innerHTML = `<div class="hello"><h3>#${d.job.jobNumber} ${esc(d.job.name)}</h3>What do you need for this job? Pick one below or just type. Claude uses the Forefront estimating skill and saves everything in the job's estimate folder.</div>`;
   else log.innerHTML = d.turns.map(estTurnHtml).join("");
   if (d.running) log.insertAdjacentHTML("beforeend", `<div class="msg assistant" id="est-live">${estStream ? md(estStream) : ""}</div><div class="msg typing" id="est-typing">Claude is working</div>`);
@@ -2685,7 +2687,7 @@ const avatarColor = (n) => { let h = 0; for (const c of n || "") h = (h * 31 + c
 function noteWho(author) { const m = String(author || "").split(/\s+[—–-]\s+/); return m.length > 1 ? { person: m.slice(1).join(" — "), via: m[0] } : { person: author || "Someone", via: "" }; }
 function noteBody(t) {
   return esc(t).replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>')
-    .replace(/(^|\s)@([A-Z][\w'’.-]*(?:\s[A-Z][\w'’.-]*)?)/g, (m, sp, nm) => `${sp}<span class="mention ${nm.toLowerCase().startsWith(String(notesData?.me || "Hunter").split(" ")[0].toLowerCase()) ? "me" : ""}">@${nm}</span>`).replace(/\n/g, "<br>");
+    .replace(/(^|\s)@([A-Z][\w'’.-]*(?:\s[A-Z][\w'’.-]*)?)/g, (m, sp, nm) => `${sp}<span class="mention ${nm.toLowerCase().startsWith(String(notesData?.me || "{{FIRST}}").split(" ")[0].toLowerCase()) ? "me" : ""}">@${nm}</span>`).replace(/\n/g, "<br>");
 }
 function noteHtml(x, reply) {
   const w = noteWho(x.author);

@@ -1,6 +1,7 @@
 import type { CalEvent } from "../connectors/calendar/index.js";
 import type { Job } from "../core/job.js";
 import type { Hub } from "../hub.js";
+import { TIME_ZONE } from "../core/config.js";
 
 /** "Leave by" keeps a few minutes spare to park and walk up. */
 export interface Leg {
@@ -30,7 +31,7 @@ export function routable(location?: string): boolean {
   return l.length >= 6 && !VIRTUAL.test(l) && /\d|,/.test(l);
 }
 
-const denverDay = (iso: string) => new Date(iso).toLocaleDateString("en-CA", { timeZone: "America/Denver" });
+const localDay = (iso: string) => new Date(iso).toLocaleDateString("en-CA", { timeZone: TIME_ZONE });
 
 const street = (a: string) => (a || "").split(",")[0].toLowerCase().replace(/\b(street|st|avenue|ave|drive|dr|court|ct|road|rd|lane|ln|way|boulevard|blvd|circle|cir|place|pl|parkway|pkwy|trail|trl|terrace|ter)\b\.?/g, "").replace(/[^a-z0-9]/g, "");
 
@@ -91,7 +92,7 @@ export async function travelFor(hub: Hub, events: CalEvent[], o: { max?: number;
   let looked = 0;
   for (let i = 0; i < visits.length && looked < (o.max ?? 30); i++) {
     const { e, place } = visits[i];
-    const prev = i > 0 && denverDay(visits[i - 1].e.start) === denverDay(e.start) ? visits[i - 1] : null;
+    const prev = i > 0 && localDay(visits[i - 1].e.start) === localDay(e.start) ? visits[i - 1] : null;
     const from = prev?.place ?? hub.cfg.travel.start;
     if (!from || street(from) === street(place)) continue; // same house: no drive
     looked++;

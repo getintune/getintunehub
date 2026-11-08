@@ -73,7 +73,7 @@ export const JobSchema = z.object({
     .object({
       lastTouchAt: z.string().default(""),
       lastTouch: z.string().default(""),
-      /** The newest email from someone else on the job that has no answer from Hunter after it. */
+      /** The newest email from someone else on the job that has no answer from the owner after it. */
       waiting: z.object({ from: z.string(), subject: z.string(), at: z.string(), threadId: z.string().default("") }).nullable().default(null),
       proposalAmount: z.number().nullable().default(null),
       checkedAt: z.string().default(""),

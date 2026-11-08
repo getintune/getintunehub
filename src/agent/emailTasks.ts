@@ -6,12 +6,13 @@ import type { Message } from "../connectors/gmail/types.js";
 import type { Hub } from "../hub.js";
 import { matchJob } from "../workflows/inbox.js";
 import { isAutomated } from "../workflows/reminders.js";
+import { TIME_ZONE } from "../core/config.js";
 
 /**
  * Turns incoming email into Google Tasks on its own: Claude reads each new email from a person and, when it asks
- * Hunter to do something, adds a task (with the job number when the email is about a job, a due date from the email
+ * the owner to do something, adds a task (with the job number when the email is about a job, a due date from the email
  * or the next workday, and a link back to the email). FYI-only email gets no task, and a thread that already has an
- * open task from Keystone gets no duplicate. Runs with the inbox check; switch off with HUB_EMAIL_TASKS=off.
+ * open task from the app gets no duplicate. Runs with the inbox check; switch off with HUB_EMAIL_TASKS=off.
  */
 interface State {
   since?: string;
@@ -41,7 +42,7 @@ function nextWorkday(d = new Date()) {
   const x = new Date(d);
   do x.setDate(x.getDate() + 1);
   while ([0, 6].includes(x.getDay()));
-  return x.toLocaleDateString("en-CA", { timeZone: "America/Denver" });
+  return x.toLocaleDateString("en-CA", { timeZone: TIME_ZONE });
 }
 
 export interface ProposedTask {
@@ -67,14 +68,15 @@ const SCHEMA = {
   additionalProperties: false,
 };
 
-/** Claude's read of one email: the things it asks Hunter to do, as short task titles. */
+/** Claude's read of one email: the things it asks the owner to do, as short task titles. */
 export async function proposeTasks(hub: Hub, m: Message, ctx: { jobNumber?: number; jobName?: string; openTasks: string[] }): Promise<ProposedTask[]> {
-  const today = new Date().toLocaleDateString("en-CA", { timeZone: "America/Denver", weekday: "long", year: "numeric", month: "2-digit", day: "2-digit" });
-  const prompt = `You help Hunter Patterson, the estimator at Forefront Building + Restoration (Colorado reconstruction after water/fire damage), keep his Google Tasks. Today is ${today} (America/Denver).
+  const today = new Date().toLocaleDateString("en-CA", { timeZone: TIME_ZONE, weekday: "long", year: "numeric", month: "2-digit", day: "2-digit" });
+  const p = hub.cfg.profile;
+  const prompt = `You help ${p.owner} keep her task list. ${p.about}. Today is ${today} (${p.timeZone}).
 
-Read this email to him and list what it asks HIM to do: reply with something, send a document or photos, schedule a visit, call someone, revise an estimate, chase a signature. Rules:
-- Only real asks or commitments with a next step for Hunter. An FYI, a thank-you, a receipt, a newsletter or "sounds good" gets NO task: return an empty list.
-- One task per distinct action, at most 3. Each title is short and starts with a verb, names the person, and ends with the job tag when there is one${ctx.jobNumber ? ` (" #${ctx.jobNumber}")` : ""}: e.g. "Send Eileen the hallway flooring photos #3226".
+Read this email to her and list what it asks HER to do: reply with something, send a document, schedule a call or session, review or comment on a doc, sign or submit something. Rules:
+- Only real asks or commitments with a next step for ${p.first}. An FYI, a thank-you, a receipt, a newsletter or "sounds good" gets NO task: return an empty list.
+- One task per distinct action, at most 3. Each title is short and starts with a verb, names the person, and ends with the job tag when there is one${ctx.jobNumber ? ` (" #${ctx.jobNumber}")` : ""}: e.g. "Send Kristin the workshop flyer edits".
 - due: only when the email states or clearly implies a date ("by Friday", "before the 12th", "tomorrow"); otherwise leave it out.
 - notes: one line of context if useful.
 - These tasks are already open for this conversation; don't repeat them: ${ctx.openTasks.length ? ctx.openTasks.map((t) => `"${t}"`).join(", ") : "(none)"}.
@@ -96,7 +98,7 @@ ${m.body.slice(0, 8000)}`;
       settingSources: [],
       outputFormat: { type: "json_schema", schema: SCHEMA },
       canUseTool: async () => ({ behavior: "deny", message: "No tools needed." }),
-      systemPrompt: "You extract action items from email into short to-do titles. Be strict: no task unless the email needs Hunter to act.",
+      systemPrompt: `You extract action items from email into short to-do titles. Be strict: no task unless the email needs ${p.first} to act.`,
       env: claudeEnv(hub),
     },
   })) {
@@ -108,7 +110,7 @@ ${m.body.slice(0, 8000)}`;
   return out.filter((t) => t.title?.trim());
 }
 
-/** Looks at the last two days of incoming mail and adds tasks for what needs Hunter. Returns what it added. */
+/** Looks at the last two days of incoming mail and adds tasks for what needs the owner. Returns what it added. */
 export async function tasksFromInbox(hub: Hub, o: { max?: number } = {}): Promise<{ title: string; jobNumber?: number }[]> {
   if (!enabled(hub)) return [];
   const s = load(hub);

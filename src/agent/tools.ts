@@ -11,6 +11,7 @@ import { downloadPhotos, pullJob } from "../workflows/pull.js";
 import { estimateFiles } from "../workflows/sendoff.js";
 import { sync } from "../workflows/sync.js";
 import { findContacts } from "../workflows/contacts.js";
+import { TIME_ZONE } from "../core/config.js";
 
 export const SERVER = "hub";
 
@@ -27,10 +28,11 @@ const wrap = <A>(fn: (a: A) => Promise<unknown>) => async (a: A) => {
 const jobNumber = z.number().int().describe("Homebase job number, e.g. 3226");
 
 /**
- * Keystone's tools for the agent. Irreversible ones (Homebase writes) ask Hunter through hub.approver inside the
+ * The app's tools for the agent. Irreversible ones (Homebase writes) ask the owner through hub.approver inside the
  * handler, so they're safe no matter how the agent calls them. There is no "send email" tool.
  */
 export function hubTools(hub: Hub) {
+  const me = hub.cfg.profile.first;
   const tools = [
     // ---------------------------------------------------------------- job folder
     tool("job_list", "List the local job folders (job.json summaries).", {}, wrap(async () =>
@@ -85,10 +87,10 @@ export function hubTools(hub: Hub) {
     tool("homebase_get_job", "Read a job from Homebase: stage, contacts, carrier, claim, financials, intake email, and the page text.", { jobNumber }, wrap(async ({ jobNumber: n }) => hub.homebase.getJob(n))),
     tool(
       "homebase_set_proposal",
-      "Set the proposal amount AND proposal submitted date together (the follow-up sequence keys off the date). Asks Hunter first. Normally `hub_sync` does this after the send-off emails go out.",
+      `Set the proposal amount AND proposal submitted date together (the follow-up sequence keys off the date). Asks ${me} first. Normally \`hub_sync\` does this after the send-off emails go out.`,
       { jobNumber, amount: z.number().positive(), submittedAt: z.string().describe("YYYY-MM-DD, the day the proposal was emailed") },
       wrap(async ({ jobNumber: n, amount, submittedAt }) => {
-        if (!(await hub.approver.confirm(`Set Homebase #${n} proposal to $${amount.toFixed(2)}, submitted ${submittedAt}?`))) return "Hunter declined; nothing changed.";
+        if (!(await hub.approver.confirm(`Set Homebase #${n} proposal to $${amount.toFixed(2)}, submitted ${submittedAt}?`))) return `${me} declined; nothing changed.`;
         await hub.homebase.setProposal(n, { amount, submittedAt });
         hub.jobs.log(n, `Homebase: proposal $${amount.toFixed(2)} on ${submittedAt}`);
         return "Done.";
@@ -96,11 +98,11 @@ export function hubTools(hub: Hub) {
     ),
     tool(
       "homebase_set_stage",
-      `Move a job to another Homebase stage. Asks Hunter first. Stages: ${STAGES.join(", ")}.`,
+      `Move a job to another Homebase stage. Asks ${me} first. Stages: ${STAGES.join(", ")}.`,
       { jobNumber, stage: z.enum(STAGES) },
       wrap(async ({ jobNumber: n, stage }) => {
         const cur = (await hub.homebase.getJob(n)).stage;
-        if (!(await hub.approver.confirm(`Move Homebase #${n} from ${cur || "?"} to ${stage}?`))) return "Hunter declined; nothing changed.";
+        if (!(await hub.approver.confirm(`Move Homebase #${n} from ${cur || "?"} to ${stage}?`))) return `${me} declined; nothing changed.`;
         await hub.homebase.setStage(n, stage);
         hub.jobs.log(n, `Homebase: stage ${cur} -> ${stage}`);
         return "Done.";
@@ -108,10 +110,10 @@ export function hubTools(hub: Hub) {
     ),
     tool(
       "homebase_add_note",
-      "Log a note or a phone call on the Homebase job. Asks Hunter first (shows the exact text).",
+      `Log a note or a phone call on the Homebase job. Asks ${me} first (shows the exact text).`,
       { jobNumber, kind: z.enum(["note", "call"]), body: z.string() },
       wrap(async ({ jobNumber: n, kind, body }) => {
-        if (!(await hub.approver.confirm(`Add this ${kind} to Homebase #${n}?`, body.split("\n")))) return "Hunter declined; nothing changed.";
+        if (!(await hub.approver.confirm(`Add this ${kind} to Homebase #${n}?`, body.split("\n")))) return `${me} declined; nothing changed.`;
         await hub.homebase.addNote(n, { kind, body });
         if (hub.jobs.exists(n)) {
           const f = hub.jobs.path(n, "notes", "notes.txt");
@@ -125,18 +127,18 @@ export function hubTools(hub: Hub) {
     // ---------------------------------------------------------------- Gmail (drafts only)
     tool(
       "contacts_find",
-      "Look up people in Hunter's contacts (everyone from his email and from Homebase, with emails, phones, title, company and the jobs they're on with their role). Search by name, email, company, phone, or job (\"#3226\" or the job's name). Homebase is searched too and merged in. Use this whenever Hunter asks for someone's contact info or who to email.",
+      `Look up people in ${me}'s contacts (everyone from her email and from Homebase, with emails, phones, title, company and the jobs they're on with their role). Search by name, email, company, phone, or job ("#3226" or the job's name). Homebase is searched too and merged in. Use this whenever ${me} asks for someone's contact info or who to email.`,
       { query: z.string().describe("e.g. \"Tucker\", \"State Farm\", \"#3184\", \"alex@\"") },
       wrap(async ({ query }) => {
         const people = await findContacts(hub, query, { homebase: true, limit: 12 });
         return people.length ? people.map((p) => ({ name: p.name, emails: p.emails, phones: p.phones.map((x) => `${x.number}${x.label ? ` (${x.label})` : ""}`), title: p.title, company: p.company, jobs: p.jobs.map((j) => `#${j.jobNumber} ${j.name}: ${j.role}`), lastEmailAt: p.lastEmailAt })) : { found: 0, note: "Nobody matches in the contacts or in Homebase." };
       }),
     ),
-    tool("gmail_search", "Search Hunter's Forefront Gmail (Gmail search syntax).", { query: z.string(), max: z.number().int().default(10) }, wrap(async ({ query, max }) => hub.gmail.search(query, max))),
+    tool("gmail_search", "Search the Gmail inbox (Gmail search syntax).", { query: z.string(), max: z.number().int().default(10) }, wrap(async ({ query, max }) => hub.gmail.search(query, max))),
     tool("gmail_read_thread", "Read every message in a Gmail thread.", { threadId: z.string() }, wrap(async ({ threadId }) => hub.gmail.getThread(threadId))),
     tool(
       "gmail_create_draft",
-      "Create a Gmail DRAFT (never sent; Hunter sends it). With a jobNumber the job's Homebase log address is BCC'd automatically. kind: 'homeowner' / 'adjuster' only for an estimate send-off (it is then tracked for logging the proposal); 'other' for replies, follow-ups and everything else. To reply in a thread, pass threadId (the draft goes into that conversation). Attachments are local file paths (the PDFs in the job's estimate/ folder). Write in Hunter's voice per the forefront-estimate skill's step 6; his Gmail signature is appended, so don't add one.",
+      `Create a Gmail DRAFT (never sent; ${me} sends it). With a jobNumber the job's Homebase log address is BCC'd automatically. kind: 'homeowner' / 'adjuster' only for an estimate send-off (it is then tracked for logging the proposal); 'other' for replies, follow-ups and everything else. To reply in a thread, pass threadId (the draft goes into that conversation). Attachments are local file paths (the PDFs in the job's estimate/ folder). Write in ${me}'s voice per the forefront-estimate skill's step 6; her Gmail signature is appended, so don't add one.`,
       {
         jobNumber: jobNumber.optional(),
         kind: z.enum(["homeowner", "adjuster", "other"]).default("other"),
@@ -160,20 +162,20 @@ export function hubTools(hub: Hub) {
           hub.jobs.upsert(a.jobNumber, { sendoff: { ...j.sendoff, drafts: [...j.sendoff.drafts, d], homebaseLoggedAt: null } });
           hub.jobs.log(a.jobNumber, `Draft (${a.kind}) "${a.subject}"`);
         }
-        return { draftId: ref.id, threadId: ref.threadId, bcc, note: "Draft created in Gmail. Hunter reviews and sends it." };
+        return { draftId: ref.id, threadId: ref.threadId, bcc, note: `Draft created in Gmail. ${me} reviews and sends it.` };
       }),
     ),
     tool(
       "hub_sync",
-      "Check which send-off drafts Hunter has sent; for those, update Homebase (proposal amount + real send date, stage -> Proposal Submitted), asking first.",
+      `Check which send-off drafts ${me} has sent; for those, update Homebase (proposal amount + real send date, stage -> Proposal Submitted), asking first.`,
       { jobNumber: jobNumber.optional() },
       wrap(async ({ jobNumber: n }) => sync(hub, n)),
     ),
 
-    // ---------------------------------------------------------------- what needs Hunter, and a job's history
+    // ---------------------------------------------------------------- what needs the owner, and a job's history
     tool(
       "hub_today",
-      "Everything that needs Hunter right now: emails waiting on a reply, jobs needing an estimate, proposals to follow up, untouched jobs, send-offs to log, unsent drafts, files to upload.",
+      `Everything that needs ${me} right now: emails waiting on a reply, jobs needing an estimate, proposals to follow up, untouched jobs, send-offs to log, unsent drafts, files to upload.`,
       {},
       wrap(async () => (await import("../workflows/reminders.js")).reminders(hub)),
     ),
@@ -185,15 +187,15 @@ export function hubTools(hub: Hub) {
     ),
     tool(
       "homebase_update_fields",
-      "Change fields on the Homebase job (Hunter is shown each old -> new value and must OK it). Keys: detail, propertyType, estimator, preferredContactMethod, picturesLink, fundingType, claimStatus, claimNumber, carrier (an account id from homebase_find_account), deductible, poWoNumber, proposalAmount (also restamps the proposal date to today), estimatedCosts, desiredMargin, mitEstimatedInvoice, lockboxCode, gateCode, alarm, pets, parking, elevatorAccess, accessNotes, customerNotes, pmNotes, toolAccess, address ({street, unit, city, state, zip}).",
+      `Change fields on the Homebase job (${me} is shown each old -> new value and must OK it). Keys: detail, propertyType, estimator, preferredContactMethod, picturesLink, fundingType, claimStatus, claimNumber, carrier (an account id from homebase_find_account), deductible, poWoNumber, proposalAmount (also restamps the proposal date to today), estimatedCosts, desiredMargin, mitEstimatedInvoice, lockboxCode, gateCode, alarm, pets, parking, elevatorAccess, accessNotes, customerNotes, pmNotes, toolAccess, address ({street, unit, city, state, zip}).`,
       { jobNumber, changes: z.record(z.string(), z.any()) },
-      wrap(async ({ jobNumber: n, changes }) => (await import("../workflows/fields.js")).editFields(hub, n, changes) ?? "Hunter declined; nothing changed."),
+      wrap(async ({ jobNumber: n, changes }) => (await import("../workflows/fields.js")).editFields(hub, n, changes) ?? `${me} declined; nothing changed.`),
     ),
     tool(
       "homebase_set_adjuster",
-      "Put an adjuster on the Homebase job (adds the person, or reuses the one Homebase has by that exact name). Asks Hunter first.",
+      `Put an adjuster on the Homebase job (adds the person, or reuses the one Homebase has by that exact name). Asks ${me} first.`,
       { jobNumber, slot: z.union([z.literal(1), z.literal(2)]).default(1), first: z.string(), last: z.string(), email: z.string().optional(), phone: z.string().optional() },
-      wrap(async ({ jobNumber: n, slot, ...a }) => (await import("../workflows/fields.js")).setAdjuster(hub, n, slot, a) ?? "Hunter declined; nothing changed."),
+      wrap(async ({ jobNumber: n, slot, ...a }) => (await import("../workflows/fields.js")).setAdjuster(hub, n, slot, a) ?? `${me} declined; nothing changed.`),
     ),
     tool(
       "homebase_find_account",
@@ -217,13 +219,13 @@ export function hubTools(hub: Hub) {
     ),
     tool(
       "homebase_upload_file",
-      "Add a file from the job folder to the job's Documents tab in Homebase (asks Hunter first). kind: estimate, invoice, scope, contract, photo, report or other.",
+      `Add a file from the job folder to the job's Documents tab in Homebase (asks ${me} first). kind: estimate, invoice, scope, contract, photo, report or other.`,
       { jobNumber, path: z.string().describe("path inside the job folder, e.g. files/ITEL report.pdf"), kind: z.enum(["estimate", "invoice", "scope", "contract", "photo", "report", "other"]) },
       wrap(async ({ jobNumber: n, path: rel, kind }) => {
         const file = path.isAbsolute(rel) ? rel : hub.jobs.path(n, rel);
         if (!existsSync(file)) throw new Error(`No file ${rel} in #${n}'s folder`);
         if (!hub.homebase.uploadDocument) throw new Error("This Homebase connection can't upload.");
-        if (!(await hub.approver.confirm(`Add ${path.basename(file)} to the Documents tab of Homebase #${n}?`, [`Filed as: ${kind}`]))) return "Hunter declined; nothing uploaded.";
+        if (!(await hub.approver.confirm(`Add ${path.basename(file)} to the Documents tab of Homebase #${n}?`, [`Filed as: ${kind}`]))) return `${me} declined; nothing uploaded.`;
         await hub.homebase.uploadDocument(n, file, { kind, title: path.basename(file) });
         return "Uploaded.";
       }),
@@ -232,13 +234,13 @@ export function hubTools(hub: Hub) {
     // ---------------------------------------------------------------- Google Calendar
     tool(
       "calendar_events",
-      "Hunter's Google Calendar events between two times (ISO), all calendars unless calendarIds is given. Events that mention a job (#3226) carry jobNumber.",
+      `${me}'s Google Calendar events between two times (ISO), all calendars unless calendarIds is given. Events that mention a job (#3226) carry jobNumber.`,
       { start: z.string(), end: z.string(), q: z.string().optional() },
       wrap(async ({ start, end, q }) => hub.calendar.events({ start, end, q })),
     ),
     tool(
       "calendar_free_time",
-      "Open weekday time (7am-5pm Denver) of at least `minutes` over the next `days` days, from Hunter's calendar.",
+      `Open weekday time (7am-5pm her time) of at least \`minutes\` over the next \`days\` days, from ${me}'s calendar.`,
       { days: z.number().int().min(1).max(21).default(5), minutes: z.number().int().min(15).default(60) },
       wrap(async ({ days, minutes }) => {
         const { freeSlots } = await import("../connectors/calendar/index.js");
@@ -249,11 +251,11 @@ export function hubTools(hub: Hub) {
     ),
     tool(
       "calendar_create_event",
-      "Put an event on Hunter's Google Calendar (asks him first). Times are ISO with the -06:00/-07:00 Denver offset. For a job visit, put the job number and name in the title (\"Scope walk #3226 Augustine\") and the loss address in location. attendees get an invite.",
+      `Put an event on ${me}'s Google Calendar (asks her first). Times are ISO with her UTC offset (${hub.cfg.profile.timeZone}). For a job visit, put the job number and name in the title ("Scope walk #3226 Augustine") and the loss address in location. attendees get an invite.`,
       { title: z.string(), start: z.string(), end: z.string(), allDay: z.boolean().optional(), location: z.string().optional(), description: z.string().optional(), attendees: z.array(z.string()).optional(), reminderMinutes: z.number().int().optional(), calendarId: z.string().optional(), jobNumber: jobNumber.optional() },
       wrap(async (a) => {
-        const when = a.allDay ? a.start.slice(0, 10) : new Date(a.start).toLocaleString("en-US", { timeZone: "America/Denver", weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
-        if (!(await hub.approver.confirm(`Add "${a.title}" to your calendar?`, [when, a.location ?? "", a.attendees?.length ? `Invites: ${a.attendees.join(", ")}` : ""].filter(Boolean)))) return "Hunter declined; nothing added.";
+        const when = a.allDay ? a.start.slice(0, 10) : new Date(a.start).toLocaleString("en-US", { timeZone: TIME_ZONE, weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+        if (!(await hub.approver.confirm(`Add "${a.title}" to your calendar?`, [when, a.location ?? "", a.attendees?.length ? `Invites: ${a.attendees.join(", ")}` : ""].filter(Boolean)))) return `${me} declined; nothing added.`;
         const ev = await hub.calendar.create(a);
         if (a.jobNumber && hub.jobs.exists(a.jobNumber)) hub.jobs.log(a.jobNumber, `Calendar: ${a.title} ${when}`);
         return ev;
@@ -261,19 +263,19 @@ export function hubTools(hub: Hub) {
     ),
     tool(
       "calendar_update_event",
-      "Move or change an event on Hunter's calendar (asks him first).",
+      `Move or change an event on ${me}'s calendar (asks her first).`,
       { calendarId: z.string(), eventId: z.string(), title: z.string().optional(), start: z.string().optional(), end: z.string().optional(), location: z.string().optional(), description: z.string().optional() },
       wrap(async ({ calendarId, eventId, ...e }) => {
-        if (!(await hub.approver.confirm(`Change this calendar event?`, Object.entries(e).filter(([, v]) => v !== undefined).map(([k, v]) => `${k}: ${v}`)))) return "Hunter declined; nothing changed.";
+        if (!(await hub.approver.confirm(`Change this calendar event?`, Object.entries(e).filter(([, v]) => v !== undefined).map(([k, v]) => `${k}: ${v}`)))) return `${me} declined; nothing changed.`;
         return hub.calendar.update(calendarId, eventId, e);
       }),
     ),
     tool(
       "calendar_delete_event",
-      "Delete an event from Hunter's calendar (asks him first).",
-      { calendarId: z.string(), eventId: z.string(), title: z.string().describe("the event's title, shown to Hunter") },
+      `Delete an event from ${me}'s calendar (asks her first).`,
+      { calendarId: z.string(), eventId: z.string(), title: z.string().describe(`the event's title, shown to ${me}`) },
       wrap(async ({ calendarId, eventId, title }) => {
-        if (!(await hub.approver.confirm(`Delete "${title}" from your calendar?`))) return "Hunter declined; nothing deleted.";
+        if (!(await hub.approver.confirm(`Delete "${title}" from your calendar?`))) return `${me} declined; nothing deleted.`;
         await hub.calendar.remove(calendarId, eventId);
         return "Deleted.";
       }),
@@ -282,16 +284,16 @@ export function hubTools(hub: Hub) {
     // ---------------------------------------------------------------- Google Tasks
     tool(
       "tasks_list",
-      "Hunter's Google Tasks (open ones; completed too if asked), optionally only those due between two dates (YYYY-MM-DD). Tasks that mention a job (#3226) carry jobNumber.",
+      `${me}'s Google Tasks (open ones; completed too if asked), optionally only those due between two dates (YYYY-MM-DD). Tasks that mention a job (#3226) carry jobNumber.`,
       { dueMin: z.string().optional(), dueMax: z.string().optional(), showCompleted: z.boolean().default(false) },
       wrap(async ({ dueMin, dueMax, showCompleted }) => hub.tasks.tasks({ dueMin, dueMax, showCompleted })),
     ),
     tool(
       "tasks_create",
-      "Add a Google Task for Hunter (asks him first); it shows on his phone right away. Put the job number in the title for job tasks (\"Call Eileen re #3226\"). due is a date, YYYY-MM-DD.",
+      `Add a Google Task for ${me} (asks her first); it shows on her phone right away. Put the job number in the title for job tasks ("Call Eileen re #3226"). due is a date, YYYY-MM-DD.`,
       { title: z.string(), due: z.string().optional(), notes: z.string().optional(), listId: z.string().optional(), jobNumber: jobNumber.optional() },
       wrap(async (a) => {
-        if (!(await hub.approver.confirm(`Add this task?`, [a.title, a.due ? `Due ${a.due}` : "No due date", a.notes ?? ""].filter(Boolean)))) return "Hunter declined; nothing added.";
+        if (!(await hub.approver.confirm(`Add this task?`, [a.title, a.due ? `Due ${a.due}` : "No due date", a.notes ?? ""].filter(Boolean)))) return `${me} declined; nothing added.`;
         const t = await hub.tasks.create(a);
         if (a.jobNumber && hub.jobs.exists(a.jobNumber)) hub.jobs.log(a.jobNumber, `Task: ${a.title}`);
         return t;
@@ -299,10 +301,10 @@ export function hubTools(hub: Hub) {
     ),
     tool(
       "tasks_update",
-      "Change a Google Task: retitle, move its due date, or mark it done / not done (asks Hunter first).",
+      `Change a Google Task: retitle, move its due date, or mark it done / not done (asks ${me} first).`,
       { listId: z.string(), taskId: z.string(), title: z.string().optional(), due: z.string().nullable().optional(), notes: z.string().optional(), completed: z.boolean().optional() },
       wrap(async ({ listId, taskId, ...t }) => {
-        if (!(await hub.approver.confirm(`Change this task?`, Object.entries(t).filter(([, v]) => v !== undefined).map(([k, v]) => `${k}: ${v}`)))) return "Hunter declined; nothing changed.";
+        if (!(await hub.approver.confirm(`Change this task?`, Object.entries(t).filter(([, v]) => v !== undefined).map(([k, v]) => `${k}: ${v}`)))) return `${me} declined; nothing changed.`;
         return hub.tasks.update(listId, taskId, t);
       }),
     ),
@@ -339,7 +341,7 @@ export function hubTools(hub: Hub) {
         const d = j.docusketchProjectId ? { projectId: j.docusketchProjectId } : await hub.sketches.findDelivery({ name: j.name, address: j.address });
         if (d?.projectId && !j.docusketchProjectId) hub.jobs.upsert(n, { docusketchProjectId: d.projectId });
         const esx = await hub.sketches.fetchEsx({ projectId: d?.projectId, sketchDir: hub.jobs.path(n, "sketch") });
-        return { delivery: d, esx, next: esx ? undefined : `Ask Hunter to download ${d?.projectId ?? "the"} ESX from https://app.docusketch.com/portal-cc/projects (or drop it in ${hub.jobs.path(n, "sketch")}).` };
+        return { delivery: d, esx, next: esx ? undefined : `Ask ${me} to download ${d?.projectId ?? "the"} ESX from https://app.docusketch.com/portal-cc/projects (or drop it in ${hub.jobs.path(n, "sketch")}).` };
       }),
     ),
 

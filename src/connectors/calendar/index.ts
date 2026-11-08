@@ -3,8 +3,9 @@ import path from "node:path";
 import { google, type calendar_v3 } from "googleapis";
 import type { Config } from "../../core/config.js";
 import { GoogleAuth, SCOPES } from "../google/auth.js";
+import { TIME_ZONE } from "../../core/config.js";
 
-/** Google Calendar: Hunter's calendars and events, read and write. */
+/** Google Calendar: the owner's calendars and events, read and write. */
 export interface CalendarInfo {
   id: string;
   name: string;
@@ -26,11 +27,11 @@ export interface CalEvent {
   link?: string; // open in Google Calendar
   meet?: string;
   attendees?: { email: string; name?: string; response?: string }[];
-  /** A job number the event mentions (#3226), so Keystone can link it. */
+  /** A job number the event mentions (#3226), so the app can link it. */
   jobNumber?: number;
   /** The series a repeating event belongs to (Google's recurringEventId). */
   recurringId?: string;
-  /** Hunter's own answer when he's an invitee: "accepted", "declined", "tentative", "needsAction". */
+  /** Her own answer when she's an invitee: "accepted", "declined", "tentative", "needsAction". */
   myResponse?: string;
 }
 
@@ -68,14 +69,14 @@ export class GoogleCalendar implements CalendarClient {
   readonly kind = "google" as const;
   private api?: calendar_v3.Calendar;
   private colors?: Record<string, string>;
-  constructor(private auth: GoogleAuth, private tz = "America/Denver") {}
+  constructor(private auth: GoogleAuth, private tz = TIME_ZONE) {}
 
   connected() {
     return this.auth.hasScope(SCOPES.calendar);
   }
 
   private cal() {
-    if (!this.connected()) throw new Error("Google Calendar isn't connected yet: double-click Connect Gmail in the Keystone folder (forefront-hub) and click Allow (it now covers Calendar too).");
+    if (!this.connected()) throw new Error("Google Calendar isn't connected yet: double-click Connect Gmail in the app's folder and click Allow (it now covers Calendar too).");
     this.api ??= google.calendar({ version: "v3", auth: this.auth.client() });
     return this.api;
   }
@@ -196,8 +197,8 @@ export class MockCalendar implements CalendarClient {
   }
   async calendars() {
     return [
-      { id: "primary", name: "Hunter Patterson", color: "#7aa7ff", primary: true, writable: true },
-      { id: "team", name: "Forefront team (test)", color: "#6fc394", primary: false, writable: true },
+      { id: "primary", name: "Marlys Woods", color: "#7aa7ff", primary: true, writable: true },
+      { id: "team", name: "Get In Tune team (test)", color: "#6fc394", primary: false, writable: true },
     ];
   }
   async events(o: { start: string; end: string; calendarIds?: string[]; q?: string }) {
