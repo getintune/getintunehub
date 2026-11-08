@@ -37,6 +37,8 @@ Owner: Marlys. Fill in as you learn it:
   coaching but has no coaching clients yet. Right now also marketing the Nov 13 *Suddenly Untethered* workshop.
 - Her word for the people/work she tracks: **a separate list for each program** (therapy clients, coaching
   clients, workshop sign-ups, certification trainees, supervision members, facilities, ...), not one big list.
+  Lists confirmed 2026-11-08: therapy clients (Grow, initials only), coaching clients, workshop sign-ups,
+  certification trainees, supervision members, treatment facilities.
 - **Grow Therapy client emails matter most:** whenever Claude reads the info@ mailbox, any email about a Grow
   Therapy client must be pointed out to her (top of the daily brief).
 - The stages a client goes through: nothing set yet. The coaching program's stages and intake will be built
@@ -104,7 +106,7 @@ Outlook** (the Gmail tab becomes Outlook; Gmail stays only to catch team request
       `Connect Gmail.command`. Left for step 4: "Hunter"/"Forefront" in the files step 4 deletes (estimating,
       Homebase, CompanyCam, DocuSketch, reminders), the practice data in `fixtures/` and the mock calendar/mail
       (still estimating examples), the "Plan my day" prompt (all about jobs), `Connect CompanyCam.bat`.
-      To check in step 7: her work address is assumed to be marlys@getintunemusictherapy.com; setup clones the
+      Her work address marlys@getintunemusictherapy.com is confirmed (2026-11-08). To check in step 7: setup clones the
       default branch, so this branch must be merged first.
 - [ ] **4. Take out what's Forefront-only.**
       - Estimating: the Estimator tab (`src/agent/studio.ts`), Selections (`src/agent/selections.ts`,
