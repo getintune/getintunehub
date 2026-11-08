@@ -4,6 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import { FixedApprover } from "../src/core/approval.js";
 import { HUB_ROOT, loadConfig } from "../src/core/config.js";
+import { MockLists } from "../src/connectors/lists/index.js";
 import { MockCompanyCam } from "../src/connectors/companycam/index.js";
 import { DocuSketch } from "../src/connectors/docusketch/index.js";
 import { MockGmail } from "../src/connectors/gmail/mock.js";
@@ -28,6 +29,7 @@ export function testHub(answer = true) {
   const said: string[] = [];
   const hub: Hub = {
     cfg,
+    lists: new MockLists(cfg.stateDir, path.join(HUB_ROOT, "fixtures", "lists.json")),
     jobs: new JobStore(cfg.jobsRoot),
     homebase,
     gmail,

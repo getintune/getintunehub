@@ -1,5 +1,7 @@
 node_modules/
 .env
+# her own data (client lists): stays on her Mac
+data/
 # OAuth tokens, Playwright login state, Homebase page snapshots (customer data)
 auth/
 snapshots/

@@ -69,6 +69,8 @@ export interface Config {
   travel: { start: string };
   /** Where mocks keep their state (mock outbox, mock Homebase writes). */
   stateDir: string;
+  /** Her own data (the lists): HUB_DATA_DIR, default the app's data/ folder (never uploaded). */
+  dataDir: string;
 }
 
 /** Reads .env from the app folder (never committed) and fills in defaults. Mock wherever credentials are missing. */
@@ -134,6 +136,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env, root = HUB_ROOT
     travel: { start: e("HUB_DAY_START_ADDRESS", officeAddress(skillDir)) },
     docusketch: { downloadsDir: e("DOWNLOADS_DIR", path.join(env.USERPROFILE || env.HOME || root, "Downloads")) },
     stateDir,
+    dataDir: e("HUB_DATA_DIR", path.join(root, "data")),
   };
 }
 

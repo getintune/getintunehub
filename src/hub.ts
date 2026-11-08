@@ -11,10 +11,13 @@ import { makeCalendar, type CalendarClient } from "./connectors/calendar/index.j
 import { makeTasks, type TasksClient } from "./connectors/tasks/index.js";
 import { makeHomebase, type HomebaseClient } from "./connectors/homebase/index.js";
 import { EstimateSkill } from "./connectors/skill/index.js";
+import { makeLists, type ListsClient } from "./connectors/lists/index.js";
 
 /** Everything a workflow or agent tool needs, in one place. Tests build one from mocks. */
 export interface Hub {
   cfg: Config;
+  /** Her lists: one per program (therapy, coaching, workshop, ...). */
+  lists: ListsClient;
   jobs: JobStore;
   homebase: HomebaseClient;
   gmail: MailClient;
@@ -32,6 +35,7 @@ export function makeHub(cfg: Config = loadConfig(), approver: Approver = new Cli
   const gmail = makeGmail(cfg);
   return {
     cfg,
+    lists: makeLists(cfg),
     jobs: new JobStore(cfg.jobsRoot),
     homebase: makeHomebase(cfg),
     gmail,
