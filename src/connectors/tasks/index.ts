@@ -186,6 +186,6 @@ export class MockTasks implements TasksClient {
 }
 
 export function makeTasks(cfg: Config): TasksClient {
-  if (cfg.gmail.driver === "google") return new GoogleTasks(new GoogleAuth({ clientId: cfg.gmail.clientId, clientSecret: cfg.gmail.clientSecret, tokenFile: cfg.gmail.tokenFile, address: cfg.gmail.address }));
+  if (cfg.gmail.driver === "google" || cfg.mode === "live") return new GoogleTasks(new GoogleAuth({ clientId: cfg.gmail.clientId, clientSecret: cfg.gmail.clientSecret, tokenFile: cfg.gmail.tokenFile, address: cfg.gmail.address }));
   return new MockTasks(cfg.stateDir);
 }

@@ -9,12 +9,9 @@ built and the house rules.
 
 ## On your Mac
 
-- **First time:** double-click **Setup Get In Tune Hub** (the first time, right-click it, choose Open, then Open
-  again). It installs the app in your home folder under "Get In Tune Hub" and puts an icon on your Desktop.
-- **Every day:** double-click **Get In Tune Hub** on your Desktop. A Terminal window opens (keep it open while you
-  use the app) and the app opens in your browser.
-- **Your settings** (name, time zone, keys) live in the `.env` file in the app's folder. It stays on your Mac and is
-  never uploaded.
+Follow **SETUP-ON-MAC.md** once (about 45 minutes). After that, double-click **Get In Tune Hub** on your Desktop;
+a Terminal window opens (keep it open while you use the app) and the app opens in your browser. Your lists,
+settings and logins stay on your Mac and are never uploaded.
 
 ## For Claude Code
 

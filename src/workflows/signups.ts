@@ -37,6 +37,12 @@ export function parseSignup(text: string, ignore: string[] = []): { name: string
   return { name: named?.[1]?.trim() ?? emails[0].split("@")[0], email: emails[0] };
 }
 
+/** The workshop a registration email is for: "New Order for Suddenly Untethered: The ..." -> "Suddenly Untethered". */
+export function eventFromSubject(subject: string): string {
+  const m = subject.match(/(?:\bfor|registration:|registered:|rsvp:)\s*(.+?)(?:\s*[:–—|-]\s|$)/i);
+  return m?.[1]?.trim() ?? "";
+}
+
 const stateFile = (hub: Hub) => path.join(hub.cfg.stateDir, "signups-dismissed.json");
 const dismissed = (hub: Hub): Record<string, string> => {
   try {
@@ -52,14 +58,14 @@ export function dismissSignup(hub: Hub, messageId: string) {
   writeFileSync(stateFile(hub), JSON.stringify(d));
 }
 
-/** New sign-ups from the last `days` days of info@, not on the workshop list yet and not dismissed. */
-export async function signupSuggestions(hub: Hub, days = 21, now = new Date()): Promise<SignupSuggestion[]> {
+/** New sign-ups from the last `days` days of info@ (two months: catches everyone since marketing began), not on the workshop list yet and not dismissed. */
+export async function signupSuggestions(hub: Hub, days = 60, now = new Date()): Promise<SignupSuggestion[]> {
   const boxes = hub.outlook.mailboxes();
   const box = boxes.find((b) => b.startsWith("info@")) ?? boxes[0];
   if (!box || !hub.outlook.connected()) return [];
   const workshop = hub.lists.list("workshop");
   const have = new Set(workshop.map((e) => e.email.toLowerCase()).filter(Boolean));
-  const event = [...workshop].sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0]?.extra.event || "Workshop";
+  const newest = [...workshop].sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0]?.extra.event;
   const d = dismissed(hub);
   const out: SignupSuggestion[] = [];
   const since = new Date(now.getTime() - days * 864e5).toISOString();
@@ -69,6 +75,9 @@ export async function signupSuggestions(hub: Hub, days = 21, now = new Date()): 
     const full = m.body ?? (await hub.outlook.get(box, m.id).catch(() => m)).body ?? m.preview;
     const p = parseSignup(`${m.subject}\n${full}`, boxes);
     if (!p || have.has(p.email) || out.some((x) => x.email === p.email)) continue;
+    // The list's own name for the workshop when the email names the same one, so they count together.
+    const named = eventFromSubject(m.subject);
+    const event = newest && (!named || newest.toLowerCase().startsWith(named.toLowerCase())) ? newest : named || newest || "Workshop";
     out.push({ messageId: m.id, ...p, source, event, at: m.receivedAt });
   }
   return out;

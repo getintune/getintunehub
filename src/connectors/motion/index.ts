@@ -177,6 +177,21 @@ export class MockMotion implements MotionClient {
   }
 }
 
+/** On her Mac before the Motion key is added: no practice tasks (they'd look real), just "not connected". */
+export class NotConnectedMotion implements MotionClient {
+  readonly kind = "motion" as const;
+  connected() {
+    return false;
+  }
+  async tasks(): Promise<MotionTask[]> {
+    throw new Error("Motion isn't connected yet: double-click Connect Motion in the app's folder.");
+  }
+  async create(): Promise<MotionTask> {
+    throw new Error("Motion isn't connected yet: double-click Connect Motion in the app's folder.");
+  }
+}
+
 export function makeMotion(cfg: Config): MotionClient {
+  if (cfg.mode === "live" && cfg.motion.driver !== "motion") return new NotConnectedMotion();
   return cfg.motion.driver === "motion" ? new LiveMotion({ apiKey: cfg.motion.apiKey, workspaceId: cfg.motion.workspaceId }) : new MockMotion(path.join(cfg.hubRoot, "fixtures", "motion.json"), cfg.profile.owner);
 }

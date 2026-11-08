@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { clientInitials, dismissGrow, growAlerts, growKind } from "../src/workflows/grow.js";
-import { acceptSignup, dismissSignup, parseSignup, signupSuggestions } from "../src/workflows/signups.js";
+import { acceptSignup, dismissSignup, eventFromSubject, parseSignup, signupSuggestions } from "../src/workflows/signups.js";
 import { testHub } from "./helpers.js";
 
 const grow = (subject: string, preview = "") => ({ from: { name: "Grow Therapy", address: "notifications@growtherapy.com" }, subject, preview });
@@ -36,6 +36,8 @@ describe("workshop sign-ups from Wix and Eventbrite emails", () => {
     expect(parseSignup("You have a new order!\nAttendee: Nora Example\nEmail: nora@example.com")).toEqual({ name: "Nora Example", email: "nora@example.com" });
     expect(parseSignup("Felix Madeup just registered for Suddenly Untethered. felix@example.com")).toEqual({ name: "Felix Madeup", email: "felix@example.com" });
     expect(parseSignup("no emails here")).toBeNull();
+    expect(eventFromSubject("New Order for Suddenly Untethered: The Surprising Growing Pains of Living Your Dream")).toBe("Suddenly Untethered");
+    expect(eventFromSubject("New registration: Suddenly Untethered")).toBe("Suddenly Untethered");
   });
 
   it("suggests new sign-ups (not people already on the list), and adds one when she clicks Add", async () => {
@@ -50,5 +52,12 @@ describe("workshop sign-ups from Wix and Eventbrite emails", () => {
     dismissSignup(hub, s[1].messageId);
     expect(await signupSuggestions(hub)).toEqual([]);
     expect(hub.lists.list("workshop")).toHaveLength(5);
+  });
+
+  it("names the workshop from the email when the list is still empty", async () => {
+    const { hub } = testHub();
+    for (const e of hub.lists.list("workshop")) hub.lists.remove(e.id);
+    const s = await signupSuggestions(hub);
+    expect(s.map((x) => x.event)).toEqual(["Suddenly Untethered", "Suddenly Untethered", "Suddenly Untethered"]);
   });
 });

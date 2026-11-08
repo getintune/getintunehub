@@ -218,7 +218,9 @@ export class MockCalendar implements CalendarClient {
 }
 
 export function makeCalendar(cfg: Config): CalendarClient {
-  if (cfg.gmail.driver === "google") {
+  // On her Mac (live) it's always her real calendar, which says "not connected" until she runs Connect Gmail:
+  // practice events would look real on her dashboard.
+  if (cfg.gmail.driver === "google" || cfg.mode === "live") {
     return new GoogleCalendar(new GoogleAuth({ clientId: cfg.gmail.clientId, clientSecret: cfg.gmail.clientSecret, tokenFile: cfg.gmail.tokenFile, address: cfg.gmail.address }));
   }
   return new MockCalendar(cfg.stateDir);

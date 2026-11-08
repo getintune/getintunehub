@@ -187,4 +187,15 @@ Outlook** (the Gmail tab becomes Outlook; Gmail stays only to catch team request
       - [ ] The coaching intake/stages from her Google Doc.
 - [ ] **7. On her computer.** Walk her through setup: install, `Connect Gmail` (her own Google Cloud project and
       OAuth client: the guide is in `src/cli/connect.ts`), her API key in `.env`, Spotify if she wants Music.
+      *Prepared 2026-11-08 (without her):* **SETUP-ON-MAC.md** is her step-by-step guide: merge the PR, GitHub
+      Desktop clone to Documents/getintunehub (a private repo can't be cloned from Terminal without a token),
+      Node.js LTS, right-click > Open on `Setup Get In Tune Hub.command` (it now sets up the folder it sits in),
+      `Connect Outlook.command`, `Connect Motion.command` (new: asks for the key, tests it, saves it), Claude app
+      connectors. Updates: GitHub Desktop > Fetch > Pull. Setup was dry-run here with stand-ins for the Mac-only
+      commands (`xcode-select`, `open`): installs, makes .env, Desktop link, doctor. On her Mac (live mode) Outlook,
+      Motion and the calendar now say "not connected" instead of showing practice data. Once Outlook is connected,
+      sign-up suggestions look back 2 months, so her existing Wix/Eventbrite registrants can be added in one click
+      each (workshop name read from the email). Still to do with her: run it, check Grow/Wix/Eventbrite wording
+      against real emails, Motion API access on her plan, morning brief as a Claude scheduled task, the
+      coaching-not-therapy reminder (see top).
 - [ ] **8. Tidy up.** Remove anything left from Keystone that she doesn't use. README in plain words for her.

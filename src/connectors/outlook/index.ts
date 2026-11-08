@@ -214,9 +214,33 @@ export class MockWorkMail implements WorkMailClient {
   }
 }
 
+/** On her Mac before Connect Outlook has been run: no practice mail (it would look real), just "not connected". */
+export class NotConnectedWorkMail implements WorkMailClient {
+  readonly kind = "microsoft" as const;
+  constructor(private boxes: string[]) {}
+  connected() {
+    return false;
+  }
+  mailboxes() {
+    return this.boxes;
+  }
+  private no(): never {
+    throw new Error("Outlook isn't connected yet: double-click Connect Outlook in the app's folder.");
+  }
+  async list(): Promise<WorkMessage[]> {
+    return this.no();
+  }
+  async get(): Promise<WorkMessage> {
+    return this.no();
+  }
+  async since(): Promise<WorkMessage[]> {
+    return this.no();
+  }
+}
+
 export function makeWorkMail(cfg: Config): WorkMailClient {
   const o = cfg.outlook;
-  return o.driver === "microsoft"
-    ? new GraphMail({ clientId: o.clientId, tenant: o.tenant, tokenFile: o.tokenFile, mailboxes: o.mailboxes })
-    : new MockWorkMail(path.join(cfg.hubRoot, "fixtures", "outlook.json"), o.mailboxes);
+  if (o.driver === "microsoft") return new GraphMail({ clientId: o.clientId, tenant: o.tenant, tokenFile: o.tokenFile, mailboxes: o.mailboxes });
+  if (cfg.mode === "live") return new NotConnectedWorkMail(o.mailboxes);
+  return new MockWorkMail(path.join(cfg.hubRoot, "fixtures", "outlook.json"), o.mailboxes);
 }

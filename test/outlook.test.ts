@@ -44,3 +44,17 @@ describe("work email (Outlook)", () => {
     expect(calls[0].body).not.toMatch(/Mail\.Send|Mail\.ReadWrite/);
   });
 });
+
+describe("on her Mac before connecting", () => {
+  it("shows nothing made-up: Outlook, Motion and the calendar just say they're not connected", async () => {
+    const { makeHub } = await import("../src/hub.js");
+    const hub = makeHub(loadConfig({ HUB_MODE: "live" }, mkdtempSync(path.join(os.tmpdir(), "live-"))));
+    expect(hub.outlook.connected()).toBe(false);
+    await expect(hub.outlook.list({ mailbox: hub.outlook.mailboxes()[0] })).rejects.toThrow(/Connect Outlook/);
+    expect(hub.motion.connected()).toBe(false);
+    await expect(hub.motion.tasks()).rejects.toThrow(/Connect Motion/);
+    expect(hub.calendar.connected()).toBe(false);
+    expect(hub.lists.kind).toBe("local");
+    expect(hub.lists.list()).toEqual([]);
+  });
+});

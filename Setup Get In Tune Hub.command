@@ -1,9 +1,11 @@
 #!/bin/bash
 # Get In Tune Hub setup for Mac. Double-click this (the first time: right-click > Open > Open).
-# It can sit anywhere (Downloads is fine): it puts the app in your home folder under "Get In Tune Hub",
-# sets it up, and puts a "Get In Tune Hub" icon on your Desktop. Safe to run again.
+# Normally it's inside the app's folder (downloaded with GitHub Desktop, see SETUP-ON-MAC.md) and sets that folder
+# up. On its own (e.g. in Downloads) it downloads the app to your home folder under "Get In Tune Hub" first.
+# Either way it puts a "Get In Tune Hub" icon on your Desktop. Safe to run again.
 
-HUB="$HOME/Get In Tune Hub"
+HERE="$(cd "$(dirname "$0")" && pwd)"
+if [ -f "$HERE/package.json" ] && [ -d "$HERE/src" ]; then HUB="$HERE"; else HUB="$HOME/Get In Tune Hub"; fi
 REPO="https://github.com/getintune/getintunehub.git"
 
 say_step() { printf '\n== %s\n' "$1"; }
@@ -27,7 +29,9 @@ echo "Node $(node -v)"
 
 # ---- 3. Download (first time) or update the app
 say_step "Get In Tune Hub"
-if [ -d "$HUB/.git" ]; then
+if [ "$HUB" = "$HERE" ]; then
+  echo "Setting up the app in $HUB"
+elif [ -d "$HUB/.git" ]; then
   echo "Updating $HUB..."
   git -C "$HUB" pull --ff-only || echo "(Couldn't update just now; carrying on with the copy you have.)"
 else

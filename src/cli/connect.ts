@@ -163,3 +163,18 @@ function loadEnvValue(k: string): string {
     return "";
   }
 }
+
+/** Motion: paste the API key from Motion's settings; it's tested, then saved to .env on this Mac only. */
+export async function connectMotion() {
+  const app = loadConfig().profile.appName;
+  console.log(`Connecting Motion to ${app}. The app shows what Motion scheduled and adds tasks only when you say Yes. It never moves, edits or deletes Motion tasks.`);
+  step(1, 'In Motion (signed in), open Settings, find "API" (it may be under "API & Integrations"), and click "Create API key". Name it ' + app + ", then copy the key.");
+  openBrowser("https://app.usemotion.com/web/settings/api");
+  const key = await ask("\n2. Paste the key here and press Enter: ");
+  if (!key) throw new Error("No key; double-click Connect Motion again when you have it.");
+  const { LiveMotion } = await import("../connectors/motion/index.js");
+  const tasks = await new LiveMotion({ apiKey: key, workspaceId: "" }).tasks();
+  setEnv({ MOTION_API_KEY: key });
+  console.log(`\nMotion is connected: you have ${tasks.length} open task${tasks.length === 1 ? "" : "s"}.`);
+  console.log(`Restart ${app} (close its window, open it again) to use it.`);
+}
