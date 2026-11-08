@@ -11,6 +11,7 @@ import { allContacts, findContacts, noteAddresses, noteMessages, withLists } fro
 import { BRIEF, briefDue } from "../workflows/brief.js";
 import { listCounts, needs } from "../workflows/needs.js";
 import { renderPage } from "./page.js";
+import { requestAllowed } from "./guard.js";
 import { featureOn } from "../agent/costs.js";
 
 /**
@@ -81,6 +82,8 @@ const server = http.createServer(async (req, res) => {
   const url = new URL(req.url ?? "/", "http://localhost");
   const p = url.pathname;
   const q = (k: string) => url.searchParams.get(k) ?? "";
+  const allowed = requestAllowed(req, port);
+  if (!allowed.ok) return send(res, 403, { error: allowed.why });
   try {
     if (p === "/" || p === "/index.html") {
       res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" });
@@ -116,7 +119,10 @@ const server = http.createServer(async (req, res) => {
     if (p === "/api/work/messages") {
       const mailbox = q("mailbox") || hub.outlook.mailboxes()[0];
       if (!hub.outlook.mailboxes().includes(mailbox)) return send(res, 400, { error: "That mailbox isn't one of yours." });
-      return send(res, 200, { mailbox, messages: await hub.outlook.list({ mailbox, q: q("q") || undefined }) });
+      const { isGrow } = await import("../workflows/grow.js");
+      // Grow emails: the page gets only who sent it and when (her HIPAA rule); the rest stays in Outlook.
+      const messages = (await hub.outlook.list({ mailbox, q: q("q") || undefined })).map((m) => (isGrow(m) ? { ...m, subject: "Grow Therapy email", preview: "" } : m));
+      return send(res, 200, { mailbox, messages });
     }
     const wm = p.match(/^\/api\/work\/messages\/([^/]+)\/([^/]+)$/);
     if (wm) {
