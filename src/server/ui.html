@@ -977,6 +977,7 @@ async function loadToday() {
   let d;
   try { d = await api("/api/dashboard"); } catch (e) { $("#today").innerHTML = `<div class="empty">${esc(e.message)}</div>`; return; }
   if (!lists.programs.length) lists = await api("/api/lists").catch(() => lists);
+  const cl = await api("/api/settings/claude").catch(() => null);
   const urgent = d.needs.filter((n) => n.kind === "next").length;
   $("#todaycount").textContent = urgent; $("#todaycount").hidden = !urgent;
   const longDate = new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
@@ -1010,6 +1011,7 @@ async function loadToday() {
         </div>
         <div class="card"><h3>Your lists</h3>
           <table class="tbl"><tbody>${d.lists.map((l) => `<tr data-prog="${esc(l.id)}" style="cursor:pointer"><td>${esc(l.name)}</td><td class="num"><b>${l.open}</b>${l.total > l.open ? `<span class="small muted"> / ${l.total}</span>` : ""}</td></tr>`).join("")}</tbody></table></div>
+        ${cl ? claudeCard(cl) : ""}
         <div class="card"><h3>Recently changed</h3>
           ${d.recent.length ? `<ul class="items">${d.recent.map((r) => `<li><a href="#" data-do="person" data-id="${esc(r.id)}">${esc(r.name)}</a> <span class="small muted">${fmtWhen(r.at)}</span><div class="small muted">${esc(r.list)} · ${esc(r.stage)}</div></li>`).join("")}</ul>` : `<p class="muted">Nobody yet.</p>`}</div>
       </div>
@@ -1017,6 +1019,21 @@ async function loadToday() {
   $("#plan")?.addEventListener("click", startPlan);
   renderBrief();
 }
+// Claude's costs and the switches for what it does on its own.
+const money = (n) => "$" + (n < 1 && n > 0 ? n.toFixed(2) : n.toFixed(2));
+function claudeCard(c) {
+  if (!c.hasKey) return `<div class="card"><h3>Claude</h3><p class="muted" style="margin:0">Claude is off on this computer: no Anthropic API key yet. We'll add it when the app is set up on your Mac. Until then nothing is charged.</p></div>`;
+  return `<div class="card" id="claudecard"><h3>Claude</h3>
+    <div class="wsbig"><b>${money(c.costs.month)}</b> this month · ${money(c.costs.today)} today</div>
+    ${c.costs.byUse.length ? `<table class="tbl"><tbody>${c.costs.byUse.map((x) => `<tr><td>${esc(x.label)} <span class="small muted">${x.runs} run${x.runs === 1 ? "" : "s"}</span></td><td class="num">${money(x.usd)}</td></tr>`).join("")}</tbody></table>` : `<p class="small muted">No Claude runs yet this month.</p>`}
+    <div class="small muted" style="margin:12px 0 6px">Claude on its own (switch off to save money)</div>
+    ${c.features.map((f) => `<label class="row sw" title="${esc(f.hint)}" style="gap:8px;padding:3px 0;cursor:pointer"><input type="checkbox" data-feature="${esc(f.id)}" ${f.on ? "checked" : ""} style="width:auto"><span style="flex:1">${esc(f.label)}<div class="small muted">${esc(f.hint)}</div></span></label>`).join("")}
+    <p class="small muted" style="margin:10px 0 0">Your spending cap is set at console.anthropic.com → Limits.</p></div>`;
+}
+document.addEventListener("change", async (e) => {
+  const c = e.target.closest("[data-feature]"); if (!c) return;
+  try { await api("/api/settings/claude", { method: "POST", body: { feature: c.dataset.feature, on: c.checked } }); log(`${c.closest("label").querySelector("span").firstChild.textContent.trim()}: ${c.checked ? "on" : "off"}.`); } catch (err) { log(err.message, "t-err"); c.checked = !c.checked; }
+});
 $("#today").addEventListener("click", (e) => {
   const f = e.target.closest("[data-prog]"); if (!f) return;
   curProg = f.dataset.prog; store.set("prog", curProg); $("#lstage").value = ""; showTab("lists");

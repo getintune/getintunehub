@@ -3,6 +3,7 @@ import { claudeEnv } from "./env.js";
 import { mkdirSync } from "node:fs";
 import type { Hub } from "../hub.js";
 import { makeGuard } from "./guard.js";
+import { recordCost } from "./costs.js";
 import { hubTools, SERVER } from "./tools.js";
 
 export function systemPrompt(hub: Hub): string {
@@ -39,8 +40,8 @@ export function agentOptions(hub: Hub, extra: Partial<Options> = {}): Options {
   };
 }
 
-/** Runs one request through the agent, printing its progress. Returns the final text. */
-export async function ask(hub: Hub, prompt: string, opts: { onMessage?: (m: SDKMessage) => void } = {}): Promise<string> {
+/** Runs one request through Claude (the bigger model: Ask Claude and the daily brief). Its cost is recorded as `use`. */
+export async function ask(hub: Hub, prompt: string, opts: { onMessage?: (m: SDKMessage) => void; use?: "ask" | "brief" } = {}): Promise<string> {
   if (!hub.cfg.anthropicApiKey) throw new Error("No Anthropic API key: add ANTHROPIC_API_KEY to the .env file in the app's folder.");
   mkdirSync(hub.cfg.stateDir, { recursive: true });
   let final = "";
@@ -52,6 +53,7 @@ export async function ask(hub: Hub, prompt: string, opts: { onMessage?: (m: SDKM
         if (b.type === "tool_use") hub.say(`  → ${b.name.replace(`mcp__${SERVER}__`, "")} ${summarize(b.input)}`);
       }
     } else if (m.type === "result") {
+      recordCost(hub, opts.use ?? "ask", m, hub.cfg.model);
       if (m.subtype === "success") final = m.result;
       else throw new Error(`Agent stopped: ${m.subtype}`);
     }

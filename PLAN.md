@@ -145,11 +145,17 @@ Outlook** (the Gmail tab becomes Outlook; Gmail stays only to catch team request
       (`{go:ID}`). Drive times use each event's own address from HUB_DAY_START_ADDRESS. Practice mail, calendar
       and tasks are made-up Get In Tune examples. Still to come: Outlook in place of Gmail as her main mailbox,
       Motion in place of Google Tasks, and the Grow Therapy email rule (step 6).
-- [ ] **5. Claude costs.** Claude features stay off until she adds an Anthropic API key. Use the fast model
+- [x] **5. Claude costs.** Claude features stay off until she adds an Anthropic API key. Use the fast model
       (`HUB_FAST_MODEL`) for everything routine (summaries, tasks from email) and the big one only for the brief
       and Ask Claude. Add on/off switches in the app for each background Claude feature. Add a cost meter: record
       each Claude run's cost (the SDK's result message has `total_cost_usd`) and show today / this month. Tell her
       to set a monthly cap at console.anthropic.com → Limits.
+      *Done 2026-11-08:* `src/agent/costs.ts`: switches for email summaries (on), tasks from email (off to start;
+      it writes Google Tasks, which she doesn't use, until Motion is connected) and the morning brief (on), saved in
+      `.hub/settings.json`; every Claude run's `total_cost_usd` goes to `.hub/claude-costs.json`. The dashboard's
+      Claude card shows this month / today by use, the switches, and the console Limits reminder. Email tasks now
+      use the fast model. `.env.example` rewritten for her (no estimating settings). In step 7: help her set the
+      monthly cap (suggest $10-20 to start).
 - [ ] **6. Her tools.** One at a time, each as a connector with a mock and tests: booking/scheduling, invoicing/
       payments, files/photos. Turn what they know into dashboard reminders and lines in the daily brief.
 - [ ] **7. On her computer.** Walk her through setup: install, `Connect Gmail` (her own Google Cloud project and

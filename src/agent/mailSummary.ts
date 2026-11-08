@@ -2,6 +2,7 @@ import { query } from "@anthropic-ai/claude-agent-sdk";
 import { claudeEnv } from "./env.js";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
+import { featureOn, recordCost } from "./costs.js";
 import type { Hub } from "../hub.js";
 
 /**
@@ -32,7 +33,7 @@ function save(hub: Hub) {
   writeFileSync(file(hub), JSON.stringify(c));
 }
 
-export const enabled = (hub: Hub) => !!hub.cfg.anthropicApiKey && (process.env.HUB_MAIL_SUMMARIES ?? "on") !== "off";
+export const enabled = (hub: Hub) => featureOn(hub, "summaries");
 
 /** Summaries already written for these threads (only those still current). */
 export function summariesFor(hub: Hub, threads: { id: string; historyId?: string }[]): Record<string, string> {
@@ -109,6 +110,7 @@ ${items.map((x, i) => `#${i + 1}\n${x.text}`).join("\n\n---\n\n")}`;
       env: claudeEnv(hub),
     },
   })) {
+    if (m.type === "result") recordCost(hub, "summaries", m, hub.cfg.fastModel);
     if (m.type === "result" && m.subtype === "success") {
       const so = (m as any).structured_output ?? JSON.parse(m.result.match(/\{[\s\S]*\}/)?.[0] ?? '{"items":[]}');
       out = so.items ?? [];

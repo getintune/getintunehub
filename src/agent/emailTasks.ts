@@ -6,12 +6,13 @@ import type { Message } from "../connectors/gmail/types.js";
 import type { Hub } from "../hub.js";
 import { isAutomated } from "../workflows/mailkind.js";
 import { TIME_ZONE } from "../core/config.js";
+import { featureOn, recordCost } from "./costs.js";
 
 /**
  * Turns incoming email into Google Tasks on its own: Claude reads each new email from a person and, when it asks
  * the owner to do something, adds a task (with a due date from the email
  * or the next workday, and a link back to the email). FYI-only email gets no task, and a thread that already has an
- * open task from the app gets no duplicate. Runs with the inbox check; switch off with HUB_EMAIL_TASKS=off.
+ * open task from the app gets no duplicate. Runs with the inbox check; off unless switched on on the dashboard.
  */
 interface State {
   since?: string;
@@ -28,8 +29,7 @@ function save(hub: Hub, s: State) {
 
 export function enabled(hub: Hub) {
   return (
-    (process.env.HUB_EMAIL_TASKS ?? "on") !== "off" &&
-    !!hub.cfg.anthropicApiKey &&
+    featureOn(hub, "emailTasks") &&
     hub.gmail.kind === "google" &&
     !!hub.gmail.listThreads &&
     (hub.gmail.fullAccess?.() ?? false) &&
@@ -90,7 +90,7 @@ ${m.body.slice(0, 8000)}`;
   for await (const msg of query({
     prompt,
     options: {
-      model: hub.cfg.model,
+      model: hub.cfg.fastModel,
       maxTurns: 2,
       allowedTools: [],
       settingSources: [],
@@ -100,6 +100,7 @@ ${m.body.slice(0, 8000)}`;
       env: claudeEnv(hub),
     },
   })) {
+    if (msg.type === "result") recordCost(hub, "emailTasks", msg, hub.cfg.fastModel);
     if (msg.type === "result" && msg.subtype === "success") {
       const so = (msg as any).structured_output ?? JSON.parse(msg.result.match(/\{[\s\S]*\}/)?.[0] ?? '{"tasks":[]}');
       out = (so.tasks ?? []).slice(0, 3);

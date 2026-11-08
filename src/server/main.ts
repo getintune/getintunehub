@@ -11,6 +11,7 @@ import { allContacts, findContacts, noteAddresses, noteMessages, withLists } fro
 import { BRIEF, briefDue } from "../workflows/brief.js";
 import { listCounts, needs } from "../workflows/needs.js";
 import { renderPage } from "./page.js";
+import { featureOn } from "../agent/costs.js";
 
 /**
  * The app's screen: a local web app on 127.0.0.1, opened in her browser. Anything that sends an email or changes her
@@ -108,6 +109,24 @@ const server = http.createServer(async (req, res) => {
       });
     }
     // ---- Spotify: only the app's client ID lives on this computer (in .env); sign-in tokens stay in the browser.
+    // ---- Claude: on/off switches for the background features, and what Claude has cost today and this month
+    if (p === "/api/settings/claude" && req.method === "GET") {
+      const c = await import("../agent/costs.js");
+      const on = c.featureSettings(hub);
+      return send(res, 200, {
+        hasKey: !!cfg.anthropicApiKey,
+        model: cfg.model,
+        fastModel: cfg.fastModel,
+        features: (Object.keys(c.FEATURES) as (keyof typeof c.FEATURES)[]).map((f) => ({ id: f, label: c.FEATURES[f].label, hint: c.FEATURES[f].hint, on: on[f], running: c.featureOn(hub, f) })),
+        costs: c.costSummary(hub),
+      });
+    }
+    if (p === "/api/settings/claude" && req.method === "POST") {
+      const b = await body(req);
+      const c = await import("../agent/costs.js");
+      c.setFeature(hub, b.feature, !!b.on);
+      return send(res, 200, { ok: true });
+    }
     if (p === "/api/settings/spotify" && req.method === "GET") return send(res, 200, { clientId: cfg.spotify.clientId });
     if (p === "/api/settings/spotify" && req.method === "POST") {
       const b = await body(req);
@@ -506,6 +525,7 @@ Your final reply is my brief for the day, shown at the top of my dashboard. Writ
       const note = await travelNote();
       const prompt = buildPrompt(await myDay());
       plan.text = await withDraftSource(trigger === "morning" ? "Morning brief" : "Plan my day", async () => (await import("../agent/run.js")).ask(hub, prompt + note, {
+        use: "brief",
         onMessage: (m) => {
           if (m.type !== "assistant") return;
           for (const b of m.message.content) if (b.type === "tool_use") { plan.steps.push(describeTool(b.name, b.input as Record<string, unknown>)); savePlan(plan); bus.emit({ type: "changed", what: "plan" }); }
@@ -524,11 +544,11 @@ Your final reply is my brief for the day, shown at the top of my dashboard. Writ
   });
 }
 
-// ---- the morning brief: on its own at 7:00 AM her time on weekdays (HUB_BRIEF_TIME=off stops it,
+// ---- the morning brief: on its own at 7:00 AM her time on weekdays (the dashboard switch or HUB_BRIEF_TIME=off stops it,
 // HUB_BRIEF_DAYS=0-6 for every day). If the app wasn't open at 7, it runs as soon as it opens, until 5 PM.
 function checkBrief() {
   const last = readPlan();
-  if (!cfg.anthropicApiKey || last.state === "running" || !briefDue(new Date(), "startedAt" in last ? last : null)) return;
+  if (!featureOn(hub, "morningBrief") || last.state === "running" || !briefDue(new Date(), "startedAt" in last ? last : null)) return;
   const r = startPlan("morning");
   if (!("error" in r)) hub.say("Making this morning's brief…");
 }
