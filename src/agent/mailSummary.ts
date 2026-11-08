@@ -5,7 +5,7 @@ import path from "node:path";
 import type { Hub } from "../hub.js";
 
 /**
- * One line, 10 words or less, saying what a conversation is about, for the Gmail tab's list ("Adjuster wants
+ * One line, 10 words or less, saying what a conversation is about, for the Gmail tab's list ("Priya asks
  * hallway flooring photos before approving LVP"). Claude writes them in batches with the fast model; each is kept
  * until the thread changes (its historyId moves), so a thread is summarized once per new message.
  */

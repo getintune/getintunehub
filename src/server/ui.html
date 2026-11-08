@@ -39,7 +39,7 @@
   [hidden] { display: none !important; }
   .app { display: grid; grid-template-columns: var(--w-nav, 232px) minmax(0, 1fr); height: 100%; }
 
-  /* ---- left nav (Homebase's sidebar, flipped light) */
+  /* ---- left nav */
   .side-nav { background: var(--side-bg); color: var(--side-ink); display: flex; flex-direction: column; min-height: 0; padding: 22px 0 14px; }
   .logo { display: grid; justify-items: center; gap: 2px; padding: 0 16px 22px; color: var(--side-ink); text-decoration: none; }
   .logo img { width: 170px; height: auto; display: block; }
@@ -107,7 +107,16 @@
   .empty { margin: auto; color: var(--muted); text-align: center; padding: 40px; }
   .page { display: flex; flex-direction: column; min-height: 100%; padding: 22px 28px 28px; gap: 16px; max-width: 1180px; }
 
-  /* job header card, like Homebase's */
+  /* ---- Clients tab: one list per program */
+  .ltabs { display: flex; flex-wrap: wrap; gap: 4px; }
+  .ltabs button { border: 1px solid var(--line); background: transparent; color: var(--ink); border-radius: 999px; padding: 3px 10px; font-size: 13px; cursor: pointer; }
+  .ltabs button.on { background: var(--brand); color: var(--brand-ink); border-color: var(--brand); }
+  .ltabs .n { opacity: .7; font-size: 12px; }
+  .job.done { opacity: .55; }
+  select.stagepill { appearance: auto; border: 1px solid var(--line); background: var(--panel-2); color: var(--ink); border-radius: 999px; padding: 4px 10px; font-weight: 600; }
+  .wsbig { font-size: 15px; margin: 0 0 10px; } .wsbig b { font: 600 34px/1 var(--head); color: var(--brand); margin-right: 4px; }
+  #lperson .fgrid label { display: grid; gap: 4px; font-size: 13px; color: var(--muted); }
+  /* header card for one person (and other pages) */
   .jobcard { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 20px 24px 0; }
   .jobhead { display: flex; gap: 12px; align-items: flex-start; flex-wrap: wrap; }
   .jobhead h2 { margin: 0; font-size: 26px; font-weight: 500; flex: 1; min-width: 240px; text-wrap: balance; }
@@ -143,7 +152,7 @@
   .tag { font-size: 11px; padding: 1px 7px; border-radius: 4px; background: var(--pill); color: var(--muted); white-space: nowrap; }
   .tag.out { color: var(--link); } .tag.sent { color: var(--ok); } .tag.draft { color: var(--warn); } .tag.in { color: var(--bad); }
 
-  /* the stat strip (Homebase's row of figures) */
+  /* the stat strip (a row of figures) */
   .strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
   .tile { background: transparent; border: 0; border-left: 1px solid var(--line); border-top: 3px solid transparent; padding: 14px 16px 12px; display: grid; gap: 1px; text-align: left; cursor: pointer; color: var(--ink); font: inherit; }
   .tile:first-child { border-left: 0; }
@@ -473,63 +482,6 @@
     .jobcard { padding: 16px 16px 0; }
   }
 
-  /* ---- Estimator tab: chat with Claude + the job's documents */
-  .est { display: grid; grid-template-columns: var(--w-est, 270px) minmax(0, 1fr) var(--w-prev, minmax(0, 0.9fr)); height: 100%; min-height: 0; position: relative; }
-  .est.noprev { grid-template-columns: var(--w-est, 270px) minmax(0, 1fr) 0; }
-  .est-side { border-right: 1px solid var(--line); background: var(--panel); overflow: auto; padding: 14px; display: flex; flex-direction: column; gap: 14px; }
-  .est-side h5 { margin: 0 0 6px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
-  .est-job { font-size: 13px; line-height: 1.45; }
-  .est-job b { font-size: 15px; display: block; }
-  .est-docs { display: grid; gap: 4px; }
-  .est-doc { display: grid; grid-template-columns: 10px 1fr auto; gap: 8px; align-items: center; padding: 7px 8px; border-radius: 6px; border: 1px solid transparent; background: none; color: var(--ink); text-align: left; cursor: pointer; font: inherit; font-size: 13px; }
-  .est-doc:hover { background: var(--panel-2); }
-  .est-doc.on { border-color: var(--line); background: var(--panel-2); }
-  .est-doc i { width: 8px; height: 8px; border-radius: 50%; background: var(--line); }
-  .est-doc.have i { background: #4cc38a; }
-  .est-doc small { color: var(--muted); font-size: 11px; }
-  .est-doc .mk { font-size: 11px; color: var(--link); }
-  .est-in { font-size: 12.5px; color: var(--muted); display: grid; gap: 3px; }
-  .est-chat { display: flex; flex-direction: column; min-height: 0; min-width: 0; position: relative; }
-  .est-log { flex: 1; overflow: auto; padding: 22px 28px 10px; display: flex; flex-direction: column; gap: 14px; }
-  .est-log .hello { margin: auto; max-width: 520px; text-align: center; color: var(--muted); }
-  .est-log .hello h3 { color: var(--ink); font-size: 20px; margin: 0 0 6px; font-weight: 600; }
-  .msg { max-width: 760px; width: 100%; margin: 0 auto; font-size: 14.5px; line-height: 1.6; }
-  .msg.user { display: flex; justify-content: flex-end; }
-  .msg.user > div { background: var(--panel-2); border: 1px solid var(--line); border-radius: 14px 14px 4px 14px; padding: 9px 14px; max-width: 80%; white-space: pre-wrap; }
-  .msg.assistant p { margin: 0 0 8px; }
-  .msg.assistant ul, .msg.assistant ol { margin: 0 0 8px; padding-left: 22px; }
-  .msg.assistant h4 { margin: 10px 0 4px; font-size: 14.5px; }
-  .msg.assistant code { background: var(--soft); padding: 1px 5px; border-radius: 4px; font-size: 13px; }
-  .msg.assistant pre { background: var(--soft); padding: 10px 12px; border-radius: 6px; overflow: auto; font-size: 12.5px; }
-  .msg.assistant table { border-collapse: collapse; margin: 4px 0 10px; font-size: 13px; }
-  .msg.assistant td, .msg.assistant th { border: 1px solid var(--line); padding: 4px 9px; text-align: left; }
-  .msg.tool + .msg.tool { margin-top: -10px; }
-  .msg.tool { color: var(--muted); font-size: 12.5px; display: flex; gap: 8px; align-items: center; }
-  .msg.tool::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--muted); opacity: .6; flex: none; }
-  .msg.error > div { border-left: 3px solid #e5484d; background: var(--soft); padding: 8px 12px; border-radius: 0 6px 6px 0; }
-  .msg.typing { color: var(--muted); font-size: 13px; }
-  .msg.typing::after { content: "…"; animation: blink 1.2s infinite; }
-  @keyframes blink { 50% { opacity: .2; } }
-  .est-quick { display: flex; gap: 6px; flex-wrap: wrap; padding: 0 28px 8px; max-width: 816px; width: 100%; margin: 0 auto; box-sizing: border-box; }
-  .est-quick button { border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 999px; padding: 5px 12px; font: inherit; font-size: 12.5px; cursor: pointer; }
-  .est-quick button:hover { background: var(--panel-2); }
-  .est-comp { padding: 0 28px 16px; max-width: 816px; width: 100%; margin: 0 auto; box-sizing: border-box; }
-  .est-box { border: 1px solid var(--line); background: var(--panel); border-radius: 14px; padding: 10px 12px 8px; display: grid; gap: 6px; }
-  .est-box:focus-within { border-color: var(--muted); }
-  .est-box textarea { border: 0; background: none; padding: 2px; min-height: 48px; max-height: 220px; resize: none; font-size: 14.5px; }
-  .est-box textarea:focus { outline: none; }
-  .est-box .bar { display: flex; gap: 8px; align-items: center; }
-  .est-files { display: flex; gap: 6px; flex-wrap: wrap; }
-  .est-files span { font-size: 12px; background: var(--soft); border-radius: 6px; padding: 3px 8px; }
-  .est-drop { position: absolute; inset: 10px; border: 2px dashed var(--muted); border-radius: 14px; background: color-mix(in srgb, var(--bg) 85%, transparent); display: grid; place-items: center; font-size: 16px; z-index: 5; }
-  .est-prev { border-left: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; min-width: 0; background: var(--panel); }
-  .est.noprev .est-prev { display: none; }
-  .est-prev .hd { display: flex; gap: 8px; align-items: center; padding: 8px 12px; border-bottom: 1px solid var(--line); font-size: 13px; }
-  .est-prev .hd b { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .est-prev iframe { flex: 1; border: 0; width: 100%; background: #525659; }
-  @media (max-width: 1100px) { .est, .est.noprev { grid-template-columns: 230px minmax(0, 1fr); } .est-prev { position: fixed; inset: 60px 12px 12px auto; width: min(640px, 90vw); z-index: 20; box-shadow: 0 10px 40px #0008; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; } }
-  @media (max-width: 700px) { .est, .est.noprev { grid-template-columns: 1fr; } .est-side { display: none; } .est-log, .est-comp, .est-quick { padding-left: 16px; padding-right: 16px; } }
-
   /* ---- zones: drag a panel's edge to resize it, the menu buttons (or a double-click on the edge) to fold it */
   .side-nav, .split > aside, .gm-rail, .calside, .est-side, .est-prev { position: relative; }
   .zgrip { position: absolute; top: 0; bottom: 0; right: -4px; width: 8px; cursor: col-resize; z-index: 6; }
@@ -556,10 +508,10 @@
   .gm.z-gm .gm-lab.on b { display: block; position: absolute; top: -2px; right: 2px; font-size: 10px; }
   .gm.z-gm .gm-compose { padding: 0; width: 56px; justify-content: center; margin-left: 12px; }
   /* folded side panels */
-  .split.z-jobs > aside, .calwrap.z-cal .calside, .est.z-est .est-side { visibility: hidden; overflow: hidden; padding: 0; border: 0; min-width: 0; }
+  .split.z-lists > aside, .calwrap.z-cal .calside, .est.z-est .est-side { visibility: hidden; overflow: hidden; padding: 0; border: 0; min-width: 0; }
   @media (max-width: 980px) { .zgrip, .zopen { display: none; } }
 
-  /* ---- Homebase Notes */
+  /* ---- small shared bits (avatars, link buttons, pop-ups) */
   .notes { display: grid; gap: 14px; max-width: 860px; padding-top: 12px; }
   .ncomp { display: grid; gap: 8px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
   .nthread { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: grid; gap: 10px; margin-bottom: 12px; }
@@ -758,8 +710,7 @@
     <nav class="tabs" id="tabs">
       <button data-tab="today" class="active" title="Dashboard"><span class="ms">space_dashboard</span><span class="nm">Dashboard</span> <span class="count" id="todaycount" hidden></span></button>
       <button data-tab="brief" title="Today's brief"><span class="ms">checklist</span><span class="nm">Brief</span> <span class="count" id="briefcount" hidden></span></button>
-      <button data-tab="jobs" title="Jobs"><span class="ms">work</span><span class="nm">Jobs</span></button>
-      <button data-tab="est" title="Estimator"><span class="ms">calculate</span><span class="nm">Estimator</span></button>
+      <button data-tab="lists" title="Your lists"><span class="ms">groups</span><span class="nm">Clients</span></button>
       <button data-tab="mail" title="Gmail"><span class="ms">mail</span><span class="nm">Gmail</span> <span class="count" id="mailcount" hidden></span></button>
       <button data-tab="people" title="Contacts"><span class="ms">contacts</span><span class="nm">Contacts</span></button>
       <button data-tab="cal" title="Calendar"><span class="ms">calendar_month</span><span class="nm">Calendar</span></button>
@@ -777,8 +728,6 @@
     <div class="crumbs" id="crumbs">Dashboard</div>
     <div class="topright">
       <span id="chips" class="row"></span>
-      <span class="small muted" id="syncstate"></span>
-      <button class="topbtn" id="syncnow" type="button" title="Refresh every job folder from Homebase (also runs every 15 minutes)">Sync now</button>
       <button class="topbtn" id="playerbtn" type="button" title="Quick player: Spotify links and Audible">♪ Player</button>
     </div>
   </div>
@@ -786,32 +735,30 @@
   <!-- TODAY -->
   <section class="view" id="v-people" hidden>
     <div class="ppl">
-      <aside class="ppl-list"><div class="pad"><input type="search" id="ppl-q" placeholder="Search name, email, company, phone or #job"><div class="small muted" id="ppl-count"></div></div><div class="list" id="ppl-rows"></div></aside>
-      <div class="scroll"><div class="ppl-card" id="ppl-card"><div class="empty">Pick someone on the left, or search. Everyone you email, and everyone on your Homebase jobs, lands here on their own.</div></div></div>
+      <aside class="ppl-list"><div class="pad"><input type="search" id="ppl-q" placeholder="Search name, email, phone or list"><div class="small muted" id="ppl-count"></div></div><div class="list" id="ppl-rows"></div></aside>
+      <div class="scroll"><div class="ppl-card" id="ppl-card"><div class="empty">Pick someone on the left, or search. Everyone you email lands here on their own.</div></div></div>
     </div>
   </section>
   <section class="view" id="v-brief" hidden><div class="scroll"><div class="briefpage" id="briefpage"><div class="empty">Loading…</div></div></div></section>
   <section class="view" id="v-today"><div class="scroll"><div class="dash" id="today"><div class="empty">Loading…</div></div></div></section>
   <div class="tip" id="tip" hidden></div>
 
-  <!-- JOBS -->
-  <section class="view" id="v-jobs" hidden>
+  <!-- LISTS: one per program -->
+  <section class="view" id="v-lists" hidden>
     <div class="split">
       <aside>
         <div class="pad">
-          <input type="search" id="q" placeholder="Search name, street or job #">
+          <div class="ltabs" id="ltabs"></div>
+          <input type="search" id="lq" placeholder="Search names, emails, notes">
           <div class="row">
-            <select id="stage" style="flex:1"><option value="">All stages</option></select>
-            <select id="sort" style="width:auto"><option value="days">Days in stage</option><option value="touch">Last touched</option><option value="num">Job #</option><option value="amt">Proposal $</option></select>
+            <select id="lstage" style="flex:1"><option value="">All stages</option></select>
+            <button class="btn primary" type="button" id="ladd">Add</button>
           </div>
-          <div class="small muted" id="count"></div>
+          <div class="small muted" id="lcount"></div>
         </div>
-        <div class="list" id="list"><div class="empty">Loading jobs from Homebase…</div></div>
+        <div class="list" id="llist"><div class="empty">Loading…</div></div>
       </aside>
-      <div class="scroll" id="main">
-        <div class="empty" id="placeholder">Pick a job on the left.</div>
-        <div class="page" id="job" hidden></div>
-      </div>
+      <div class="scroll" id="lmain"><div class="page" id="lperson"><div class="empty">Pick someone on the left, or press Add.</div></div></div>
     </div>
   </section>
 
@@ -857,50 +804,13 @@
     </div>
   </section>
 
-  <!-- ESTIMATOR -->
-  <section class="view" id="v-est" hidden>
-    <div class="est noprev" id="est">
-      <aside class="est-side">
-        <div><h5>Job</h5><select id="est-job"><option value="">Pick a job…</option></select></div>
-        <div class="est-job" id="est-jobinfo"></div>
-        <div><h5>Documents</h5><div class="est-docs" id="est-docs"></div></div>
-        <div id="est-other"></div>
-        <div><h5>What Claude can use</h5><div class="est-in" id="est-inputs"></div></div>
-        <div class="row" style="margin-top:auto;gap:6px;flex-wrap:wrap"><button class="btn" type="button" id="est-new" title="Start over with a fresh conversation (the old one is kept in the job's notes folder)">New conversation</button></div>
-      </aside>
-      <div class="est-chat" id="est-chat">
-        <div class="est-log" id="est-log"></div>
-        <div class="est-quick" id="est-quick"></div>
-        <div class="est-comp">
-          <div class="est-box">
-            <div class="est-files" id="est-files"></div>
-            <textarea id="est-input" rows="2" placeholder="Message Claude about this job… (drop an ESX, Xactimate PDF or photos here)"></textarea>
-            <div class="bar">
-              <button class="btn" type="button" id="est-attach" title="Add files to the job folder for Claude">＋ Files</button>
-              <input type="file" id="est-pick" multiple hidden>
-              <span class="small muted" id="est-state" style="flex:1"></span>
-              <button class="btn" type="button" id="est-stop" hidden>Stop</button>
-              <button class="btn primary" type="button" id="est-send">Send</button>
-            </div>
-          </div>
-        </div>
-        <div class="est-drop" id="est-drop" hidden>Drop to add to the job folder for Claude</div>
-      </div>
-      <div class="est-prev">
-        <div class="hd"><b id="est-ptitle"></b><a class="btn" id="est-popen" target="_blank" rel="noopener">Open</a><button class="btn" type="button" id="est-pclose">Close</button></div>
-        <iframe id="est-frame" title="Document preview"></iframe>
-      </div>
-    </div>
-  </section>
-
   <section class="view" id="v-music" hidden>
     <div class="sp" id="sp"><div class="sp-main" style="grid-column:1/-1;grid-row:1/-1"><div class="sp-msg">Loading…</div></div></div>
   </section>
 
   <footer class="askbar">
     <form id="askform">
-      <button type="button" class="btn" id="addfiles" title="Add files to a job (or drag them anywhere onto {{APP_NAME}})">Add files</button>
-      <textarea id="prompt" rows="1" placeholder="Ask Claude, or drop files here, e.g. “who's waiting on me?”, “draft a follow-up to the Wegener homeowner”"></textarea>
+      <textarea id="prompt" rows="1" placeholder="Ask Claude, e.g. “how many workshop sign-ups do I have?”, “draft a follow-up to Tom about coaching”"></textarea>
       <button class="btn primary">Ask</button>
     </form>
     <div class="attached small" id="attached"></div>
@@ -920,33 +830,6 @@
 <dialog id="approve"><div class="in"><h4 id="ap-title"></h4><ul id="ap-details"></ul><textarea id="ap-text" rows="3" hidden></textarea></div>
   <div class="foot"><button class="btn" id="ap-no">No</button><button class="btn primary" id="ap-yes">Yes, go ahead</button></div></dialog>
 
-<dialog id="sendoff"><form method="dialog"><div class="in">
-  <h4>Draft the send-off</h4>
-  <div class="banner">Creates Gmail <b>drafts</b>, BCC'd to <span id="so-bcc"></span>. You send them.</div>
-  <label class="row"><input type="checkbox" id="so-home" checked> Homeowner: Reconstruction Estimate</label>
-  <label class="row"><input type="checkbox" id="so-adj"> Adjuster: Xactimate Estimate + photo report</label>
-  <p class="small muted" id="so-missing"></p>
-  </div><div class="foot"><button class="btn" value="cancel">Cancel</button><button class="btn primary" value="go">Create drafts</button></div></form></dialog>
-
-<dialog id="logdlg"><form method="dialog"><div class="in">
-  <h4>Log a call</h4>
-  <div class="row"><select id="lg-dir" style="width:auto"><option>Outbound</option><option>Inbound</option></select><input type="text" id="lg-who" placeholder="With (e.g. Eileen Brandt)" style="flex:1"></div>
-  <textarea id="lg-body" rows="4" placeholder="First line is the subject on Homebase's Activity tab"></textarea>
-  <p class="small muted">Claude will offer a one-line note for the job's feed afterwards.</p>
-  </div><div class="foot"><button class="btn" value="cancel">Cancel</button><button class="btn primary" value="go">Log it</button></div></form></dialog>
-
-<dialog id="adjdlg"><form method="dialog"><div class="in">
-  <h4>Adjuster <span id="adj-slot"></span></h4>
-  <div class="fgrid"><label>First name<input type="text" id="adj-first"></label><label>Last name<input type="text" id="adj-last"></label><label>Email<input type="email" id="adj-email"></label><label>Phone<input type="text" id="adj-phone"></label></div>
-  <p class="small muted">Adds them in Homebase (or uses the person Homebase already has by that name) and puts them on the job.</p>
-  </div><div class="foot"><button class="btn" value="cancel">Cancel</button><button class="btn primary" value="go">Save to Homebase</button></div></form></dialog>
-
-<dialog id="filedlg"><form method="dialog"><div class="in">
-  <h4>Add <span id="fd-count"></span> to a job</h4>
-  <div class="small muted" id="fd-names"></div>
-  <select id="fd-job"></select>
-  <label class="row"><input type="checkbox" id="fd-hb" checked> Also add to the job's Documents in Homebase (you'll OK each one)</label>
-  </div><div class="foot"><button class="btn" value="cancel">Cancel</button><button class="btn primary" value="go">Add</button></div></form></dialog>
 <div class="player" id="player" hidden>
   <div class="bar"><b>Player</b><button class="btn small" id="pl-min" type="button">Hide</button><button class="btn small" id="pl-close" type="button" aria-label="Close player">✕</button></div>
   <iframe id="pl-spotify" title="Spotify" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy" hidden></iframe>
@@ -957,17 +840,20 @@
     <span class="small muted">Sign in to Spotify in this browser for full songs; otherwise Spotify plays previews.</span>
   </div>
 </div>
-<div class="dropzone" id="dropzone" hidden><div>Drop to add to <span id="dz-target">a job</span></div></div>
+<dialog id="ladddlg"><form method="dialog"><div class="in">
+  <h4 id="la-h">Add someone</h4>
+  <p class="small muted" id="la-hint"></p>
+  <div class="fgrid" id="la-fields"></div>
+  </div><div class="foot"><button class="btn" value="cancel">Cancel</button><button class="btn primary" value="go">Add</button></div></form></dialog>
 
 <dialog id="evdlg"><form method="dialog" id="evform"><div class="in">
   <h4 id="ev-h">New event</h4>
-  <input type="text" id="ev-title" placeholder="Title (e.g. Scope walk #3226 Augustine)">
+  <input type="text" id="ev-title" placeholder="Title (e.g. Free consult with Priya)">
   <div class="fgrid">
     <label>Date<input type="date" id="ev-date"></label>
     <label>Start<input type="time" id="ev-start" step="900"></label>
     <label>End<input type="time" id="ev-end" step="900"></label>
     <label style="align-self:end"><span class="row"><input type="checkbox" id="ev-allday" style="width:auto"> All day</span></label>
-    <label>Job<select id="ev-job"><option value="">(none)</option></select></label>
     <label>Calendar<select id="ev-cal"></select></label>
     <label class="wide">Location<input type="text" id="ev-loc"><span class="small evtravel" id="ev-travel" hidden></span></label>
     <label class="wide">Notes<textarea id="ev-desc" rows="3"></textarea></label>
@@ -988,7 +874,6 @@
 
 <dialog id="composedlg" class="gcomp"><form method="dialog" id="composeform">
   <div class="gc-h"><span id="cp-title">New Message</span><button type="button" id="cp-min" title="Minimize"><span class="ms">minimize</span></button><button value="cancel" title="Save &amp; close"><span class="ms">close</span></button></div>
-  <div class="gc-f"><span>Job</span><select id="cp-job"><option value="">(none)</option></select></div>
   <div class="gc-f"><span>To</span><input type="text" id="cp-to" autocomplete="off"></div>
   <div class="gc-f"><span>Cc</span><input type="text" id="cp-cc" autocomplete="off"></div>
   <div class="gc-f"><span>Bcc</span><input type="text" id="cp-bcc" autocomplete="off"></div>
@@ -1011,7 +896,7 @@ const fmtWhen = (d) => { if (!d) return ""; const t = new Date(d); const today =
 const ZOOM = () => parseFloat(document.documentElement.style.zoom) || 1;
 const store = { get(k, d) { try { return JSON.parse(localStorage.getItem("hub:" + k)) ?? d; } catch { return d; } }, set(k, v) { try { localStorage.setItem("hub:" + k, JSON.stringify(v)); } catch {} } };
 
-let status = {}, meta = { fields: [], sections: [], vocab: {}, reminderGroups: [] }, jobs = [], selected = store.get("job", null), view = null, jobTab = store.get("jobtab", "overview");
+let status = {}, lists = { programs: [], entries: [] }, curProg = store.get("prog", "coaching"), curPerson = store.get("person", null);
 
 async function api(path, opts = {}) {
   const r = await fetch(path, { ...opts, headers: { "Content-Type": "application/json" }, body: opts.body ? JSON.stringify(opts.body) : undefined });
@@ -1043,452 +928,217 @@ $("#congrip").addEventListener("pointerdown", (e) => {
 conApply();
 
 // ============================================================= tabs
+const TAB_NAMES = { today: "Dashboard", brief: "Today's brief", lists: "Clients", mail: "Gmail", people: "Contacts", cal: "Calendar", music: "Music" };
 function showTab(t) {
+  if (!TAB_NAMES[t]) t = "today";
   store.set("tab", t);
   $$("#tabs button").forEach((b) => b.classList.toggle("active", b.dataset.tab === t));
-  for (const v of ["today", "brief", "jobs", "est", "mail", "people", "cal", "music"]) $("#v-" + v).hidden = v !== t;
+  for (const v of Object.keys(TAB_NAMES)) $("#v-" + v).hidden = v !== t;
   if (t === "people") loadPeople();
   if (t === "brief") renderBrief();
-  document.querySelector(".askbar form").hidden = t === "est";
-  if (t === "est") loadEst();
+  if (t === "lists") loadLists();
   if (t === "cal") loadCal();
   if (t === "music" && !$("#sp-bar")) renderMusic();
-  setCrumbs(t === "jobs" && view ? `Jobs / <b>#${view.homebase.jobNumber}</b>` : `<b>${{ today: "Dashboard", brief: "Today's brief", people: "Contacts", jobs: "Jobs", est: "Estimator", mail: "Gmail", cal: "Calendar", music: "Music" }[t]}</b>`);
+  setCrumbs(`<b>${TAB_NAMES[t]}</b>`);
   if (t === "today") loadToday();
   if (t === "mail" && !mailLoaded) loadMail();
 }
 $$("#tabs button").forEach((b) => b.addEventListener("click", () => showTab(b.dataset.tab)));
 
 function setCrumbs(html) { $("#crumbs").innerHTML = html; }
-function rememberJob(n, name) {
-  const r = store.get("recent", []).filter((x) => x.n !== n); r.unshift({ n, name }); store.set("recent", r.slice(0, 4)); renderRecent();
+function rememberPerson(id, name) {
+  const r = store.get("recentPeople", []).filter((x) => x.id !== id); r.unshift({ id, name }); store.set("recentPeople", r.slice(0, 4)); renderRecent();
 }
 function renderRecent() {
-  $("#recent").innerHTML = store.get("recent", []).map((x) => `<button type="button" data-do="open" data-n="${x.n}" title="#${x.n} ${esc(x.name)}">⌂ #${x.n} ${esc(x.name)}</button>`).join("");
+  $("#recent").innerHTML = store.get("recentPeople", []).map((x) => `<button type="button" data-do="person" data-id="${esc(x.id)}" title="${esc(x.name)}">• ${esc(x.name)}</button>`).join("");
 }
-$("#globalq").addEventListener("keydown", (e) => { if (e.key !== "Enter") return; const q = $("#globalq").value.trim(); if (!q) return; if (/^#?\d{4}$/.test(q)) { showTab("jobs"); openJob(Number(q.replace("#", ""))); } else { showTab("jobs"); $("#q").value = q; renderList(); } $("#globalq").value = ""; });
+$("#globalq").addEventListener("keydown", (e) => { if (e.key !== "Enter") return; const q = $("#globalq").value.trim(); if (!q) return; showTab("lists"); $("#lq").value = q; loadLists(); $("#globalq").value = ""; });
 $("#logo").addEventListener("click", (e) => { e.preventDefault(); showTab("today"); });
 
 // ============================================================= status
 async function loadStatus() {
   status = await api("/api/status");
-  meta = await api("/api/meta").catch(() => meta);
   const chip = (label, on, title) => `<span class="chip ${on ? "" : "off"}" title="${esc(title)}">${on ? "●" : "○"} ${label}</span>`;
   $("#chips").innerHTML = [
-    chip("Homebase", status.homebase !== "mock", `Homebase: ${status.homebase}`),
-    chip("Gmail", status.gmail === "google", status.gmail === "google" ? (status.gmailFull ? "Connected" : "Connected for drafts only; reconnect to send from {{APP_NAME}}") : "Not connected (test inbox)"),
-    chip("CompanyCam", status.companycam === "rest", status.companycam === "rest" ? "Connected" : "Not connected"),
-    chip("Claude", status.agent, status.agent ? `On · requests go to ${(status.claude?.endpoint || "").replace(/^https?:\/\//, "")}${status.claude?.ignored?.length ? `. Ignored a setting on this PC that tried to send them elsewhere: ${status.claude.ignored.map((r) => r.name + (r.host ? " → " + r.host : "")).join(", ")}` : ""}` : "Off: no Anthropic API key on this machine"),
+    chip("Lists", status.lists !== "mock", status.lists === "mock" ? "Practice lists (made-up people)" : "Your lists, saved on this computer"),
+    chip("Gmail", status.gmail === "google", status.gmail === "google" ? (status.gmailFull ? "Connected" : "Connected for drafts only; reconnect to send from {{APP_NAME}}") : "Not connected (practice inbox)"),
+    chip("Claude", status.agent, status.agent ? `On · requests go to ${(status.claude?.endpoint || "").replace(/^https?:\/\//, "")}${status.claude?.ignored?.length ? `. Ignored a setting on this computer that tried to send them elsewhere: ${status.claude.ignored.map((r) => r.name + (r.host ? " → " + r.host : "")).join(", ")}` : ""}` : "Off: no Anthropic API key on this computer"),
   ].join("");
 }
-async function loadSyncState() {
-  try {
-    const s = await api("/api/sync-all");
-    const ago = s.last ? Math.round((Date.now() - Date.parse(s.last.at)) / 60000) : null;
-    $("#syncstate").textContent = s.running ? "Syncing…" : s.last ? `Synced ${ago < 1 ? "just now" : ago + " min ago"}` : "";
-    $("#syncnow").disabled = !!s.running;
-  } catch {}
-}
-$("#syncnow").addEventListener("click", async () => { try { await api("/api/sync-all", { method: "POST" }); loadSyncState(); } catch (e) { log(e.message, "t-err"); } });
 
-// ============================================================= TODAY
-const ACTIONS = {
-  reply: (r) => `${r.threadId ? `<button class="btn small primary" data-do="thread" data-thread="${esc(r.threadId)}">Reply</button>` : ""}<button class="btn small" data-do="claude" data-p="Read the latest email on job #${r.jobNumber} and draft my reply in Gmail (draft only).">Draft reply with Claude</button>`,
-  log: (r) => `<button class="btn small primary" data-do="logsent" data-n="${r.jobNumber}">Log in Homebase</button>`,
-  estimate: (r) => `<button class="btn small" data-do="claude" data-p="Start the estimate for job #${r.jobNumber}: check what's in the job folder (ESX, photos, notes) and tell me what's missing before you price it.">Start estimate with Claude</button>`,
-  adjuster: (r) => `<button class="btn small primary" data-do="claude" data-p="Draft a short check-in email to the adjuster on job #${r.jobNumber}, in my voice, asking where they are on their review of our estimate and whether they need anything else from us (photos, measurements, a call). Reply in the existing thread with them if there is one. Gmail draft only.">Draft check-in with Claude</button>`,
-  followup: (r) => `<button class="btn small" data-do="claude" data-p="Draft a short follow-up email for job #${r.jobNumber}'s proposal in my voice (Gmail draft only), to whoever is waiting on it.">Draft follow-up</button>`,
-  draft: () => `<a class="btn small" href="https://mail.google.com/mail/u/0/#drafts" target="_blank" rel="noopener">Open Gmail drafts</a>`,
-  upload: (r) => `<button class="btn small primary" data-do="upload" data-n="${r.jobNumber}">Upload</button>`,
-  stale: (r) => `<button class="btn small" data-do="claude" data-p="Job #${r.jobNumber} hasn't been touched in a week. Look at where it stands and tell me the next step; draft any email that's needed (draft only).">What's next?</button>`,
-};
-function remRow(r) {
-  return `<div class="rem"><div class="l"><div class="ttl"><a href="#" data-do="open" data-n="${r.jobNumber}">#${r.jobNumber} ${esc(r.name)}</a> · ${esc(r.title)}</div><div class="small muted">${esc(r.detail)}${r.detail ? " · " : ""}<span class="stage">${esc(r.stage)}</span>${r.days && r.days < 999 ? ` · ${r.days} day${r.days === 1 ? "" : "s"}` : ""}</div></div><div class="r">${ACTIONS[r.kind]?.(r) ?? ""}</div></div>`;
+// ============================================================= TODAY (the dashboard)
+const progName = (id) => lists.programs.find((p) => p.id === id)?.name || id;
+function needRow(n) {
+  const when = n.kind === "next" ? (n.days > 0 ? `<span style="color:var(--bad)">${n.days} day${n.days === 1 ? "" : "s"} overdue</span>` : "due today") : `${n.days} days at ${esc(n.stage)}`;
+  return `<div class="rem"><div class="l"><div class="ttl"><a href="#" data-do="person" data-id="${esc(n.id)}">${esc(n.name)}</a> · ${esc(n.title)}</div><div class="small muted">${esc(n.list)} · <span class="stage">${esc(n.stage)}</span> · ${when}</div></div>
+    <div class="r"><button class="btn small" data-do="person" data-id="${esc(n.id)}">Open</button>${status.agent && n.program !== "therapy" ? `<button class="btn small" data-do="claude" data-p="${esc(`Help me with ${n.name} (${n.list}, id ${n.id}): ${n.title}. Look them up, check my recent email with them, and draft what's needed in Gmail (draft only).`)}">Help with Claude</button>` : ""}</div></div>`;
 }
-let dashFilter = null;
 async function loadToday() {
   let d;
   try { d = await api("/api/dashboard"); } catch (e) { $("#today").innerHTML = `<div class="empty">${esc(e.message)}</div>`; return; }
-  const t = d.totals;
-  const urgent = t.waiting + (d.unfiled?.length || 0);
+  if (!lists.programs.length) lists = await api("/api/lists").catch(() => lists);
+  const urgent = d.needs.filter((n) => n.kind === "next").length;
   $("#todaycount").textContent = urgent; $("#todaycount").hidden = !urgent;
-  const by = Object.fromEntries(d.groups.map((g) => [g.kind, []]));
-  for (const r of d.reminders) (by[r.kind] ??= []).push(r);
-  const date = new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
-  const max = Math.max(1, ...d.byStage.map((x) => x.count));
-  const tile = (k, v, label, hot) => `<button class="tile ${hot && v ? "hot" : ""} ${k && dashFilter === k ? "on" : ""}" data-filter="${k}" type="button"><span class="v">${v}</span><span class="k">${label}</span></button>`;
-  const groups = d.groups.filter((g) => by[g.kind]?.length && (!dashFilter || g.kind === dashFilter));
   const longDate = new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
-  const notesCard = await teamNotesCard();
+  const w = d.workshops[0];
+  const tile = (prog, v, label, hot) => `<button class="tile ${hot && v ? "hot" : ""}" data-prog="${prog}" type="button"><span class="v">${v}</span><span class="k">${esc(label)}</span></button>`;
+  const open = (id) => d.lists.find((l) => l.id === id)?.open ?? 0;
   $("#today").innerHTML = `
-    <div class="todayhead"><div style="flex:1;min-width:240px"><h2>Dashboard</h2><div class="dateline">${esc(longDate)} · ${t.open} open jobs${d.lastSync ? ` · synced ${fmtWhen(d.lastSync)}` : ""}</div></div>
-      <button class="btn primary" id="plan" ${status.agent ? "" : "disabled title='Claude is off on this machine'"}>Plan my day with Claude</button></div>
-    ${!d.autoFiling ? `<div class="banner">Incoming job emails file themselves to Homebase once Gmail is fully connected${status.gmail === "google" ? ": double-click <b>Connect Gmail</b> in the {{APP_NAME}} folder once more and click Allow" : ""}.</div>` : ""}
+    <div class="todayhead"><div style="flex:1;min-width:240px"><h2>Good ${new Date().getHours() < 12 ? "morning" : new Date().getHours() < 17 ? "afternoon" : "evening"}, {{FIRST}}</h2><div class="dateline">${esc(longDate)}</div></div>
+      <button class="btn primary" id="plan" ${status.agent ? "" : "disabled title='Claude is off on this computer'"}>Plan my day with Claude</button></div>
     <div id="brief"></div>
     <div class="strip">
-      ${tile("reply", t.waiting, "waiting on your reply", true)}
-      ${tile("estimate", t.estimate, "need an estimate")}
-      ${tile("adjuster", t.adjuster, "adjusters to check in with", true)}
-      ${tile("followup", t.followup, "proposals to follow up")}
-      ${tile("proposals", usd(t.proposalsAmount).replace(/\.\d\d$/, ""), `${t.proposalsOut} proposals out`)}
-      ${tile("stale", t.stale, "not touched this week")}
-      ${tile("", t.open, "open jobs")}
+      ${w ? tile("workshop", w.total, `signed up · ${w.event}${w.newToday ? ` · ${w.newToday} new today` : ""}`, false) : tile("workshop", 0, "workshop sign-ups")}
+      ${tile("therapy", open("therapy"), "therapy clients")}
+      ${tile("coaching", open("coaching"), "coaching clients & inquiries")}
+      ${tile("trainees", open("trainees"), "certification trainees")}
+      ${tile("supervision", open("supervision"), "supervision members")}
+      ${tile("facilities", open("facilities"), "facilities")}
     </div>
     <div class="cols">
-      <div class="card"><h3>Needs you ${dashFilter ? `<button class="btn small" data-filter="">Show everything</button>` : ""}</h3>
-        <div class="needs">
-        ${d.unfiled?.length && (!dashFilter || dashFilter === "reply") ? `<div class="group"><h3>Emails to file <span class="muted">${d.unfiled.length} · couldn't tell which job; pick one</span></h3>
-          ${d.unfiled.map((u) => `<div class="rem"><div class="l"><div class="ttl">${esc(u.subject || "(no subject)")}</div><div class="small muted">from ${esc(u.from)} · ${fmtDate(u.at)}</div></div><div class="r">${u.candidates.map((c) => `<button class="btn small primary" data-do="fileto" data-thread="${esc(u.threadId)}" data-msg="${esc(u.messageId)}" data-n="${c.jobNumber}">#${c.jobNumber} ${esc(c.name)}</button>`).join("")}<button class="btn small" data-do="thread" data-thread="${esc(u.threadId)}">Open</button><button class="btn small" data-do="notjob" data-msg="${esc(u.messageId)}">Not a job email</button></div></div>`).join("")}</div>` : ""}
-        ${groups.map((g) => `<div class="group"><h3>${esc(g.label)} <span class="muted">${by[g.kind].length} · ${esc(g.hint)}</span></h3>${by[g.kind].map(remRow).join("")}</div>`).join("") || `<div class="alldone">${d.lastSync || d.folders ? "Nothing is waiting on you." : "The first sync is still running. This fills in when it finishes (about a minute)."}</div>`}
-        </div></div>
       <div class="side">
-        ${notesCard}
+        <div class="card"><h3>Needs you <span class="small muted">${d.needs.length ? `${d.needs.length} thing${d.needs.length === 1 ? "" : "s"}` : ""}</span></h3>
+          <div class="needs">${d.needs.length ? d.needs.map(needRow).join("") : `<div class="alldone">Nothing on your lists is waiting on you.</div>`}</div></div>
+        ${d.workshops.map((x) => `<div class="card"><h3><span>${esc(x.event)}</span><button class="btn small" data-prog="workshop">See everyone</button></h3>
+          <div class="wsbig"><b>${x.total}</b> signed up${x.newToday ? ` · <span class="tag in">${x.newToday} new today</span>` : ""}</div>
+          <table class="tbl"><tbody>${x.bySource.map((s) => `<tr><td>${esc(s.source)}<div><span class="sbar" style="width:${Math.round((s.count / x.total) * 100)}%"></span></div></td><td class="num"><b>${s.count}</b></td></tr>`).join("")}</tbody></table></div>`).join("")}
+      </div>
+      <div class="side">
         <div class="card"><h3>Today <button class="btn small" data-do="gocal">Calendar</button></h3>
-          ${(d.schedule = (d.schedule || []).filter((e) => !isHiddenEv(e))) && ""}${d.calendarConnected ? (d.schedule.length ? `<ul class="items">${d.schedule.map((e) => `<li><span class="sw" style="display:inline-block;width:9px;height:9px;border-radius:2px;background:${esc(e.color || "#7aa7ff")}"></span> <b>${e.allDay ? "All day" : hm(e.start)}</b> ${esc(e.title)}${e.location ? `<div class="small muted">${esc(e.location)}</div>` : ""}${d.travel?.[e.id] ? `<div class="small ${d.travel[e.id].late ? "" : "muted"}">${d.travel[e.id].late ? `<span style="color:var(--bad)">⚠ ${d.travel[e.id].late} min short from ${esc(d.travel[e.id].fromLabel)}</span>` : `🚗 Leave by <b>${hm(d.travel[e.id].leaveBy)}</b> · ${d.travel[e.id].minutes} min from ${esc(d.travel[e.id].fromLabel)}`} · <a href="${esc(d.travel[e.id].mapsUrl)}" target="_blank" rel="noopener">Directions</a></div>` : ""}${e.jobNumber ? ` <a href="#" class="small" data-do="open" data-n="${e.jobNumber}">#${e.jobNumber}</a>` : ""}</li>`).join("")}</ul>` : `<p class="muted" style="margin:0">Nothing on the calendar today.</p>`) : `<p class="muted" style="margin:0">Connect Google Calendar (Connect Gmail) to see today here.</p>`}
-          ${d.tasksDue?.length ? `<div class="small muted" style="margin:12px 0 4px">Tasks due</div>${d.tasksDue.map((k) => `<div class="row" style="gap:6px;padding:3px 0"><button class="btn small" data-do="taskdone" data-list="${esc(k.listId)}" data-task="${esc(k.id)}" title="Mark done">☐</button><span style="flex:1;min-width:0">${esc(k.title)}</span>${k.jobNumber ? goButton(k.jobNumber, placeFor(k.title)) : ""}${k.due < ymd(new Date()) ? `<span class="small" style="color:var(--bad)">${fmtDate(k.due + "T12:00")}</span>` : ""}</div>`).join("")}` : ""}
+          ${(d.schedule = (d.schedule || []).filter((e) => !isHiddenEv(e))) && ""}${d.calendarConnected ? (d.schedule.length ? `<ul class="items">${d.schedule.map((e) => `<li><span class="sw" style="display:inline-block;width:9px;height:9px;border-radius:2px;background:${esc(e.color || "#7aa7ff")}"></span> <b>${e.allDay ? "All day" : hm(e.start)}</b> ${esc(e.title)}${e.location ? `<div class="small muted">${esc(e.location)}</div>` : ""}${d.travel?.[e.id] ? `<div class="small ${d.travel[e.id].late ? "" : "muted"}">${d.travel[e.id].late ? `<span style="color:var(--bad)">⚠ ${d.travel[e.id].late} min short from ${esc(d.travel[e.id].fromLabel)}</span>` : `🚗 Leave by <b>${hm(d.travel[e.id].leaveBy)}</b> · ${d.travel[e.id].minutes} min from ${esc(d.travel[e.id].fromLabel)}`} · <a href="${esc(d.travel[e.id].mapsUrl)}" target="_blank" rel="noopener">Directions</a></div>` : ""}</li>`).join("")}</ul>` : `<p class="muted" style="margin:0">Nothing on the calendar today.</p>`) : `<p class="muted" style="margin:0">Connect your calendar to see today here.</p>`}
+          ${d.tasksDue?.length ? `<div class="small muted" style="margin:12px 0 4px">Tasks due</div>${d.tasksDue.map((k) => `<div class="row" style="gap:6px;padding:3px 0"><button class="btn small" data-do="taskdone" data-list="${esc(k.listId)}" data-task="${esc(k.id)}" title="Mark done">☐</button><span style="flex:1;min-width:0">${esc(k.title)}</span>${k.due < ymd(new Date()) ? `<span class="small" style="color:var(--bad)">${fmtDate(k.due + "T12:00")}</span>` : ""}</div>`).join("")}` : ""}
         </div>
-        <div class="card"><h3><span><span class="muted small" style="font-variant-numeric:tabular-nums">01</span> Stages</span></h3>
-          <table class="tbl"><thead><tr><th>Stage</th><th class="num">Proposals</th><th class="num">Jobs</th></tr></thead><tbody>
-          ${d.byStage.map((x) => `<tr data-stage="${esc(x.stage)}" data-tip="${esc(x.stage)}: ${x.count} job${x.count === 1 ? "" : "s"}${x.amount ? ` · ${usd(x.amount)}` : ""}"><td>${esc(x.stage)}<div><span class="sbar" style="width:${Math.round((x.count / max) * 100)}%"></span></div></td><td class="num">${x.amount ? usd(x.amount).replace(/\.\d\d$/, "") : ""}</td><td class="num"><b>${x.count}</b></td></tr>`).join("")}
-          </tbody></table></div>
-        <div class="card"><h3><span><span class="muted small">02</span> Proposals out</span><span class="small muted">largest first</span></h3>
-          ${d.proposals.length ? `<table class="tbl"><tbody>${d.proposals.map((x) => `<tr><td><a href="#" data-do="open" data-n="${x.jobNumber}">#${x.jobNumber} ${esc(x.name)}</a>${x.waiting ? ` <span class="tag in">reply</span>` : ""}<div class="small muted">${x.lastTouch ? esc(x.lastTouch) : "no activity"}</div></td><td class="num">${usd(x.amount) || "—"}<div class="small muted">${daysSince(x.lastTouchAt) ?? "?"}d quiet</div></td></tr>`).join("")}</tbody></table>` : `<p class="muted">None out.</p>`}</div>
-        <div class="card"><h3><span><span class="muted small">03</span> Recent activity</span></h3>
-          ${d.activity.length ? `<ul class="items">${d.activity.map((a) => `<li><a href="#" data-do="open" data-n="${a.jobNumber}">#${a.jobNumber} ${esc(a.name)}</a> <span class="small muted">${fmtWhen(a.at)}</span><div class="small">${esc(a.what)}</div></li>`).join("")}</ul>` : `<p class="muted">Nothing yet. Activity from {{APP_NAME}} shows here.</p>`}</div>
+        <div class="card"><h3>Your lists</h3>
+          <table class="tbl"><tbody>${d.lists.map((l) => `<tr data-prog="${esc(l.id)}" style="cursor:pointer"><td>${esc(l.name)}</td><td class="num"><b>${l.open}</b>${l.total > l.open ? `<span class="small muted"> / ${l.total}</span>` : ""}</td></tr>`).join("")}</tbody></table></div>
+        <div class="card"><h3>Recently changed</h3>
+          ${d.recent.length ? `<ul class="items">${d.recent.map((r) => `<li><a href="#" data-do="person" data-id="${esc(r.id)}">${esc(r.name)}</a> <span class="small muted">${fmtWhen(r.at)}</span><div class="small muted">${esc(r.list)} · ${esc(r.stage)}</div></li>`).join("")}</ul>` : `<p class="muted">Nobody yet.</p>`}</div>
       </div>
     </div>`;
   $("#plan")?.addEventListener("click", startPlan);
   renderBrief();
 }
 $("#today").addEventListener("click", (e) => {
-  const f = e.target.closest("[data-filter]");
-  if (f) { const k = f.dataset.filter; if (k === "proposals") { showTab("jobs"); $("#stage").value = "Proposal Submitted"; $("#sort").value = "amt"; renderList(); return; } dashFilter = k && dashFilter !== k ? k : null; loadToday(); return; }
-  const s = e.target.closest("[data-stage]");
-  if (s) { showTab("jobs"); $("#stage").value = s.dataset.stage; renderList(); }
+  const f = e.target.closest("[data-prog]"); if (!f) return;
+  curProg = f.dataset.prog; store.set("prog", curProg); $("#lstage").value = ""; showTab("lists");
 });
-$("#today").addEventListener("mousemove", (e) => { const r = e.target.closest("[data-tip]"); const tip = $("#tip"); if (!r) { tip.hidden = true; return; } tip.textContent = r.dataset.tip; tip.hidden = false; tip.style.left = Math.min(e.clientX + 12, innerWidth - 260) + "px"; tip.style.top = e.clientY + 14 + "px"; });
-$("#today").addEventListener("mouseleave", () => ($("#tip").hidden = true));
 document.addEventListener("click", async (e) => {
   const b = e.target.closest("[data-do]"); if (!b) return;
   e.preventDefault();
-  const n = Number(b.dataset.n);
   try {
-    if (b.dataset.do === "open") { showTab("jobs"); openJob(n); }
+    if (b.dataset.do === "person") { showTab("lists"); openPerson(b.dataset.id); }
     if (b.dataset.do === "thread") { if (!mailLoaded) await loadMail(); showTab("mail"); openThread(b.dataset.thread); }
-    if (b.dataset.do === "claude") { await askClaude(b.dataset.p, n || undefined); }
-    if (b.dataset.do === "logsent") await api(`/api/jobs/${n}/sync`, { method: "POST" });
-    if (b.dataset.do === "upload") await api(`/api/jobs/${n}/files-upload`, { method: "POST", body: {} });
+    if (b.dataset.do === "claude") { await askClaude(b.dataset.p); }
     if (b.dataset.do === "gocal") showTab("cal");
-    if (b.dataset.do === "taskdone") { await api(`/api/tasks/${encodeURIComponent(b.dataset.list)}/${encodeURIComponent(b.dataset.task)}`, { method: "PATCH", body: { completed: true } }); b.closest(".row")?.remove(); log("Task done. It's checked off on your phone too."); }
-    if (b.dataset.do === "fileto") { await api("/api/inbox/file", { method: "POST", body: { threadId: b.dataset.thread, messageId: b.dataset.msg, jobNumber: n } }); b.closest(".rem")?.remove(); }
-    if (b.dataset.do === "notjob") { await api("/api/inbox/dismiss", { method: "POST", body: { messageId: b.dataset.msg } }); b.closest(".rem")?.remove(); }
-    if (b.dataset.do === "filethread") { const sel = $("#fileto-job"); const jn = n || Number(sel?.value); if (!jn) return; await api("/api/inbox/file", { method: "POST", body: { threadId: b.dataset.thread, jobNumber: jn } }); }
+    if (b.dataset.do === "taskdone") { await api(`/api/tasks/${encodeURIComponent(b.dataset.list)}/${encodeURIComponent(b.dataset.task)}`, { method: "PATCH", body: { completed: true } }); b.closest(".row")?.remove(); log("Task done."); }
   } catch (err) { log(err.message, "t-err"); }
 });
 
-// ============================================================= JOBS list
-async function loadJobs() {
-  try { jobs = await api(`/api/jobs`); } catch (e) { $("#list").innerHTML = `<div class="empty">Couldn't load jobs: ${esc(e.message)}</div>`; return; }
-  const stages = [...new Set(jobs.map((j) => j.stage))];
-  const cur = $("#stage").value;
-  $("#stage").innerHTML = `<option value="">All stages</option>` + stages.map((s) => `<option ${s === cur ? "selected" : ""}>${esc(s)}</option>`).join("");
-  renderList();
+// ============================================================= LISTS: one per program
+const program = (id) => lists.programs.find((p) => p.id === id);
+async function loadLists() {
+  try { lists = await api("/api/lists"); } catch (e) { $("#llist").innerHTML = `<div class="empty">${esc(e.message)}</div>`; return; }
+  if (!program(curProg)) curProg = lists.programs[0]?.id;
+  renderLists();
+  if (curPerson && lists.entries.some((x) => x.id === curPerson)) renderPerson();
 }
-function renderList() {
-  const q = $("#q").value.trim().toLowerCase(), st = $("#stage").value, sort = $("#sort").value;
-  const rows = jobs.filter((j) => (!st || j.stage === st) && (!q || `${j.jobNumber} ${j.name} ${j.address}`.toLowerCase().includes(q)));
-  const key = { days: (j) => -(daysSince(j.stageSince) ?? -1), touch: (j) => -(daysSince(j.lastTouchAt) ?? 9999), num: (j) => -j.jobNumber, amt: (j) => -(j.proposalAmount ?? 0) }[sort];
-  rows.sort((a, b) => key(a) - key(b));
-  $("#count").textContent = `${rows.length} job${rows.length === 1 ? "" : "s"}`;
-  $("#list").innerHTML = rows.map((j) => {
-    const d = daysSince(j.stageSince);
-    const old = d !== null && ((j.stage === "Proposal Submitted" && d >= 10) || d >= 30);
-    const dots = (j.flags || []).filter((f) => ["reply", "log", "estimate", "followup", "stale"].includes(f)).map((f) => `<span class="dot ${f}" title="${esc(meta.reminderGroups.find((g) => g.kind === f)?.label ?? f)}"></span>`).join("");
-    return `<div class="job ${j.jobNumber === selected ? "sel" : ""}" data-n="${j.jobNumber}">
-      <div class="t"><span class="n">#${j.jobNumber}</span> ${esc(j.name)}${dots}</div><div class="amt">${usd(j.proposalAmount)}</div>
-      <div class="sub"><span class="stage">${esc(j.stage)}</span> ${esc(j.address.split(",")[0])}</div><div class="days ${old ? "old" : ""}">${d === null ? "" : d + "d"}</div></div>`;
-  }).join("") || `<div class="empty">No jobs match.</div>`;
+function renderLists() {
+  const p = program(curProg); if (!p) return;
+  const count = (id) => lists.entries.filter((e) => e.program === id && !program(id).done.includes(e.stage)).length;
+  $("#ltabs").innerHTML = lists.programs.map((x) => `<button type="button" data-prog="${esc(x.id)}" class="${x.id === curProg ? "on" : ""}">${esc(x.name)} <span class="n">${count(x.id)}</span></button>`).join("");
+  const st = $("#lstage").value;
+  $("#lstage").innerHTML = `<option value="">All stages</option><option value="open" ${st === "open" ? "selected" : ""}>Still open</option>` + p.stages.map((x) => `<option ${x === st ? "selected" : ""}>${esc(x)}</option>`).join("");
+  const q = $("#lq").value.trim().toLowerCase();
+  const rows = lists.entries.filter((e) => e.program === curProg && (!st || (st === "open" ? !p.done.includes(e.stage) : e.stage === st)) && (!q || [e.name, e.email, e.phone, e.nextStep, ...Object.values(e.extra || {}), ...e.notes.map((n) => n.text)].join(" ").toLowerCase().includes(q)));
+  rows.sort((a, b) => (p.done.includes(a.stage) - p.done.includes(b.stage)) || (p.stages.indexOf(a.stage) - p.stages.indexOf(b.stage)) || b.updatedAt.localeCompare(a.updatedAt));
+  $("#lcount").textContent = `${rows.length} ${rows.length === 1 ? p.word : p.word + "s"}${p.hint ? " · " + p.hint : ""}`;
+  const today = ymd(new Date());
+  $("#llist").innerHTML = rows.map((e) => `<div class="job ${e.id === curPerson ? "sel" : ""} ${p.done.includes(e.stage) ? "done" : ""}" data-id="${esc(e.id)}">
+      <div class="t">${esc(e.name)}</div><div class="amt small">${e.nextDate ? `<span style="${e.nextDate <= today ? "color:var(--bad)" : ""}">${fmtDate(e.nextDate + "T12:00")}</span>` : ""}</div>
+      <div class="sub"><span class="stage">${esc(e.stage)}</span> ${esc(p.fields[0] && e.extra?.[p.fields[0].key] ? e.extra[p.fields[0].key] : e.email || "")}</div><div class="days">${daysSince(e.stageSince) ?? ""}d</div></div>`).join("") || `<div class="empty">Nobody here yet. Press <b>Add</b>.</div>`;
 }
-$("#list").addEventListener("click", (e) => { const el = e.target.closest(".job"); if (el) openJob(Number(el.dataset.n)); });
-["#q", "#stage", "#sort"].forEach((s) => $(s).addEventListener(s === "#q" ? "input" : "change", renderList));
-
-// ============================================================= one job
-async function openJob(n, keepScroll = false) {
-  selected = n; store.set("job", n); renderList();
-  $("#placeholder").hidden = true; $("#job").hidden = false;
-  if (!keepScroll) $("#job").innerHTML = `<div class="jobhead"><h2>#${n}</h2><span class="muted">Loading…</span></div>`;
-  try { view = await api(`/api/jobs/${n}`); } catch (e) { $("#job").innerHTML = `<div class="empty">Couldn't load #${n}: ${esc(e.message)}</div>`; return; }
-  if (selected !== n) return;
-  renderJob();
-  if (!keepScroll) $("#main").scrollTop = 0;
+$("#ltabs").addEventListener("click", (e) => { const b = e.target.closest("[data-prog]"); if (!b) return; curProg = b.dataset.prog; store.set("prog", curProg); $("#lstage").value = ""; renderLists(); });
+$("#lq").addEventListener("input", renderLists);
+$("#lstage").addEventListener("change", renderLists);
+$("#llist").addEventListener("click", (e) => { const el = e.target.closest("[data-id]"); if (el) openPerson(el.dataset.id); });
+async function openPerson(id) {
+  if (!lists.entries.some((x) => x.id === id)) await loadLists();
+  const e = lists.entries.find((x) => x.id === id); if (!e) { log("That person isn't on your lists any more.", "t-err"); return; }
+  curPerson = id; store.set("person", id);
+  if (e.program !== curProg) { curProg = e.program; store.set("prog", curProg); $("#lstage").value = ""; }
+  renderLists(); renderPerson();
+  rememberPerson(id, e.name);
 }
-function renderJob() {
-  const { homebase: h, local: l } = view;
-  const d = daysSince(h.stageSince);
-  const drafts = l?.sendoff?.drafts || [];
-  const ccId = l?.companycamProjectId;
-  rememberJob(h.jobNumber, h.name);
-  setCrumbs(`Jobs / <b>#${h.jobNumber}</b>`);
-  $("#job").innerHTML = `
-    <div class="jobcard">
-      <div class="jobhead">
-        <h2>${esc(view.projectName || h.name)}</h2>
-        <div class="stagewrap"><button type="button" class="stagepill" id="stagebtn" title="Change the stage in Homebase"><span>Stage</span>${esc(h.stage)} <i class="ms" style="font-style:normal;font-size:18px">expand_more</i></button><div class="stagepop" id="stagepop" hidden></div></div>
-      </div>
-      <div class="jobmeta">#${h.jobNumber} · Reconstruction${view.fields?.propertyType ? ` · ${esc(view.fields.propertyType)}` : ""}${view.customer?.name ? ` · ${esc(view.customer.name)}` : ""}${d === null ? "" : ` · ${d} days in stage`}${l?.pulse?.lastTouchAt ? ` · touched ${fmtDate(l.pulse.lastTouchAt)}` : ""}</div>
-      <div class="actions">
-        <button class="btn primary" data-act="sendoff">Draft send-off…</button>
-        <button class="btn" data-act="sync" ${drafts.length ? "" : "disabled"} title="After you send the drafts: log the proposal in Homebase">Check sent &amp; log</button>
-        <button class="btn" data-act="compose">Email…</button>
-        <button class="btn" data-act="log">Log call…</button>
-        <button class="btn" data-act="addfiles">Add files</button>
-        <button class="btn" data-act="schedule">Schedule…</button>
-        <button class="btn" data-act="pull">Refresh</button>
-        ${status.gmail === "mock" && drafts.some((x) => !x.sentAt) ? `<button class="btn" data-act="mocksend">Pretend I sent them</button>` : ""}
-        <a class="btn" href="${esc(h.url)}" target="_blank" rel="noopener">Homebase ↗</a>
-        ${ccId ? `<a class="btn" href="https://app.companycam.com/projects/${esc(ccId)}" target="_blank" rel="noopener">CompanyCam ↗</a>` : ""}
-      </div>
-      <div class="subtabs" id="subtabs">${[["overview", "Dashboard"], ["notes", "Notes"], ["selections", "Selections"], ["details", "Details"], ["timeline", "Timeline"], ["photos", "Photos"], ["files", `Documents ${(view.hbFiles?.docs?.length ?? 0) + (view.files?.estimate?.length ?? 0)}`]].map(([k, v]) => `<button data-sub="${k}" class="${jobTab === k ? "active" : ""}">${v}</button>`).join("")}</div>
-    </div>
-    <div id="jobbody"></div>`;
-  renderJobTab();
-}
-$("#job").addEventListener("click", async (e) => {
-  const sub = e.target.closest("[data-sub]");
-  if (sub) { e.preventDefault(); jobTab = sub.dataset.sub; store.set("jobtab", jobTab); $$("#subtabs button").forEach((b) => b.classList.toggle("active", b.dataset.sub === jobTab)); renderJobTab(); return; }
-  const b = e.target.closest("[data-act]"); if (!b) return;
-  const n = view.homebase.jobNumber;
-  try {
-    const act = b.dataset.act;
-    if (act === "pull") await api(`/api/jobs/${n}/pull`, { method: "POST" });
-    if (act === "sync") await api(`/api/jobs/${n}/sync`, { method: "POST" });
-    if (act === "files") await api(`/api/jobs/${n}/files-sync`, { method: "POST" });
-    if (act === "upload") await api(`/api/jobs/${n}/files-upload`, { method: "POST", body: {} });
-    if (act === "mocksend") { await api(`/api/jobs/${n}/mock-send`, { method: "POST" }); log(`#${n}: marked the drafts as sent (test mode).`); openJob(n, true); }
-    if (act === "sendoff") openSendoff();
-    if (act === "log") $("#logdlg").showModal();
-    if (act === "compose") openCompose({ job: n, to: view.customer?.email || "" });
-    if (act === "adjuster") openAdjuster(Number(b.dataset.slot));
-    if (act === "save") saveDetails();
-    if (act === "revert") renderJobTab();
-    if (act === "note") { const t = $("#tl-note").value.trim(); if (t) { await api(`/api/jobs/${n}/note`, { method: "POST", body: { body: t } }); $("#tl-note").value = ""; } }
-    if (act === "embed") { const f = $("#ccembed"); f.hidden = !f.hidden; }
-    if (act === "addfiles") { pickTarget = n; $("#filepick").click(); }
-    if (act === "schedule") { const st = new Date(); st.setDate(st.getDate() + 1); st.setHours(9, 0, 0, 0); openEvent({ title: `Scope walk #${n} ${view.homebase.name}`, start: st.toISOString(), end: new Date(st.getTime() + 3600e3).toISOString(), location: view.homebase.address, job: n }); }
-  } catch (err) { log(err.message, "t-err"); }
-});
-
-function renderJobTab() {
-  const t = jobTab, el = $("#jobbody");
-  if (t === "overview") return renderOverview(el);
-  if (t === "details") return renderDetails(el);
-  if (t === "timeline") return renderTimeline(el);
-  if (t === "notes") return renderNotes(el);
-  if (t === "selections") return renderSelections(el);
-  if (t === "photos") return renderPhotos(el);
-  if (t === "files") return renderFiles(el);
-}
-
-function renderOverview(el) {
-  const { homebase: h, local: l, fields: f, customer: c, adjusters, carrier } = view;
-  const adj = adjusters.filter(Boolean);
-  const drafts = l?.sendoff?.drafts || [];
-  const waiting = l?.pulse?.waiting;
-  const pen = `<button class="pencil" data-sub="details" title="Edit under Details">✎</button>`;
-  const row = (k, v) => `<dt>${k}</dt><dd>${v || `<span class="muted">—</span>`}</dd>`;
+function renderPerson() {
+  const e = lists.entries.find((x) => x.id === curPerson), el = $("#lperson");
+  if (!e) { el.innerHTML = `<div class="empty">Pick someone on the left, or press Add.</div>`; return; }
+  const p = program(e.program);
+  setCrumbs(`Clients / ${esc(p.name)} / <b>${esc(e.name)}</b>`);
+  const field = (key, label, value, opts) => opts ? `<label>${esc(label)}<select data-f="${key}"><option value=""></option>${opts.map((o) => `<option ${o === value ? "selected" : ""}>${esc(o)}</option>`).join("")}</select></label>` : `<label>${esc(label)}<input type="text" data-f="${key}" value="${esc(value || "")}"></label>`;
   el.innerHTML = `
-    <div class="strip">
-      <div class="tile" style="cursor:default"><span class="k">Proposal</span><span class="v">${usd(f.proposalAmount) || "—"}</span><span class="k">${h.proposalSubmittedAt ? "sent " + esc(h.proposalSubmittedAt) : "&nbsp;"}</span></div>
-      <div class="tile" style="cursor:default"><span class="k">Contract amount</span><span class="v">${usd(h.contractAmount) || "—"}</span><span class="k">&nbsp;</span></div>
-      <div class="tile" style="cursor:default"><span class="k">Estimated costs</span><span class="v">${usd(f.estimatedCosts) || "—"}</span><span class="k">${f.desiredMargin ? `margin ${esc(f.desiredMargin)}%` : "&nbsp;"}</span></div>
-      <div class="tile" style="cursor:default"><span class="k">Days in stage</span><span class="v">${daysSince(h.stageSince) ?? "—"}</span><span class="k">${esc(h.stage)}</span></div>
-      <div class="tile" style="cursor:default"><span class="k">Last touched</span><span class="v">${l?.pulse?.lastTouchAt ? daysSince(l.pulse.lastTouchAt) + "d" : "—"}</span><span class="k">${esc((l?.pulse?.lastTouch || "").slice(0, 34))}</span></div>
-    </div>
-    ${waiting ? `<div class="banner" style="border-left-color:var(--bad)"><b>${esc(waiting.from)}</b> is waiting on you · ${esc(waiting.subject)} · ${fmtDate(waiting.at)} <span class="row" style="display:inline-flex;margin-left:8px">${waiting.threadId ? `<button class="btn small primary" data-do="thread" data-thread="${esc(waiting.threadId)}">Open &amp; reply</button>` : ""}<button class="btn small" data-do="claude" data-n="${h.jobNumber}" data-p="Read the latest email on job #${h.jobNumber} and draft my reply in Gmail (draft only).">Draft reply with Claude</button></span></div>` : ""}
-    <div class="grid" style="grid-template-columns:minmax(0,1.5fr) minmax(0,1fr)">
-      <div class="side">
-        <div class="card"><h3>Customer ${pen}</h3>
-          ${f.customerNotes ? `<div class="banner" style="margin-bottom:10px;white-space:pre-wrap">${esc(f.customerNotes)}</div>` : ""}
-          <dl>${row("Project name", esc(view.projectName || ""))}${row("Name", esc(c?.name))}${row("Phone", esc(c?.phone))}${row("Email", c?.email ? `${esc(c.email)} <button class="pencil" style="float:none" data-act="compose" title="Email">✉</button>` : "")}${row("Loss address", esc(h.address))}${row("Preferred", esc(f.preferredContactMethod))}</dl></div>
-        <div class="card"><h3>Project ${pen}</h3>
-          <dl>${row("Loss type", esc(f.detail))}${row("Carrier", esc(carrier?.name))}${row("Claim number", esc(f.claimNumber))}
-            ${adj.length ? adj.map((a, i) => row(`Adjuster ${adj.length > 1 ? i + 1 : ""}`, `${esc(a.name)}${a.email ? `<br><span class="small">${esc(a.email)}</span>` : ""}${a.phone ? `<br><span class="small muted">${esc(a.phone)}</span>` : ""}`)).join("") : row("Adjuster", `<button class="btn small" data-act="adjuster" data-slot="1">Add adjuster</button>`)}
-            ${row("Funding", esc([f.fundingType, f.claimStatus].filter(Boolean).join(" · ")))}${row("Deductible", usd(f.deductible))}</dl></div>
-        <div class="card"><h3>Send-off</h3>
-          ${drafts.length ? `<ul class="items">${drafts.map((x) => `<li><span class="tag ${x.sentAt ? "sent" : "draft"}">${x.sentAt ? "sent " + fmtDate(x.sentAt) : "draft"}</span> <b>${esc(x.kind)}</b> → ${esc(x.to.join(", "))}<div class="small muted">${esc(x.subject)}</div></li>`).join("")}</ul>${l?.sendoff?.homebaseLoggedAt ? `<p class="small" style="color:var(--ok);margin:10px 0 0">Logged in Homebase ${fmtDate(l.sendoff.homebaseLoggedAt)}</p>` : ""}` : `<p class="muted" style="margin:0">No send-off drafted yet.</p>`}</div>
+    <div class="jobcard">
+      <div class="jobhead"><h2>${esc(e.name)}</h2>
+        <div class="stagewrap"><select id="pstage" class="stagepill" title="Move to another stage">${p.stages.map((x) => `<option ${x === e.stage ? "selected" : ""}>${esc(x)}</option>`).join("")}</select></div></div>
+      <div class="jobmeta">${esc(p.name)} · ${esc(e.stage)} for ${daysSince(e.stageSince) ?? 0} days · added ${fmtDate(e.createdAt)}</div>
+      <div class="actions">
+        ${e.email ? `<button class="btn" data-pact="email">Email…</button><button class="btn" data-pact="mails">Their emails</button>` : ""}
+        ${status.agent && !p.initialsOnly ? `<button class="btn" data-do="claude" data-p="${esc(`Look at ${e.name} on my ${p.name} list (id ${e.id}) and my recent email with them, then tell me the next step and draft any email that's needed (draft only).`)}">What's next? (Claude)</button>` : ""}
+        <button class="btn" data-pact="remove" style="margin-left:auto">Remove…</button>
       </div>
-      <div class="side">
-        <div class="card"><h3>Team</h3><dl>${row("Estimator", esc(h.people?.estimator))}${row("Project manager", esc(h.people?.projectManager))}${row("Owner", esc(h.people?.owner))}</dl></div>
-        <div class="card"><h3>Site access ${pen}</h3>
-          ${f.lockboxCode || f.gateCode || f.parking || f.alarm || f.pets ? `<dl>${f.lockboxCode ? row("Lockbox", esc(f.lockboxCode)) : ""}${f.gateCode ? row("Gate code", esc(f.gateCode)) : ""}${f.alarm ? row("Alarm", esc(f.alarm)) : ""}${f.pets ? row("Pets", esc(f.pets)) : ""}${f.parking ? row("Parking", esc(f.parking)) : ""}</dl>` : `<p class="muted" style="margin:0 0 8px">No lockbox, gate code or parking noted.</p>`}
-          <dl>${row("Photos", l?.companycamProjectId ? `<a href="#" data-sub="photos">View photos</a> · <a href="https://app.companycam.com/projects/${esc(l.companycamProjectId)}" target="_blank" rel="noopener">Open in CompanyCam</a>` : "")}</dl></div>
-        ${f.pmNotes ? `<div class="card"><h3>PM notes ${pen}</h3><div style="white-space:pre-wrap">${esc(f.pmNotes)}</div></div>` : ""}
+    </div>
+    ${p.initialsOnly ? `<div class="banner">Initials only. Notes here are just for scheduling and admin; clinical details stay in Grow Therapy.</div>` : ""}
+    <div class="grid" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr)">
+      <div class="card"><h3>Details</h3>
+        <div class="fgrid" id="pform">
+          ${field("name", p.initialsOnly ? "Initials" : "Name", e.name)}
+          ${p.initialsOnly ? "" : field("email", "Email", e.email) + field("phone", "Phone", e.phone)}
+          ${p.fields.map((f) => field("x." + f.key, f.label, e.extra?.[f.key], f.options)).join("")}
+          <label class="wide">Next step<input type="text" data-f="nextStep" value="${esc(e.nextStep)}" placeholder="e.g. Send the coaching program details"></label>
+          <label>Next step date<input type="date" data-f="nextDate" value="${esc(e.nextDate)}"></label>
+        </div>
+        <div class="row" style="margin-top:10px"><button class="btn primary" data-pact="save">Save</button><span class="small muted" id="psaved"></span></div>
+      </div>
+      <div class="card"><h3>Notes</h3>
+        <textarea id="pnote" rows="3" placeholder="${p.initialsOnly ? "Scheduling or admin only (no clinical details)" : "Add a note"}"></textarea>
+        <div class="row" style="margin:8px 0 12px"><button class="btn" data-pact="note">Add note</button></div>
+        ${e.notes.length ? `<ul class="items">${[...e.notes].reverse().map((n) => `<li><span class="small muted">${fmtWhen(n.at)}</span><div style="white-space:pre-wrap">${esc(n.text)}</div></li>`).join("")}</ul>` : `<p class="muted" style="margin:0">No notes yet.</p>`}
       </div>
     </div>`;
 }
-
-// ---- details (edit like Homebase)
-function fieldInput(def, v) {
-  const id = `f-${def.key}`;
-  const val = v && typeof v === "object" ? v.name ?? "" : v ?? "";
-  const opts = Array.isArray(def.options) ? def.options : def.options ? meta.vocab[def.options] ?? [] : null;
-  if (def.type === "textarea") return `<textarea id="${id}" rows="3" data-key="${def.key}">${esc(val)}</textarea>`;
-  if (def.type === "select" && opts) return `<select id="${id}" data-key="${def.key}"><option value=""></option>${opts.map((o) => `<option ${o === val ? "selected" : ""}>${esc(o)}</option>`).join("")}${val && !opts.includes(val) ? `<option selected>${esc(val)}</option>` : ""}</select>`;
-  if (def.type === "account") return `<input type="text" id="${id}" data-key="${def.key}" list="dl-carriers" value="${esc(val)}" data-account-id="${esc(v?.id ?? "")}" autocomplete="off">`;
-  return `<input type="${def.type === "money" || def.type === "percent" ? "text" : "text"}" inputmode="${def.type === "money" || def.type === "percent" ? "decimal" : "text"}" id="${id}" data-key="${def.key}" value="${esc(val)}">`;
-}
-function renderDetails(el) {
-  const { fields: f, customer: c, address: a, adjusters, carrier } = view;
-  const vals = { ...f, carrier };
-  el.innerHTML = `<div class="form" id="details">
-    <div class="fsec"><h3>Customer</h3><div class="fgrid">
-      <label>Name<input type="text" id="c-name" value="${esc(c?.name ?? "")}" data-orig="${esc(c?.name ?? "")}"></label>
-      <label>Email<input type="email" id="c-email" value="${esc(c?.email ?? "")}" data-orig="${esc(c?.email ?? "")}"></label>
-      <label>Phone<input type="text" id="c-phone" value="${esc(c?.phone ?? "")}" data-orig="${esc(c?.phone ?? "")}"></label></div></div>
-    <div class="fsec"><h3>Property address</h3><div class="fgrid">
-      ${["street", "unit", "city", "state", "zip"].map((k) => `<label>${k[0].toUpperCase() + k.slice(1)}<input type="text" data-addr="${k}" value="${esc(a?.[k] ?? "")}" data-orig="${esc(a?.[k] ?? "")}"></label>`).join("")}</div></div>
-    ${meta.sections.map((s) => `<div class="fsec"><h3>${esc(s)}</h3><div class="fgrid">
-      ${meta.fields.filter((d) => d.section === s).map((d) => `<label class="${d.type === "textarea" ? "wide" : ""}">${esc(d.label)}${fieldInput(d, vals[d.key])}${d.help ? `<span class="help muted">${esc(d.help)}</span>` : ""}</label>`).join("")}
-      ${s === "Insurance" ? [1, 2].map((i) => `<label>Adjuster ${i}<div class="row"><span style="flex:1">${adjusters[i - 1] ? esc(adjusters[i - 1].name) + (adjusters[i - 1].email ? ` · ${esc(adjusters[i - 1].email)}` : "") : "—"}</span><button type="button" class="btn small" data-act="adjuster" data-slot="${i}">${adjusters[i - 1] ? "Change" : "Add"}</button></div></label>`).join("") : ""}
-    </div></div>`).join("")}
-    <datalist id="dl-carriers"></datalist>
-  </div>
-  <div class="savebar"><button class="btn primary" data-act="save" id="savebtn" disabled>Save to Homebase</button><button class="btn" data-act="revert">Undo changes</button><span class="small muted" id="dirty">No changes</span></div>`;
-  const orig = {};
-  $$("#details [data-key]").forEach((i) => (orig[i.dataset.key] = i.value));
-  el.dataset.orig = JSON.stringify(orig);
-  el.addEventListener("input", onDetailInput);
-}
-let carrierTimer;
-function onDetailInput(e) {
-  const i = e.target;
-  if (i.dataset.key === "carrier") {
-    clearTimeout(carrierTimer);
-    carrierTimer = setTimeout(async () => {
-      if (i.value.length < 3) return;
-      const list = await api(`/api/accounts?kind=Carrier&q=${encodeURIComponent(i.value)}`).catch(() => []);
-      $("#dl-carriers").innerHTML = list.map((a) => `<option value="${esc(a.name)}" data-id="${esc(a.id)}"></option>`).join("");
-      const hit = list.find((a) => a.name === i.value);
-      i.dataset.accountId = hit ? hit.id : "";
-    }, 250);
-  }
-  const orig = JSON.parse($("#jobbody").dataset.orig || "{}");
-  let n = 0;
-  $$("#details [data-key], #details [data-addr], #details #c-name, #details #c-email, #details #c-phone").forEach((x) => {
-    const o = x.dataset.key ? orig[x.dataset.key] : x.dataset.orig;
-    const ch = (x.value ?? "") !== (o ?? "");
-    x.closest("label")?.classList.toggle("changed", ch);
-    if (ch) n++;
-  });
-  $("#savebtn").disabled = !n;
-  $("#dirty").textContent = n ? `${n} change${n === 1 ? "" : "s"}` : "No changes";
-}
-async function saveDetails() {
-  const n = view.homebase.jobNumber;
-  const orig = JSON.parse($("#jobbody").dataset.orig || "{}");
-  const changes = {}, labels = {};
-  for (const x of $$("#details [data-key]")) {
-    const k = x.dataset.key;
-    if ((x.value ?? "") === (orig[k] ?? "")) continue;
-    const def = meta.fields.find((d) => d.key === k);
-    if (def?.type === "account") {
-      if (!x.dataset.accountId) { log(`Pick the carrier from the list so Homebase gets the right account.`, "t-err"); return; }
-      changes[k] = x.dataset.accountId; labels[k] = x.value;
-    } else if (def?.type === "money" || def?.type === "percent") changes[k] = x.value.trim() === "" ? null : x.value.replace(/[$,%\s]/g, "");
-    else changes[k] = x.value.trim() === "" ? null : x.value;
-  }
-  const addr = {}; let addrChanged = false;
-  for (const x of $$("#details [data-addr]")) { addr[x.dataset.addr] = x.value || null; if (x.value !== x.dataset.orig) addrChanged = true; }
-  if (addrChanged) { changes.address = addr; labels.address = [addr.street, addr.unit, addr.city, addr.state, addr.zip].filter(Boolean).join(", "); }
-  if (Object.keys(changes).length) await api(`/api/jobs/${n}/fields`, { method: "POST", body: { changes, labels } });
-  const cn = $("#c-name"), ce = $("#c-email"), cp = $("#c-phone");
-  if (view.customer && (cn.value !== cn.dataset.orig || ce.value !== ce.dataset.orig || cp.value !== cp.dataset.orig)) {
-    const [first, ...rest] = cn.value.trim().split(/\s+/);
-    await api(`/api/jobs/${n}/contact`, { method: "POST", body: { contactId: view.customer.id, name: view.customer.name, first: cn.value !== cn.dataset.orig ? first : undefined, last: cn.value !== cn.dataset.orig ? rest.join(" ") : undefined, email: ce.value !== ce.dataset.orig ? ce.value : undefined, phone: cp.value !== cp.dataset.orig ? cp.value : undefined } });
-  }
-}
-let adjSlot = 1;
-function openAdjuster(slot) {
-  adjSlot = slot; $("#adj-slot").textContent = slot;
-  const a = view.adjusters[slot - 1] || (slot === 1 && view.local?.adjuster?.name ? view.local.adjuster : null);
-  const [first, ...rest] = (a?.name || "").split(/\s+/);
-  $("#adj-first").value = first || ""; $("#adj-last").value = rest.join(" "); $("#adj-email").value = a?.email || ""; $("#adj-phone").value = a?.phone || "";
-  $("#adjdlg").showModal();
-}
-$("#adjdlg").addEventListener("close", async () => {
-  if ($("#adjdlg").returnValue !== "go") return;
-  try { await api(`/api/jobs/${view.homebase.jobNumber}/adjuster`, { method: "POST", body: { slot: adjSlot, first: $("#adj-first").value.trim(), last: $("#adj-last").value.trim(), email: $("#adj-email").value.trim(), phone: $("#adj-phone").value.trim() } }); } catch (e) { log(e.message, "t-err"); }
+$("#lperson").addEventListener("change", async (ev) => {
+  if (ev.target.id !== "pstage") return;
+  try { await api(`/api/lists/${encodeURIComponent(curPerson)}`, { method: "PATCH", body: { stage: ev.target.value } }); await loadLists(); log(`Moved to ${ev.target.value}.`); } catch (err) { log(err.message, "t-err"); }
 });
-
-// ---- timeline
-const KIND = { note: "Note", call: "Call", text: "Text", meeting: "Meeting", email: "Email", draft: "Draft", other: "Activity" };
-async function renderTimeline(el) {
-  const n = view.homebase.jobNumber;
-  el.innerHTML = `<div class="tl"><div class="composer"><textarea id="tl-note" rows="2" placeholder="Add a note to the job's Homebase feed"></textarea><div class="row"><button class="btn primary small" data-act="note">Add note</button><button class="btn small" data-act="log">Log call…</button><button class="btn small" data-act="compose">Email…</button><span class="small muted">Emails, calls and notes appear here on their own.</span></div></div><div id="tl-items"><div class="empty">Loading…</div></div></div>`;
-  let items = [];
-  try { items = await api(`/api/jobs/${n}/timeline`); } catch (e) { $("#tl-items").innerHTML = `<div class="empty">${esc(e.message)}</div>`; return; }
-  if (jobTab !== "timeline" || view.homebase.jobNumber !== n) return;
-  $("#tl-items").innerHTML = items.length ? items.map((i) => `<div class="ti"><div class="when">${fmtDate(i.at)}<br>${i.at.length > 10 ? new Date(i.at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }) : ""}</div>
-    <div class="what"><span class="tag ${i.direction === "in" ? "in" : i.direction === "out" ? "out" : ""}">${KIND[i.kind]}${i.direction ? (i.direction === "in" ? " in" : " out") : ""}</span> <b>${esc(i.title)}</b>${i.threadId ? ` <a href="#" data-do="thread" data-thread="${esc(i.threadId)}" class="small">open</a>` : ""}
-    ${i.who ? `<div class="small muted">${esc(i.who)}</div>` : ""}${i.body ? `<div class="body">${esc(i.body).slice(0, 600)}</div>` : ""}</div></div>`).join("") : `<div class="empty">Nothing on this job yet.</div>`;
-}
-
-// ---- photos (live from CompanyCam)
-async function renderPhotos(el) {
-  const n = view.homebase.jobNumber;
-  el.innerHTML = `<div class="empty">Loading photos from CompanyCam…</div>`;
-  let d;
-  try { d = await api(`/api/jobs/${n}/photos`); } catch (e) { el.innerHTML = `<div class="empty">${esc(e.message)}</div>`; return; }
-  if (jobTab !== "photos") return;
-  if (!d.linked) { el.innerHTML = `<div class="empty">No CompanyCam project linked to this job yet. Add the CompanyCam link under Details, or press Refresh.</div>`; return; }
-  el.innerHTML = `<div class="actions" style="padding-top:12px"><span class="muted">${d.photos.length} photo${d.photos.length === 1 ? "" : "s"}, shown straight from CompanyCam${d.kind === "mock" ? " (test photos: CompanyCam isn't connected)" : ""}</span>
-    ${d.embedUrl ? `<button class="btn small" data-act="embed">CompanyCam viewer</button>` : ""}<a class="btn small" href="${esc(d.url)}" target="_blank" rel="noopener">Open in CompanyCam ↗</a></div>
-    ${d.embedUrl ? `<div style="padding:0 20px"><iframe id="ccembed" class="embed" src="${esc(d.embedUrl)}" hidden loading="lazy" title="CompanyCam"></iframe></div>` : ""}
-    <div class="photos">${d.photos.map((p) => `<figure><a href="${esc(p.original)}" target="_blank" rel="noopener"><img loading="lazy" src="${esc(p.thumb)}" alt="${esc(p.description || "Job photo")}"></a><figcaption title="${esc(p.description)}">${fmtDate(p.at)} · ${esc(p.description || p.creator || "")}</figcaption></figure>`).join("")}</div>`;
-}
-
-// ---- files
-function renderFiles(el) {
-  const n = view.homebase.jobNumber, files = view.files, hb = view.hbFiles;
-  const fileUrl = (rel) => `/api/jobs/${n}/file/${encodeURIComponent(rel)}`;
-  el.innerHTML = `<div class="grid">
-    <div class="card"><h3>Estimate <span class="row"><button class="btn small" data-act="files">Sync files</button></span></h3>
-      ${(files.estimate || []).length ? `<ul class="items">${files.estimate.map((f) => `<li><a href="${fileUrl("estimate/" + f.name)}" target="_blank">${esc(f.name)}</a> <span class="small muted">${Math.max(1, Math.round(f.size / 1024))} KB</span></li>`).join("")}</ul>` : `<p class="muted">No estimate files yet.</p>`}
-      <p class="small muted" style="margin:10px 0 0">Folder: ${esc(view.folder)}</p></div>
-    <div class="card"><h3>In Homebase ${hb.toUpload.length ? `<button class="btn small primary" data-act="upload">Upload ${hb.toUpload.length}</button>` : ""}</h3>
-      ${hb.docs.length ? `<ul class="items">${hb.docs.map((d) => `<li><span class="tag">${esc(d.kind)}</span> <a href="${d.localFile ? fileUrl(d.localFile) : `/api/jobs/${n}/hbdoc/${d.id}`}" target="_blank">${esc(d.title || d.fileName)}</a><div class="small muted">${fmtDate(d.createdAt)}${d.createdBy ? " · " + esc(d.createdBy) : ""}</div></li>`).join("")}</ul>` : `<p class="muted">No files on the job in Homebase.</p>`}
-      ${hb.toUpload.length ? `<p class="small muted" style="margin:10px 0 0">Not in Homebase yet: ${hb.toUpload.map((f) => esc(f.name)).join(", ")}</p>` : ""}</div>
-    <div class="card"><h3>Added files <button class="btn small" data-act="addfiles">Add files</button></h3>
-      ${(files.files || []).length || (files.photosAdded || []).length ? `<ul class="items">${(files.files || []).map((f) => `<li><a href="${fileUrl("files/" + f.name)}" target="_blank">${esc(f.name)}</a> <span class="small muted">${fmtDate(f.modified)}</span></li>`).join("")}${(files.photosAdded || []).slice(0, 12).map((f) => `<li><a href="${fileUrl("photos/" + f.name)}" target="_blank">${esc(f.name)}</a> <span class="tag">photo</span></li>`).join("")}</ul>` : `<p class="muted">Drag files anywhere onto {{APP_NAME}}, or use Add files.</p>`}</div>
-    <div class="card"><h3>Email attachments</h3>
-      ${(files.attachments || []).length ? `<ul class="items">${files.attachments.slice(0, 40).map((f) => `<li><a href="${fileUrl("email/attachments/" + f.name)}" target="_blank">${esc(f.name.split("/").pop())}</a><div class="small muted">${esc(f.name.split("/")[0])}</div></li>`).join("")}</ul>` : `<p class="muted">Attachments from emails filed to this job land here.</p>`}</div>
-    <div class="card"><h3>Sketch</h3>${(files.sketch || []).length ? `<ul class="items">${files.sketch.map((f) => `<li><a href="${fileUrl("sketch/" + f.name)}">${esc(f.name)}</a></li>`).join("")}</ul>` : `<p class="muted">No ESX yet. Download it from DocuSketch; {{APP_NAME}} picks it up from Downloads.</p>`}</div>
-  </div>`;
-}
-
-// ---- send-off / log dialogs
-function openSendoff() {
-  const { homebase: h, local: l, files, customer: c, adjusters } = view;
-  const adj = adjusters.find(Boolean) || (l?.adjuster?.email ? l.adjuster : null);
-  const est = (files.estimate || []).map((f) => f.name);
-  $("#so-bcc").textContent = view.intake;
-  $("#so-adj").checked = !!adj?.email;
-  const missing = [];
-  if (!c?.email && !l?.customer?.email) missing.push("no homeowner email");
-  if (!adj?.email) missing.push("no adjuster (Details → Add adjuster)");
-  if (!est.some((f) => f.endsWith("- Reconstruction Estimate.pdf"))) missing.push("no Reconstruction Estimate PDF");
-  if (!est.some((f) => f.endsWith("- Xactimate Estimate.pdf"))) missing.push("no Xactimate Estimate PDF");
-  $("#so-missing").textContent = missing.length ? "Missing: " + missing.join("; ") + "." : "";
-  $("#sendoff").showModal();
-}
-$("#sendoff").addEventListener("close", async () => {
-  if ($("#sendoff").returnValue !== "go") return;
-  const to = [$("#so-home").checked && "homeowner", $("#so-adj").checked && "adjuster"].filter(Boolean);
-  if (to.length) try { await api(`/api/jobs/${view.homebase.jobNumber}/sendoff`, { method: "POST", body: { to } }); } catch (e) { log(e.message, "t-err"); }
+$("#lperson").addEventListener("click", async (ev) => {
+  const b = ev.target.closest("[data-pact]"); if (!b) return;
+  const e = lists.entries.find((x) => x.id === curPerson); if (!e) return;
+  try {
+    const act = b.dataset.pact;
+    if (act === "save") {
+      const body = { extra: {} };
+      for (const f of $$("#pform [data-f]")) { const k = f.dataset.f; if (k.startsWith("x.")) body.extra[k.slice(2)] = f.value; else body[k] = f.value; }
+      await api(`/api/lists/${encodeURIComponent(e.id)}`, { method: "PATCH", body }); await loadLists(); $("#psaved").textContent = "Saved."; 
+    }
+    if (act === "note") { const t = $("#pnote").value.trim(); if (!t) return; await api(`/api/lists/${encodeURIComponent(e.id)}/note`, { method: "POST", body: { text: t } }); await loadLists(); }
+    if (act === "email") openCompose({ to: e.email });
+    if (act === "mails") { showTab("mail"); $("#mq").value = e.email; $("#mq").dispatchEvent(new Event("input")); }
+    if (act === "remove") { if (!confirm(`Remove ${e.name} from ${program(e.program).name}? This can't be undone.`)) return; await api(`/api/lists/${encodeURIComponent(e.id)}`, { method: "DELETE" }); curPerson = null; store.set("person", null); await loadLists(); renderPerson(); }
+  } catch (err) { log(err.message, "t-err"); }
 });
-$("#logdlg").addEventListener("close", async () => {
-  if ($("#logdlg").returnValue !== "go" || !$("#lg-body").value.trim()) return;
-  try { await api(`/api/jobs/${view.homebase.jobNumber}/log`, { method: "POST", body: { kind: "call", body: $("#lg-body").value.trim(), who: $("#lg-who").value.trim(), direction: $("#lg-dir").value } }); $("#lg-body").value = ""; } catch (e) { log(e.message, "t-err"); }
+$("#ladd").addEventListener("click", () => {
+  const p = program(curProg); if (!p) return;
+  $("#la-h").textContent = `Add to ${p.name}`;
+  $("#la-hint").textContent = p.initialsOnly ? "Initials only (e.g. J.D.). No email, phone or clinical details: those stay in Grow Therapy." : p.hint || "";
+  const inp = (k, label, type = "text", opts) => opts ? `<label>${esc(label)}<select data-a="${k}"><option value=""></option>${opts.map((o) => `<option>${esc(o)}</option>`).join("")}</select></label>` : `<label>${esc(label)}<input type="${type}" data-a="${k}"></label>`;
+  $("#la-fields").innerHTML = inp("name", p.initialsOnly ? "Initials" : "Name") + (p.initialsOnly ? "" : inp("email", "Email", "email") + inp("phone", "Phone")) +
+    `<label>Stage<select data-a="stage">${p.stages.map((x) => `<option>${esc(x)}</option>`).join("")}</select></label>` +
+    p.fields.map((f) => inp("x." + f.key, f.label, "text", f.options)).join("") + inp("nextStep", "Next step") + inp("nextDate", "Next step date", "date");
+  $("#ladddlg").showModal();
+});
+$("#ladddlg").addEventListener("close", async () => {
+  if ($("#ladddlg").returnValue !== "go") return;
+  const body = { program: curProg, extra: {} };
+  for (const f of $$("#la-fields [data-a]")) { const k = f.dataset.a; if (k.startsWith("x.")) body.extra[k.slice(2)] = f.value; else body[k] = f.value; }
+  try { const e = await api("/api/lists", { method: "POST", body }); await loadLists(); openPerson(e.id); log(`Added ${e.name}.`); } catch (err) { log(err.message, "t-err"); $("#ladddlg").showModal(); }
 });
 
 // ============================================================= MAIL (Gmail-style)
@@ -1572,7 +1222,7 @@ async function loadThreads() {
       <input type="checkbox" class="gm-cb" ${mailSel.has(t.id) ? "checked" : ""} aria-label="Select">
       <button class="star ${t.starred ? "on" : ""}" type="button" title="${t.starred ? "Starred" : "Not starred"}">${msI("star", t.starred)}</button>
       <div class="who">${t.generated ? `<span class="gsrc">${esc(t.generated.source)}</span>${esc(t.to?.map(nameOf).join(", ") || "")}` : draftView ? `<span class="drafttag">Draft</span>` : esc(sentView ? "Me" : nameOf(t.from))}${t.messageCount > 1 ? ` <small>${t.messageCount}</small>` : ""}${!draftView && !t.generated && t.hasDraft ? `, <span class="drafttag">${t.claudeDraft ? "Claude draft" : "Draft"}</span>` : ""}</div>
-      <div class="ln">${(t.labelIds || []).includes("IMPORTANT") && mailLabel !== "IMPORTANT" ? "" : ""}${t.generated?.jobNumber ? `<span class="chip">#${t.generated.jobNumber}</span>` : ""}<span class="sj">${esc(t.subject || "(no subject)")}</span><span class="sn"> - ${esc(t.snippet)}</span></div>
+      <div class="ln">${(t.labelIds || []).includes("IMPORTANT") && mailLabel !== "IMPORTANT" ? "" : ""}<span class="sj">${esc(t.subject || "(no subject)")}</span><span class="sn"> - ${esc(t.snippet)}</span></div>
       <div class="dt">${t.hasAttachments ? `<span class="ms" style="font-size:16px;vertical-align:-3px;margin-right:6px">attach_file</span>` : ""}${gDate(t.date)}</div>
       <div class="acts"><button class="gm-ib" data-act1="archive" title="Archive">${msI("archive")}</button><button class="gm-ib" data-act1="trash" title="Delete">${msI("delete")}</button><button class="gm-ib" data-act1="${t.unread ? "read" : "unread"}" title="${t.unread ? "Mark as read" : "Mark as unread"}">${msI(t.unread ? "drafts" : "mark_email_unread")}</button></div>
     </div>`).join("") || `<div class="gm-empty">${q ? "No messages matched your search." : mailLabel === "INBOX" ? "Your inbox is empty." : genView ? "No drafts from Claude waiting. Drafts Claude makes for you (replies, Plan my day, send-offs) collect here until you send them." : "No conversations here."}</div>`;
@@ -1684,7 +1334,7 @@ function editDraftInline(i) {
   box.innerHTML = `<div class="gm-dedit">
     <label><span>To</span><input type="text" data-f="to" value="${esc(m.to.join(", "))}"></label>
     <label><span>Cc</span><input type="text" data-f="cc" value="${esc(m.cc.join(", "))}"></label>
-    <label><span>Bcc</span><input type="text" data-f="bcc" value="${esc((m.bcc || []).join(", "))}" title="office+<job#> here files the email in Homebase"></label>
+    <label><span>Bcc</span><input type="text" data-f="bcc" value="${esc((m.bcc || []).join(", "))}"></label>
     <label><span>Subject</span><input type="text" data-f="subject" value="${esc(m.subject)}"></label>
     <textarea data-f="body" rows="10">${esc(noSig(m.body))}</textarea>
     <div class="small" style="color:#5f6368">Your Gmail signature is added when it's saved.${m.attachments.length ? ` Attachments stay on: ${esc(m.attachments.map((a) => a.filename).join(", "))}.` : ""}</div>
@@ -1732,16 +1382,14 @@ async function openThread(id) {
   try { t = await api(`/api/mail/threads/${id}`); } catch (e) { rd.querySelector(".gm-empty").textContent = e.message; return; }
   threadView = t;
   if (t.messages.some((m) => m.labelIds?.includes("UNREAD"))) api(`/api/mail/threads/${id}/modify`, { method: "POST", body: { remove: ["UNREAD"] } }).then(loadMailCounts).catch(() => {});
-  const last = t.messages.at(-1), job = t.jobs[0], starred = t.messages.some((m) => m.labelIds?.includes("STARRED"));
+  const last = t.messages.at(-1), starred = t.messages.some((m) => m.labelIds?.includes("STARRED"));
   const labelsOn = [...new Set(t.messages.flatMap((m) => m.labelIds || []))].filter((l) => ["INBOX", "SENT", "IMPORTANT"].includes(l));
   rd.innerHTML = `<div class="gm-bar"><button class="gm-ib" id="gm-back" title="Back to ${esc(GLABELS.find((g) => g[0] === mailLabel)?.[1] || "list")}">${msI("arrow_back")}</button>
       <button class="gm-ib" data-m="archive" title="Archive">${msI("archive")}</button><button class="gm-ib" data-m="spam" title="Report spam">${msI("report")}</button><button class="gm-ib" data-m="trash" title="Delete">${msI("delete")}</button>
       <span style="width:12px"></span><button class="gm-ib" data-m="unread" title="Mark as unread">${msI("mark_email_unread")}</button><button class="gm-ib" data-m="star" title="${starred ? "Unstar" : "Star"}">${msI("star", starred)}</button></div>
     <div class="gm-th">
-      <h1>${esc(t.messages[0]?.subject || "(no subject)")}${labelsOn.map((l) => `<span class="chip">${esc(GLABELS.find((g) => g[0] === l)?.[1] || l)}</span>`).join("")}${t.jobs.map((j) => `<a href="#" class="chip" data-do="open" data-n="${j.jobNumber}" title="${esc(j.stage)}">#${j.jobNumber} ${esc(j.name)}</a>`).join("")}</h1>
+      <h1>${esc(t.messages[0]?.subject || "(no subject)")}${labelsOn.map((l) => `<span class="chip">${esc(GLABELS.find((g) => g[0] === l)?.[1] || l)}</span>`).join("")}${(t.people || []).map((x) => `<a href="#" class="chip" data-do="person" data-id="${esc(x.id)}" title="${esc(x.list)}: ${esc(x.stage)}">${esc(x.list)} · ${esc(x.stage)}</a>`).join("")}</h1>
       ${peopleRow(t)}
-      <div class="gm-filebar">${t.jobs.length ? t.jobs.map((j) => `<button class="gm-pill" data-do="filethread" data-thread="${esc(t.id)}" data-n="${j.jobNumber}" type="button">${msI("drive_file_move")}File to #${j.jobNumber}</button>`).join("") : `<span>Not matched to a job.</span>`}
-        <select id="fileto-job" aria-label="File to another job"><option value="">File to another job…</option>${jobs.map((j) => `<option value="${j.jobNumber}">#${j.jobNumber} ${esc(j.name)}</option>`).join("")}</select><button class="gm-pill" data-do="filethread" data-thread="${esc(t.id)}" type="button">File</button></div>
       ${t.messages.map((m, i) => `<div class="gm-msg ${m.draft ? "draft" : ""} ${i < t.messages.length - 1 && t.messages.length > 2 && !m.draft ? "col" : ""}" data-mi="${i}">${avatar(m.from)}<div style="min-width:0">
           ${m.draft ? `<div class="gm-draftbar"><span class="tagd">${m.draft.generated ? `${msI("auto_awesome")} Claude draft${m.draft.source && m.draft.source !== "Claude" ? ` · ${esc(m.draft.source)}` : ""}` : `${msI("draft")} Draft`}</span><span class="nots">Not sent. Nothing goes out until you press Send and confirm.</span></div>` : ""}
           <div class="gm-mh"><b>${esc(nameOf(m.from))}</b><button type="button" class="em" data-copy="${esc(addrOf(m.from))}" title="Copy address">&lt;${esc(addrOf(m.from))}&gt;</button><span class="when">${m.draft ? (m.date && !isNaN(Date.parse(m.date)) ? `Draft saved ${new Date(m.date).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}` : "Draft") : new Date(m.date).toLocaleString("en-US", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</span></div>
@@ -1780,10 +1428,10 @@ async function openThread(id) {
   const quote = (m) => `\n\nOn ${new Date(m.date).toLocaleString("en-US")}, ${m.from} wrote:\n${m.body.split("\n").map((l) => "> " + l).join("\n")}`;
   const replyTo = () => { const from = addrOf(last.from); return from.toLowerCase() === me ? last.to.join(", ") : from; };
   const re = /^re:/i.test(last.subject) ? last.subject : `Re: ${last.subject}`;
-  $("#replybtn").onclick = () => openCompose({ reply: true, to: replyTo(), subject: re, body: quote(last), threadId: t.id, inReplyTo: last.messageIdHeader, job: job?.jobNumber });
+  $("#replybtn").onclick = () => openCompose({ reply: true, to: replyTo(), subject: re, body: quote(last), threadId: t.id, inReplyTo: last.messageIdHeader });
   $("#replyall").onclick = () => openCompose({ reply: true, to: [replyTo(), ...last.to].map(addrOf).filter((a) => a.toLowerCase() !== me).filter((a, i, arr) => arr.indexOf(a) === i).join(", "), cc: last.cc.map(addrOf).filter((a) => a.toLowerCase() !== me).join(", "), subject: re, body: quote(last), threadId: t.id, inReplyTo: last.messageIdHeader, job: job?.jobNumber });
-  $("#fwd").onclick = () => openCompose({ subject: `Fwd: ${last.subject}`, body: `\n\n---------- Forwarded message ---------\nFrom: ${last.from}\nDate: ${last.date}\nSubject: ${last.subject}\nTo: ${last.to.join(", ")}\n\n${last.body}`, job: job?.jobNumber });
-  $("#claudereply") && ($("#claudereply").onclick = () => askClaude(`Read Gmail thread ${t.id}${job ? ` (job #${job.jobNumber})` : ""} and draft my reply in Gmail as a draft in that thread, in my voice. Don't send it.`, job?.jobNumber));
+  $("#fwd").onclick = () => openCompose({ subject: `Fwd: ${last.subject}`, body: `\n\n---------- Forwarded message ---------\nFrom: ${last.from}\nDate: ${last.date}\nSubject: ${last.subject}\nTo: ${last.to.join(", ")}\n\n${last.body}` });
+  $("#claudereply") && ($("#claudereply").onclick = () => askClaude(`Read Gmail thread ${t.id} and draft my reply in Gmail as a draft in that thread, in my voice. Don't send it.`));
 }
 $("#reader").addEventListener("click", async (e) => {
   const ds = e.target.closest("[data-dsend]"), dd = e.target.closest("[data-ddel]"), de = e.target.closest("[data-dedit]");
@@ -1805,75 +1453,26 @@ let composeReplace = "";
 function openCompose(o) {
   $("#cp-title").textContent = o.reply ? (o.subject || "Reply") : o.subject?.startsWith("Fwd:") ? o.subject : "New Message";
   $("#composedlg").classList.remove("min");
-  $("#cp-job").innerHTML = `<option value="">(none)</option>` + jobs.map((j) => `<option value="${j.jobNumber}" ${o.job === j.jobNumber ? "selected" : ""}>#${j.jobNumber} ${esc(j.name)}</option>`).join("");
   $("#cp-to").value = o.to || ""; $("#cp-cc").value = o.cc || ""; $("#cp-subject").value = o.subject || ""; $("#cp-body").value = o.body || "";
   $("#cp-thread").value = o.threadId || ""; $("#cp-reply").value = o.inReplyTo || "";
   composeReplace = o.replaceDraft || "";
-  $("#cp-bcc").value = o.job ? `office+${o.job}@forefrontteam.com` : "";
+  $("#cp-bcc").value = o.bcc || "";
   composeFiles = [];
   renderComposeFiles();
   if (!$("#composedlg").open) $("#composedlg").show();
   setTimeout(() => { const b = $("#cp-body"); b.focus(); b.setSelectionRange(0, 0); b.scrollTop = 0; }, 50);
 }
-$("#cp-job").addEventListener("change", () => {
-  const n = $("#cp-job").value;
-  const bcc = $("#cp-bcc").value.split(",").map((s) => s.trim()).filter((s) => s && !/^office\+\d+@forefrontteam\.com$/i.test(s));
-  if (n) bcc.push(`office+${n}@forefrontteam.com`);
-  $("#cp-bcc").value = bcc.join(", ");
-  composeFiles = []; renderComposeFiles();
-});
-async function renderComposeFiles() {
-  const n = $("#cp-job").value;
-  if (!n) { $("#cp-files").innerHTML = `<span>Pick a job to attach its files and log the email to it.</span>`; return; }
-  let v = view && view.homebase.jobNumber === Number(n) ? view : await api(`/api/jobs/${n}`).catch(() => null);
-  const list = (v?.files?.estimate || []).map((f) => "estimate/" + f.name);
-  $("#cp-files").innerHTML = list.length ? `<span>Attach:</span> ` + list.map((p) => `<label><input type="checkbox" data-file="${esc(p)}" ${composeFiles.includes(p) ? "checked" : ""}> ${esc(p.split("/").pop())}</label>`).join(" ") : `<span>No estimate files in #${n}'s folder to attach.</span>`;
-  $$("#cp-files [data-file]").forEach((c) => c.addEventListener("change", () => { composeFiles = $$("#cp-files [data-file]:checked").map((x) => x.dataset.file); }));
-}
+function renderComposeFiles() { $("#cp-files").innerHTML = ""; }
 $("#composedlg").addEventListener("close", async () => {
   const how = $("#composedlg").returnValue;
   if (how !== "send" && how !== "draft") return;
-  const n = $("#cp-job").value ? Number($("#cp-job").value) : undefined;
-  const body = { to: $("#cp-to").value, cc: $("#cp-cc").value, bcc: $("#cp-bcc").value, subject: $("#cp-subject").value, body: $("#cp-body").value, threadId: $("#cp-thread").value || undefined, inReplyTo: $("#cp-reply").value || undefined, jobNumber: n, attachments: composeFiles.map((p) => ({ job: n, path: p })), replaceDraft: composeReplace || undefined };
+  const body = { to: $("#cp-to").value, cc: $("#cp-cc").value, bcc: $("#cp-bcc").value, subject: $("#cp-subject").value, body: $("#cp-body").value, threadId: $("#cp-thread").value || undefined, inReplyTo: $("#cp-reply").value || undefined, replaceDraft: composeReplace || undefined };
   try {
     if (how === "send") await api("/api/mail/send", { method: "POST", body });
     else { await api("/api/mail/draft", { method: "POST", body }); log("Saved as a Gmail draft."); }
   } catch (e) { log(e.message, "t-err"); $("#composedlg").show(); }
 });
 $("#cp-min").addEventListener("click", () => $("#composedlg").classList.toggle("min"));
-
-// ============================================================= adding files (drag & drop anywhere, or Add files)
-let pickTarget = null, pendingFiles = [], dragDepth = 0, recentFiles = [];
-const currentJob = () => (store.get("tab", "today") === "jobs" && view ? view.homebase.jobNumber : null);
-window.addEventListener("dragenter", (e) => { if (![...(e.dataTransfer?.types || [])].includes("Files") || store.get("tab", "today") === "est") return; dragDepth++; const j = currentJob(); $("#dz-target").textContent = j ? `#${j} ${view.homebase.name}` : "a job"; $("#dropzone").hidden = false; });
-window.addEventListener("dragleave", () => { if (--dragDepth <= 0) { dragDepth = 0; $("#dropzone").hidden = true; } });
-window.addEventListener("dragover", (e) => { if ([...(e.dataTransfer?.types || [])].includes("Files")) e.preventDefault(); });
-window.addEventListener("drop", (e) => {
-  if (!e.dataTransfer?.files?.length || store.get("tab", "today") === "est") return;
-  e.preventDefault(); dragDepth = 0; $("#dropzone").hidden = true;
-  chooseTarget([...e.dataTransfer.files], currentJob());
-});
-$("#addfiles").addEventListener("click", () => { pickTarget = currentJob(); $("#filepick").click(); });
-$("#filepick").addEventListener("change", () => { const f = [...$("#filepick").files]; $("#filepick").value = ""; if (f.length) chooseTarget(f, pickTarget); });
-function chooseTarget(files, job) {
-  pendingFiles = files;
-  $("#fd-count").textContent = files.length === 1 ? files[0].name : `${files.length} files`;
-  $("#fd-names").textContent = files.length > 1 ? files.map((f) => f.name).join(", ") : "";
-  $("#fd-job").innerHTML = jobs.map((j) => `<option value="${j.jobNumber}" ${j.jobNumber === job ? "selected" : ""}>#${j.jobNumber} ${esc(j.name)}</option>`).join("");
-  $("#filedlg").showModal();
-}
-$("#filedlg").addEventListener("close", async () => {
-  if ($("#filedlg").returnValue !== "go") return;
-  const n = Number($("#fd-job").value), hb = $("#fd-hb").checked;
-  for (const f of pendingFiles) {
-    try {
-      const r = await fetch(`/api/jobs/${n}/upload?homebase=${hb ? 1 : 0}`, { method: "POST", headers: { "X-Filename": encodeURIComponent(f.name) }, body: f });
-      if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || r.statusText);
-      recentFiles.push({ job: n, name: f.name });
-    } catch (e) { log(`${f.name}: ${e.message}`, "t-err"); }
-  }
-  $("#attached").innerHTML = recentFiles.slice(-6).map((x) => `<span class="tag">📎 #${x.job} ${esc(x.name)}</span>`).join("");
-});
 
 // ============================================================= theme: Get In Tune (light, default) / Night
 const THEMES = [["tune", "Get In Tune"], ["night", "Night"]];
@@ -2051,13 +1650,12 @@ function openEvent(o) {
   $("#ev-date").value = ymd(s); $("#ev-start").value = s.toTimeString().slice(0, 5); $("#ev-end").value = en.toTimeString().slice(0, 5);
   $("#ev-allday").checked = !!o.allDay;
   $("#ev-loc").value = o.location || ""; $("#ev-desc").value = o.description || ""; $("#ev-att").value = (o.attendees || []).map((a) => a.email).join(", "); $("#ev-rem").value = "";
-  $("#ev-job").innerHTML = `<option value="">(none)</option>` + jobs.map((j) => `<option value="${j.jobNumber}" ${(o.job ?? o.jobNumber) === j.jobNumber ? "selected" : ""}>#${j.jobNumber} ${esc(j.name)}</option>`).join("");
   if (o.calendarId) $("#ev-cal").value = o.calendarId;
   $("#ev-cal").disabled = editing;
   $("#ev-del").hidden = !editing;
   $("#ev-hide").hidden = !editing; $("#ev-hide").textContent = o.recurringId ? "Hide this series on my screen" : "Hide on my screen";
   evOpen = o;
-  $("#ev-meta").innerHTML = editing ? [o.meet ? `<a href="${esc(o.meet)}" target="_blank" rel="noopener">Join Meet</a>` : "", o.link ? `<a href="${esc(o.link)}" target="_blank" rel="noopener">Open in Google Calendar</a>` : "", o.jobNumber ? `<a href="#" data-do="open" data-n="${o.jobNumber}">Open job #${o.jobNumber}</a>` : ""].filter(Boolean).join(" · ") : "";
+  $("#ev-meta").innerHTML = editing ? [o.meet ? `<a href="${esc(o.meet)}" target="_blank" rel="noopener">Join Meet</a>` : "", o.link ? `<a href="${esc(o.link)}" target="_blank" rel="noopener">Open in Google Calendar</a>` : ""].filter(Boolean).join(" · ") : "";
   const g = o.id ? calLegs[o.id] : null;
   const loc = (o.location || "").trim();
   $("#ev-travel").hidden = !g && !loc;
@@ -2067,16 +1665,11 @@ function openEvent(o) {
     try {
       const d = await api(`/api/travel/drive?${new URLSearchParams({ to: $("#ev-loc").value.trim() || loc, ...(o.start ? { at: new Date(new Date(o.start).getTime() - 40 * 60000).toISOString() } : {}) })}`);
       const leave = o.start ? new Date(new Date(o.start).getTime() - (d.minutes + 5) * 60000).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }) : "";
-      $("#ev-travel").innerHTML = `About <b>${d.minutes} min</b> (${d.miles} mi) from the office${d.rush ? " at rush hour" : ""}${leave ? ` · leave by <b>${leave}</b>` : ""} · <a href="${esc(d.mapsUrl)}" target="_blank" rel="noopener">Directions ↗</a>`;
+      $("#ev-travel").innerHTML = `About <b>${d.minutes} min</b> (${d.miles} mi) from your start address${d.rush ? " at rush hour" : ""}${leave ? ` · leave by <b>${leave}</b>` : ""} · <a href="${esc(d.mapsUrl)}" target="_blank" rel="noopener">Directions ↗</a>`;
     } catch (e) { $("#ev-travel").innerHTML = `<span style="color:var(--bad)">${esc(e.message)}</span>`; }
   });
   $("#evdlg").showModal();
 }
-$("#ev-job").addEventListener("change", () => {
-  const j = jobs.find((x) => x.jobNumber === Number($("#ev-job").value)); if (!j) return;
-  if (!$("#ev-title").value.includes(`#${j.jobNumber}`)) $("#ev-title").value = `${$("#ev-title").value || "Scope walk"} #${j.jobNumber} ${j.name}`.trim();
-  if (!$("#ev-loc").value) $("#ev-loc").value = j.address;
-});
 $("#evdlg").addEventListener("close", async () => {
   const how = $("#evdlg").returnValue, id = $("#ev-id").value, calId = $("#ev-calid").value;
   try {
@@ -2086,7 +1679,7 @@ $("#evdlg").addEventListener("close", async () => {
       const start = allDay ? date : new Date(`${date}T${$("#ev-start").value || "09:00"}`).toISOString();
       let end = allDay ? ymd(new Date(new Date(`${date}T12:00`).getTime() + 864e5)) : new Date(`${date}T${$("#ev-end").value || "10:00"}`).toISOString();
       if (!allDay && end <= start) end = new Date(Date.parse(start) + 3600e3).toISOString();
-      const b = { title: $("#ev-title").value.trim() || "(no title)", start, end, allDay, location: $("#ev-loc").value.trim(), description: $("#ev-desc").value.trim(), attendees: $("#ev-att").value.split(/[,;]/).map((x) => x.trim()).filter(Boolean), reminderMinutes: $("#ev-rem").value ? Number($("#ev-rem").value) : undefined, calendarId: $("#ev-cal").value || undefined, jobNumber: $("#ev-job").value ? Number($("#ev-job").value) : undefined };
+      const b = { title: $("#ev-title").value.trim() || "(no title)", start, end, allDay, location: $("#ev-loc").value.trim(), description: $("#ev-desc").value.trim(), attendees: $("#ev-att").value.split(/[,;]/).map((x) => x.trim()).filter(Boolean), reminderMinutes: $("#ev-rem").value ? Number($("#ev-rem").value) : undefined, calendarId: $("#ev-cal").value || undefined };
       if (id) await api(`/api/cal/events/${encodeURIComponent(calId)}/${encodeURIComponent(id)}`, { method: "PATCH", body: b });
       else await api("/api/cal/events", { method: "POST", body: b });
       log(`${id ? "Updated" : "Added"} "${b.title}".`);
@@ -2102,12 +1695,12 @@ async function renderTaskPanel() {
   try { openTasks = await api("/api/tasks"); } catch (e) { $("#cal-tasks").innerHTML = `<span class="small muted">${esc(e.message)}</span>`; return; }
   const today = ymd(new Date());
   const groups = [["Overdue", (k) => k.due && k.due < today], ["Today", (k) => k.due === today], ["Upcoming", (k) => k.due && k.due > today], ["No date", (k) => !k.due]];
-  $("#cal-tasks").innerHTML = groups.map(([label, f]) => { const ks = openTasks.filter(f).sort((a, b) => (a.due ?? "").localeCompare(b.due ?? "")); return ks.length ? `<div class="small muted" style="margin-top:6px">${label}</div>${ks.map((k) => `<div class="ev chip" style="background:transparent;color:var(--ink);border:0;padding:2px 0;white-space:normal" data-task="${esc(k.id)}" data-list="${esc(k.listId)}"><span data-check="1" style="cursor:pointer">☐</span> ${esc(k.title)}${k.jobNumber ? goButton(k.jobNumber, placeFor(k.title)) : ""}${k.due && label !== "Today" ? ` <span class="small ${label === "Overdue" ? "" : "muted"}" style="${label === "Overdue" ? "color:var(--bad)" : ""}">${fmtDate(k.due + "T12:00")}</span>` : ""}</div>`).join("")}` : ""; }).join("") || `<span class="small muted">No open tasks.</span>`;
+  $("#cal-tasks").innerHTML = groups.map(([label, f]) => { const ks = openTasks.filter(f).sort((a, b) => (a.due ?? "").localeCompare(b.due ?? "")); return ks.length ? `<div class="small muted" style="margin-top:6px">${label}</div>${ks.map((k) => `<div class="ev chip" style="background:transparent;color:var(--ink);border:0;padding:2px 0;white-space:normal" data-task="${esc(k.id)}" data-list="${esc(k.listId)}"><span data-check="1" style="cursor:pointer">☐</span> ${esc(k.title)}${k.due && label !== "Today" ? ` <span class="small ${label === "Overdue" ? "" : "muted"}" style="${label === "Overdue" ? "color:var(--bad)" : ""}">${fmtDate(k.due + "T12:00")}</span>` : ""}</div>`).join("")}` : ""; }).join("") || `<span class="small muted">No open tasks.</span>`;
 }
 async function addTaskFromPanel(e) {
   e.preventDefault();
   const title = $("#tk-title").value.trim(); if (!title) return;
-  try { await api("/api/tasks", { method: "POST", body: { title, due: $("#tk-due").value || undefined, jobNumber: title.match(/#(\d{4})/)?.[1] } }); $("#tk-title").value = ""; log(`Added the task "${title}". It's on your phone too.`); renderTaskPanel(); renderCal(); } catch (err) { log(err.message, "t-err"); }
+  try { await api("/api/tasks", { method: "POST", body: { title, due: $("#tk-due").value || undefined } }); $("#tk-title").value = ""; log(`Added the task "${title}". It's on your phone too.`); renderTaskPanel(); renderCal(); } catch (err) { log(err.message, "t-err"); }
 }
 $(".calside").addEventListener("click", async (e) => {
   const tk = e.target.closest("[data-task]"); if (!tk) return;
@@ -2123,7 +1716,7 @@ function openTask(k) {
   $("#tk-dtitle").value = k.title || ""; $("#tk-ddue").value = k.due || ""; $("#tk-notes").value = k.notes || ""; $("#tk-done").checked = !!k.completed;
   $("#tk-lists").innerHTML = taskLists.map((l) => `<option value="${esc(l.id)}" ${l.id === k.listId ? "selected" : ""}>${esc(l.title)}</option>`).join("");
   $("#tk-lists").disabled = !!k.id; $("#tk-del").hidden = !k.id;
-  $("#tk-meta").innerHTML = k.jobNumber ? `<a href="#" data-do="open" data-n="${k.jobNumber}">Open job #${k.jobNumber}</a>` : "";
+  $("#tk-meta").innerHTML = "";
   $("#taskdlg").showModal();
 }
 $("#taskdlg").addEventListener("close", async () => {
@@ -2403,29 +1996,11 @@ document.addEventListener("click", async (e) => {
 setInterval(() => { if (spState?.is_playing && spState.item) { spState.progress_ms = Math.min(spState.item.duration_ms, (spState.progress_ms || 0) + 1000); const r = $("#sp-seekr"); if (r && document.activeElement !== r) { r.value = spState.progress_ms; r.style.setProperty("--p", `${(spState.progress_ms / spState.item.duration_ms) * 100}%`); r.previousElementSibling.textContent = fmtMs(spState.progress_ms); } } }, 1000);
 
 // ============================================================= Claude
-// ---- Asking Claude takes you where the answer is: estimating and pricing go to the Estimator chat for the job,
-// a draft opens in Gmail, and anything else answers in a popup (with buttons to the jobs and people it's about).
-const EST_RX = /\b(estimates?|estimating|pric(e|es|ing|ed)|scope|scoping|xactimate|esx|line items?|agreements?|selections?|allowances?|photo report|revis(e|ed|ion)|supplements?|o&p|markup|square (feet|foot)|quantit(y|ies)|convert)\b/i;
-const DRAFT_RX = /\b(draft|e-?mail|reply|respond|write (to|back)|follow[- ]?up|send|text)\b/i;
-function jobFromText(t) {
-  const n = String(t).match(/#?\b(\d{4})\b/); if (n && jobs.some((j) => j.jobNumber === Number(n[1]))) return Number(n[1]);
-  const low = String(t).toLowerCase();
-  const hits = jobs.filter((j) => j.name && j.name.length >= 4 && new RegExp(`\\b${j.name.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`).test(low));
-  return hits.length === 1 ? hits[0].jobNumber : null;
-}
+// ---- Asking Claude: a draft opens in Gmail; anything else answers in a popup (with buttons to the people it's about).
 const asking = new Map();
-async function askClaude(prompt, job) {
-  if (!status.agent) { log("Claude is off on this machine (no Anthropic API key).", "t-err"); return; }
-  if (EST_RX.test(prompt) && !DRAFT_RX.test(prompt)) {
-    const n = jobFromText(prompt) || job || (store.get("tab") === "jobs" && view ? view.homebase.jobNumber : null) || estJob;
-    showTab("est");
-    if (!n) { $("#est-input").value = prompt; snack("Pick the job on the left, then press Send."); return; }
-    if (estJob !== n || !estData) { $("#est-job").value = String(n); await openEst(n); }
-    if (estData?.running) { $("#est-input").value = prompt; snack("Claude is still working on this job. Your message is ready to send."); return; }
-    await estSend(prompt);
-    return;
-  }
-  const r = await api("/api/ask", { method: "POST", body: { prompt, job: job || jobFromText(prompt) || undefined } });
+async function askClaude(prompt) {
+  if (!status.agent) { log("Claude is off on this computer (no Anthropic API key).", "t-err"); return; }
+  const r = await api("/api/ask", { method: "POST", body: { prompt } });
   log("› " + prompt);
   asking.set(r.id, prompt);
   renderAskCard();
@@ -2450,22 +2025,20 @@ async function onAnswer(e) {
     return;
   }
   $("#ans-q").textContent = e.prompt;
-  $("#ans-body").innerHTML = e.error ? `<p style="color:var(--bad)">${esc(e.error)}</p>` : md(e.text || "(no answer)").replace(/(^|[\s(>])#(\d{4})\b/g, '$1<a href="#" data-do="open" data-n="$2">#$2</a>');
-  $("#ans-acts").innerHTML = [...e.jobs.filter((n) => jobs.some((j) => j.jobNumber === n)).map((n) => `<button class="btn small" data-do="open" data-n="${n}">Open #${n} ${esc(jobs.find((j) => j.jobNumber === n)?.name || "")}</button>`), ...e.contacts.map((q) => `<button class="btn small" data-ans-people="${esc(q)}">${msI("contacts")} ${esc(q)} in Contacts</button>`), e.drafts.length ? `<button class="btn small" data-label-go="HUB_DRAFTS">Claude drafts</button>` : ""].join("");
+  $("#ans-body").innerHTML = e.error ? `<p style="color:var(--bad)">${esc(e.error)}</p>` : md(e.text || "(no answer)");
+  $("#ans-acts").innerHTML = [...(e.people || []).map((x) => `<button class="btn small" data-do="person" data-id="${esc(x.id)}">Open ${esc(x.name)}</button>`), ...e.contacts.map((q) => `<button class="btn small" data-ans-people="${esc(q)}">${msI("contacts")} ${esc(q)} in Contacts</button>`), e.drafts.length ? `<button class="btn small" data-label-go="HUB_DRAFTS">Claude drafts</button>` : ""].join("");
   if (!$("#answerdlg").open) $("#answerdlg").showModal();
 }
 $("#answerdlg").addEventListener("click", (e) => {
   if (e.target === $("#answerdlg")) { $("#answerdlg").close(); return; }
-  const o = e.target.closest("[data-do=open]"); if (o) { $("#answerdlg").close(); return; } // the global handler opens the job
+  const o = e.target.closest("[data-do=person]"); if (o) { $("#answerdlg").close(); return; } // the global handler opens them
   const pq = e.target.closest("[data-ans-people]"); if (pq) { $("#answerdlg").close(); showTab("people"); $("#ppl-q").value = pq.dataset.ansPeople; loadPeople(pq.dataset.ansPeople, true); return; }
   const lg = e.target.closest("[data-label-go]"); if (lg) { $("#answerdlg").close(); showTab("mail"); setTimeout(() => $(`#labels [data-label="${lg.dataset.labelGo}"]`)?.click(), 400); }
 });
 $("#askform").addEventListener("submit", async (e) => {
   e.preventDefault();
   const p = $("#prompt").value.trim(); if (!p) return;
-  const tab = store.get("tab", "today");
-  const withFiles = recentFiles.length ? `${p}\n\n(Files I just added: ${recentFiles.map((x) => `#${x.job} ${x.name}`).join("; ")}. They're in those jobs' folders.)` : p;
-  try { await askClaude(withFiles, tab === "jobs" ? selected : recentFiles.at(-1)?.job); $("#prompt").value = ""; recentFiles = []; $("#attached").innerHTML = ""; } catch (err) { log(err.message, "t-err"); }
+  try { await askClaude(p); $("#prompt").value = ""; } catch (err) { log(err.message, "t-err"); }
 });
 $("#prompt").addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("#askform").requestSubmit(); } });
 
@@ -2489,16 +2062,7 @@ $("#ap-yes").addEventListener("click", () => answer(true));
 $("#ap-no").addEventListener("click", () => answer(false));
 $("#approve").addEventListener("cancel", (e) => { e.preventDefault(); answer(false); });
 
-// ============================================================= Estimator tab: Claude + the forefront-estimate skill, per job
-let estJob = store.get("estjob", null), estData = null, estFiles = [], estStream = "";
-const EST_QUICK = [
-  { label: "New estimate from ESX + photos", text: "Write a new estimate for this job from the ESX in the sketch folder and the CompanyCam photos. Ask me anything you need before you price it." },
-  { label: "Convert an Xactimate PDF", text: "Convert the Xactimate estimate PDF in this job's folder into our Reconstruction Estimate, Agreement and Xactimate documents." },
-  { label: "Agreement + selections", text: "Build the Reconstruction Agreement with material selections. Ask me what the homeowner picked, and set allowances for anything they still need to choose." },
-  { label: "Selections sign-off", text: "Make the Material Selection Approval sheet for the homeowner to sign." },
-  { label: "Photo report", text: "Make the photo report for the adjuster from the CompanyCam photos." },
-  { label: "Revise…", fill: "Revise the estimate: " },
-];
+// ============================================================= markdown (Claude's answers and the brief)
 function md(src) {
   const inline = (t) => esc(t).replace(/`([^`]+)`/g, "<code>$1</code>").replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>").replace(/(^|[\s(])\*([^*\s][^*]*)\*/g, "$1<i>$2</i>");
   const out = []; const lines = String(src).replace(/\r/g, "").split("\n"); let i = 0;
@@ -2515,129 +2079,13 @@ function md(src) {
   }
   return out.join("");
 }
-async function loadEst() {
-  if (!jobs.length) await loadJobs();
-  if (!estJob && view) estJob = view.homebase.jobNumber;
-  $("#est-job").innerHTML = `<option value="">Pick a job…</option>` + jobs.map((j) => `<option value="${j.jobNumber}" ${j.jobNumber === estJob ? "selected" : ""}>#${j.jobNumber} ${esc(j.name)}${j.stage ? ` · ${esc(j.stage)}` : ""}</option>`).join("");
-  if (estJob && !jobs.some((j) => j.jobNumber === estJob)) $("#est-job").insertAdjacentHTML("beforeend", `<option value="${estJob}" selected>#${estJob}</option>`);
-  if (estJob) openEst(estJob); else renderEst();
-}
-async function openEst(n) {
-  estJob = n; store.set("estjob", n); estFiles = []; estStream = "";
-  setCrumbs(`Estimator / <b>#${n}</b>`);
-  $("#est-log").innerHTML = `<div class="hello">Loading #${n}…</div>`;
-  try { estData = await api(`/api/studio/${n}`); } catch (e) { estData = null; $("#est-log").innerHTML = `<div class="hello">Couldn't open #${n}: ${esc(e.message)}</div>`; return; }
-  if (estData.job.name) setCrumbs(`Estimator / <b>#${n} ${esc(estData.job.name)}</b>`);
-  renderEst();
-}
-async function refreshEstFiles() {
-  if (!estJob) return;
-  const d = await api(`/api/studio/${estJob}`).catch(() => null);
-  if (d && d.job.jobNumber === estJob) { estData = { ...d, turns: estData?.turns ?? d.turns }; renderEstSide(); if (!$("#est").classList.contains("noprev")) { const cur = $("#est-frame").dataset.path; const doc = [...d.docs.map((x) => x.file), ...d.otherPdfs].find((f) => f && f.path === cur); if (doc) previewEst(doc); } }
-}
-function renderEst() { renderEstSide(); renderEstLog(); renderEstState(); }
-function renderEstSide() {
-  const d = estData;
-  if (!d) { $("#est-jobinfo").innerHTML = `<span class="muted small">Pick a job to start. Claude works in that job's folder with the estimating skill, like a chat.</span>`; $("#est-docs").innerHTML = ""; $("#est-inputs").innerHTML = ""; $("#est-other").innerHTML = ""; return; }
-  const j = d.job;
-  $("#est-jobinfo").innerHTML = `<b>#${j.jobNumber} ${esc(j.name)}</b>${esc(j.address || "")}<br><span class="muted">${esc(j.stage || "")}${j.insurance === "oop" ? " · Out of pocket" : j.carrier ? ` · ${esc(j.carrier)}` : ""}${j.claimNumber ? ` · ${esc(j.claimNumber)}` : ""}</span>${j.estimate?.total ? `<br>Estimate total: <b style="display:inline">$${Number(j.estimate.total).toLocaleString("en-US", { minimumFractionDigits: 2 })}</b>` : ""}`;
-  const cur = $("#est-frame").dataset.path;
-  $("#est-docs").innerHTML = d.docs.map((x) => `<button type="button" class="est-doc ${x.file ? "have" : ""} ${x.file && x.file.path === cur && !$("#est").classList.contains("noprev") ? "on" : ""}" data-est-doc="${x.key}" title="${x.file ? `Preview ${esc(x.file.name)}` : `Ask Claude to make the ${esc(x.label)}`}"><i></i><span>${esc(x.label)}<br><small>${x.file ? `Updated ${new Date(x.file.modified).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}` : "Not made yet"}</small></span><span class="mk">${x.file ? "View" : "Make"}</span></button>`).join("") + (d.revisions ? `<div class="small muted" style="padding:2px 8px">${d.revisions} earlier version${d.revisions === 1 ? "" : "s"} kept in estimate/revisions</div>` : "");
-  $("#est-other").innerHTML = d.otherPdfs.length ? `<h5>Other PDFs</h5><div class="est-docs">${d.otherPdfs.map((f) => `<button type="button" class="est-doc have ${f.path === cur ? "on" : ""}" data-est-path="${esc(f.path)}"><i style="background:var(--muted)"></i><span>${esc(f.name)}</span><span class="mk">View</span></button>`).join("")}</div>` : "";
-  const i = d.inputs;
-  $("#est-inputs").innerHTML = [i.sketches.length ? `✓ Sketch: ${i.sketches.map((s) => esc(s.name)).join(", ")}` : `– No ESX yet (drop it in the chat, or Claude can look for the DocuSketch email)`, i.photos ? `✓ ${i.photos} photos in the job folder` : `– No photos downloaded (Claude can pull them from CompanyCam)`, d.estimateJson ? `✓ estimate.json` : ""].filter(Boolean).map((x) => `<div>${x}</div>`).join("");
-}
-function renderEstLog() {
-  const d = estData, log = $("#est-log");
-  if (!d) { log.innerHTML = `<div class="hello"><h3>Estimator</h3>Pick a job on the left, then ask Claude for an estimate, agreement, selections sign-off or photo report, the same way you would in chat.</div>`; $("#est-quick").innerHTML = ""; return; }
-  if (!d.claude) log.innerHTML = `<div class="hello"><h3>Claude is off on this machine</h3>Add your Anthropic API key (ANTHROPIC_API_KEY in {{APP_NAME}}'s .env), then restart {{APP_NAME}}.</div>`;
-  else if (!d.turns.length) log.innerHTML = `<div class="hello"><h3>#${d.job.jobNumber} ${esc(d.job.name)}</h3>What do you need for this job? Pick one below or just type. Claude uses the Forefront estimating skill and saves everything in the job's estimate folder.</div>`;
-  else log.innerHTML = d.turns.map(estTurnHtml).join("");
-  if (d.running) log.insertAdjacentHTML("beforeend", `<div class="msg assistant" id="est-live">${estStream ? md(estStream) : ""}</div><div class="msg typing" id="est-typing">Claude is working</div>`);
-  const have = new Set(d.docs.filter((x) => x.file).map((x) => x.key));
-  $("#est-quick").innerHTML = (d.claude ? EST_QUICK : []).filter((q) => !(q.label.startsWith("Revise") && !have.has("estimate"))).map((q, k) => `<button type="button" data-est-quick="${EST_QUICK.indexOf(q)}">${esc(q.label)}</button>`).join("");
-  log.scrollTop = log.scrollHeight;
-}
-function estTurnHtml(t) {
-  if (t.role === "user") return `<div class="msg user"><div>${esc(t.text)}</div></div>`;
-  if (t.role === "tool") return `<div class="msg tool">${esc(t.text)}</div>`;
-  if (t.role === "error") return `<div class="msg error"><div>${esc(t.text)}</div></div>`;
-  return `<div class="msg assistant">${md(t.text)}</div>`;
-}
-function renderEstState() {
-  const run = !!estData?.running;
-  $("#est-send").hidden = run; $("#est-stop").hidden = !run;
-  $("#est-state").textContent = run ? "Claude is working… approvals pop up when it needs your OK." : "";
-  $("#est-files").innerHTML = estFiles.map((f) => `<span>📎 ${esc(f)}</span>`).join("");
-}
-function previewEst(f) {
-  const fr = $("#est-frame");
-  fr.dataset.path = f.path;
-  fr.src = `/api/jobs/${estJob}/file/${encodeURIComponent(f.path)}?v=${encodeURIComponent(f.modified)}`;
-  $("#est-ptitle").textContent = f.name; $("#est-popen").href = fr.src;
-  $("#est").classList.remove("noprev"); renderEstSide();
-}
-async function estSend(text) {
-  text = (text ?? $("#est-input").value).trim();
-  if (!estJob) return log("Pick a job first.", "t-err");
-  if (!text && !estFiles.length) return;
-  const full = (estFiles.length ? `Files I added to the job folder: ${estFiles.join(", ")}\n\n` : "") + (text || "Take a look at the files I just added.");
-  $("#est-input").value = ""; estFiles = [];
-  try { await api(`/api/studio/${estJob}/send`, { method: "POST", body: { text: full } }); }
-  catch (e) { log(e.message, "t-err"); $("#est-input").value = text; }
-}
-async function estUpload(files) {
-  if (!estJob) return log("Pick a job first, then add files.", "t-err");
-  for (const f of files) {
-    $("#est-state").textContent = `Adding ${f.name}…`;
-    try { const r = await fetch(`/api/studio/${estJob}/upload`, { method: "POST", headers: { "x-filename": encodeURIComponent(f.name) }, body: f }).then((r) => r.json()); if (r.error) throw new Error(r.error); estFiles.push(r.path); }
-    catch (e) { log(`Couldn't add ${f.name}: ${e.message}`, "t-err"); }
-  }
-  renderEstState(); refreshEstFiles(); $("#est-input").focus();
-}
-function onStudio(e) {
-  if (!estData || e.job !== estJob) return;
-  if (e.kind === "delta") {
-    estStream += e.text;
-    const live = $("#est-live"); if (live) { live.innerHTML = md(estStream); const l = $("#est-log"); if (l.scrollHeight - l.scrollTop - l.clientHeight < 200) l.scrollTop = l.scrollHeight; }
-    return;
-  }
-  if (e.kind === "turn") { if (e.turn.role === "assistant") estStream = ""; estData.turns.push(e.turn); if (e.turn.role === "tool" && /Writing|Running|photo report/i.test(e.turn.text)) setTimeout(refreshEstFiles, 1500); }
-  if (e.kind === "state") { estData.running = e.running; if (!e.running) { estStream = ""; refreshEstFiles(); } }
-  renderEstLog(); renderEstState();
-}
-$("#est-job").addEventListener("change", () => { const n = Number($("#est-job").value); if (n) { $("#est").classList.add("noprev"); $("#est-frame").removeAttribute("src"); delete $("#est-frame").dataset.path; openEst(n); } });
-$("#est-send").addEventListener("click", () => estSend());
-$("#est-stop").addEventListener("click", () => estJob && api(`/api/studio/${estJob}/stop`, { method: "POST", body: {} }).catch((e) => log(e.message, "t-err")));
-$("#est-input").addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); if (!estData?.running) estSend(); } });
-$("#est-input").addEventListener("input", (e) => { e.target.style.height = "auto"; e.target.style.height = Math.min(220, e.target.scrollHeight) + "px"; });
-$("#est-attach").addEventListener("click", () => $("#est-pick").click());
-$("#est-pick").addEventListener("change", () => { const f = [...$("#est-pick").files]; $("#est-pick").value = ""; if (f.length) estUpload(f); });
-$("#est-new").addEventListener("click", async () => { if (!estJob || !confirm("Start a fresh conversation for this job? The old one is kept in the job's notes folder.")) return; try { await api(`/api/studio/${estJob}/reset`, { method: "POST", body: {} }); openEst(estJob); } catch (e) { log(e.message, "t-err"); } });
-$("#est-pclose").addEventListener("click", () => { $("#est").classList.add("noprev"); renderEstSide(); });
-$("#v-est").addEventListener("click", (e) => {
-  const q = e.target.closest("[data-est-quick]");
-  if (q) { const it = EST_QUICK[Number(q.dataset.estQuick)]; if (it.fill) { $("#est-input").value = it.fill; $("#est-input").focus(); } else estSend(it.text); return; }
-  const d = e.target.closest("[data-est-doc]");
-  if (d && estData) { const doc = estData.docs.find((x) => x.key === d.dataset.estDoc); if (doc.file) previewEst(doc.file); else if (!estData.running) { const it = { estimate: 0, agreement: 2, xactimate: 0, selections: 3, photos: 4 }[doc.key]; $("#est-input").value = EST_QUICK[it].text; $("#est-input").focus(); } return; }
-  const o = e.target.closest("[data-est-path]");
-  if (o && estData) previewEst(estData.otherPdfs.find((f) => f.path === o.dataset.estPath));
-});
-let estDrag = 0;
-$("#v-est").addEventListener("dragenter", (e) => { if (![...(e.dataTransfer?.types || [])].includes("Files")) return; estDrag++; $("#est-drop").hidden = false; });
-$("#v-est").addEventListener("dragleave", () => { if (--estDrag <= 0) { estDrag = 0; $("#est-drop").hidden = true; } });
-$("#v-est").addEventListener("dragover", (e) => { if ([...(e.dataTransfer?.types || [])].includes("Files")) e.preventDefault(); });
-$("#v-est").addEventListener("drop", (e) => { if (!e.dataTransfer?.files?.length) return; e.preventDefault(); estDrag = 0; $("#est-drop").hidden = true; estUpload([...e.dataTransfer.files]); });
-
 
 // ============================================================= zones: resizable, foldable side panels (remembered)
 const ZONES = {
   nav: { box: ".app", panel: ".side-nav", v: "--w-nav", def: 232, min: 180, max: 360, rail: 72 },
-  jobs: { box: ".split", panel: ".split > aside", v: "--w-jobs", def: 330, min: 240, max: 680 },
+  lists: { box: ".split", panel: ".split > aside", v: "--w-jobs", def: 330, min: 240, max: 680 },
   gm: { box: "#gm", panel: "#labels", v: "--w-gm", def: 256, min: 200, max: 420, rail: 88 },
   cal: { box: ".calwrap", panel: ".calside", v: "--w-cal", def: 210, min: 180, max: 440 },
-  est: { box: "#est", panel: ".est-side", v: "--w-est", def: 270, min: 220, max: 520 },
-  prev: { box: "#est", panel: ".est-prev", v: "--w-prev", def: 0, min: 320, max: 1400, left: true, noFold: true },
 };
 const zstate = () => store.get("zones", {});
 function zapply(k) {
@@ -2680,84 +2128,6 @@ function zgrips() {
 }
 document.addEventListener("click", (e) => { const t = e.target.closest("[data-zone-toggle]"); if (t) zfold(t.dataset.zoneToggle); });
 zgrips(); for (const k of Object.keys(ZONES)) zapply(k);
-// ============================================================= Homebase Notes: the team's internal conversation per job
-let notesData = null, notesPeople = [];
-const initials = (n) => (n || "?").split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase();
-const avatarColor = (n) => { let h = 0; for (const c of n || "") h = (h * 31 + c.charCodeAt(0)) % 360; return `hsl(${h} 45% 42%)`; };
-function noteWho(author) { const m = String(author || "").split(/\s+[—–-]\s+/); return m.length > 1 ? { person: m.slice(1).join(" — "), via: m[0] } : { person: author || "Someone", via: "" }; }
-function noteBody(t) {
-  return esc(t).replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>')
-    .replace(/(^|\s)@([A-Z][\w'’.-]*(?:\s[A-Z][\w'’.-]*)?)/g, (m, sp, nm) => `${sp}<span class="mention ${nm.toLowerCase().startsWith(String(notesData?.me || "{{FIRST}}").split(" ")[0].toLowerCase()) ? "me" : ""}">@${nm}</span>`).replace(/\n/g, "<br>");
-}
-function noteHtml(x, reply) {
-  const w = noteWho(x.author);
-  return `<div class="nt ${reply ? "reply" : ""}"><div class="av" style="background:${avatarColor(w.person)}">${esc(initials(w.person))}</div><div class="nb"><div class="nh"><b>${esc(w.person)}</b>${w.via ? `<span class="via">${esc(w.via)}</span>` : ""}<span class="when" title="${esc(new Date(x.postedAt).toLocaleString())}">${fmtWhen(x.postedAt)}</span></div><div class="nx">${noteBody(x.body)}</div></div></div>`;
-}
-async function renderNotes(el) {
-  const n = view.homebase.jobNumber;
-  el.innerHTML = `<div class="notes"><div class="ncomp"><textarea id="nt-new" rows="3" placeholder="Write a note for the team… type @ to mention someone"></textarea><div class="row"><button class="btn primary small" data-nt="post">Post note</button><span class="small muted">Posts to the job's Notes tab in Homebase. People you @mention get the Homebase bell.</span></div></div><div id="nt-list"><div class="empty">Loading notes from Homebase…</div></div></div>`;
-  mentionBox($("#nt-new"));
-  try { notesData = await api(`/api/jobs/${n}/notes`); } catch (e) { $("#nt-list").innerHTML = `<div class="empty">${esc(e.message)}</div>`; return; }
-  if (jobTab !== "notes" || view.homebase.jobNumber !== n) return;
-  notesPeople = notesData.people || [];
-  const list = notesData.notes;
-  $("#nt-list").innerHTML = (notesData.live ? "" : `<div class="banner" style="margin-bottom:12px">Showing the last copy from the background sync: Homebase didn't answer just now.</div>`) + (list.length ? list.map((x) => `<div class="nthread" data-note="${esc(x.id)}">${noteHtml(x)}${x.replies.map((r) => noteHtml(r, true)).join("")}
-      ${notesData.canReply ? `<div class="nreply"><button class="linkbtn" data-nt="open">Reply</button><div class="nrbox" hidden><textarea rows="2" placeholder="Reply… (@ to mention)"></textarea><div class="row"><button class="btn primary small" data-nt="reply">Reply</button><button class="btn small" data-nt="cancel">Cancel</button></div></div></div>` : ""}</div>`).join("") : `<div class="empty">No notes on this job yet. Start the conversation above.</div>`);
-  $$("#nt-list .nrbox textarea").forEach(mentionBox);
-}
-document.addEventListener("click", async (e) => {
-  const b = e.target.closest("[data-nt]"); if (!b || !view) return;
-  const n = view.homebase.jobNumber, th = b.closest(".nthread");
-  try {
-    if (b.dataset.nt === "post") { const t = $("#nt-new").value.trim(); if (!t) return; await api(`/api/jobs/${n}/note`, { method: "POST", body: { body: t } }); $("#nt-new").value = ""; }
-    if (b.dataset.nt === "open") { b.hidden = true; th.querySelector(".nrbox").hidden = false; th.querySelector(".nrbox textarea").focus(); }
-    if (b.dataset.nt === "cancel") { th.querySelector(".nrbox").hidden = true; th.querySelector("[data-nt=open]").hidden = false; }
-    if (b.dataset.nt === "reply") { const ta = th.querySelector(".nrbox textarea"), t = ta.value.trim(); if (!t) return; await api(`/api/jobs/${n}/notes/${encodeURIComponent(th.dataset.note)}/reply`, { method: "POST", body: { body: t } }); ta.value = ""; }
-  } catch (err) { log(err.message, "t-err"); }
-});
-// @mention type-ahead: names come from everyone who has written on a job's Notes tab.
-function mentionBox(ta) {
-  const pop = document.createElement("div"); pop.className = "mpop"; pop.hidden = true; ta.parentElement.style.position = "relative"; ta.after(pop);
-  let hits = [], at = -1, pick = 0;
-  const close = () => { pop.hidden = true; hits = []; };
-  const insert = (name) => { const v = ta.value, c = ta.selectionStart; ta.value = v.slice(0, at) + "@" + name + " " + v.slice(c); const p = at + name.length + 2; ta.setSelectionRange(p, p); close(); ta.focus(); };
-  ta.addEventListener("input", async () => {
-    const c = ta.selectionStart, m = ta.value.slice(0, c).match(/(^|\s)@([\w'’.-]*(?:\s[\w'’.-]*)?)$/);
-    if (!m) return close();
-    if (!notesPeople.length) { try { notesPeople = (await api("/api/notes/recent?days=365")).people; } catch {} }
-    at = c - m[2].length - 1; const q = m[2].toLowerCase();
-    hits = notesPeople.filter((p) => p.toLowerCase().includes(q)).slice(0, 6); pick = 0;
-    if (!hits.length) return close();
-    pop.innerHTML = hits.map((p, i) => `<button type="button" class="${i === pick ? "on" : ""}" data-i="${i}"><span class="av" style="background:${avatarColor(p)}">${esc(initials(p))}</span>${esc(p)}</button>`).join(""); pop.hidden = false;
-  });
-  ta.addEventListener("keydown", (e) => {
-    if (pop.hidden) return;
-    if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); pick = (pick + (e.key === "ArrowDown" ? 1 : hits.length - 1)) % hits.length; pop.querySelectorAll("button").forEach((x, i) => x.classList.toggle("on", i === pick)); }
-    else if (e.key === "Enter" || e.key === "Tab") { e.preventDefault(); insert(hits[pick]); }
-    else if (e.key === "Escape") close();
-  });
-  pop.addEventListener("mousedown", (e) => { const x = e.target.closest("[data-i]"); if (x) { e.preventDefault(); insert(hits[Number(x.dataset.i)]); } });
-  ta.addEventListener("blur", () => setTimeout(close, 150));
-}
-// Dashboard: the team's latest notes across every job (from the background sync), mentions of you first.
-async function teamNotesCard() {
-  let d; try { d = await api("/api/notes/recent?days=14"); } catch { return ""; }
-  notesPeople = d.people || notesPeople;
-  const seen = store.get("notesSeen", "");
-  const others = d.notes.filter((x) => !x.mine);
-  const rows = [...others.filter((x) => x.mentionsMe), ...others.filter((x) => !x.mentionsMe)].slice(0, 10);
-  const fresh = others.filter((x) => x.at > seen).length;
-  return `<div class="card" id="teamnotes"><h3><span>Team notes ${fresh ? `<span class="tag in">${fresh} new</span>` : ""}</span>${fresh ? `<button class="btn small" data-do="notesseen">Mark read</button>` : ""}</h3>
-    ${rows.length ? `<div class="tnotes">${rows.map((x) => `<a href="#" class="tn ${x.at > seen ? "new" : ""} ${x.mentionsMe ? "me" : ""}" data-do="opennotes" data-n="${x.jobNumber}"><span class="av" style="background:${avatarColor(x.author)}">${esc(initials(x.author))}</span><span class="tb"><span class="th"><b>${esc(x.author)}</b> on #${x.jobNumber} ${esc(x.name)}${x.mentionsMe ? ` <span class="tag in">@you</span>` : ""}<span class="when">${fmtWhen(x.at)}</span></span>${x.thread ? `<span class="small muted">↳ reply to “${esc(x.thread.slice(0, 60))}”</span>` : ""}<span class="tx">${esc(x.body.slice(0, 180))}</span></span></a>`).join("")}</div>` : `<p class="muted" style="margin:0">No notes from the team in the last two weeks.</p>`}</div>`;
-}
-document.addEventListener("click", (e) => {
-  const a = e.target.closest("[data-do=opennotes],[data-do=notesseen]"); if (!a) return;
-  e.preventDefault();
-  if (a.dataset.do === "notesseen") { store.set("notesSeen", new Date().toISOString()); loadToday(); return; }
-  jobTab = "notes"; store.set("jobtab", "notes"); showTab("jobs"); openJob(Number(a.dataset.n));
-});
-
-
 // ============================================================= Today's brief: its own tab, every item a checkbox
 // The dashboard keeps one line ("Today's brief: 3 of 11 done · Open"). Ticks are saved with the brief, so a new
 // brief (the 7 AM one, or Plan again) starts with nothing ticked.
@@ -2778,15 +2148,9 @@ async function renderBrief() {
   let total = 0, doneN = 0, html = "";
   if (p.state === "done") {
     const box = document.createElement("div");
-    box.innerHTML = md(p.text).replace(/(^|[\s(>])#(\d{4})\b/g, '$1<a href="#" data-do="open" data-n="$2">#$2</a>')
+    box.innerHTML = md(p.text)
       .replace(/\s*\{email:([\w-]{6,})\}/g, ' <button type="button" class="bmail" data-do="thread" data-thread="$1" title="Open this email in Gmail">✉ View email</button>')
-      .replace(/\s*\{go:(\d{3,6}):(\w+)\}/g, (m, n, place) => goButton(Number(n), place));
-    // A job line Claude didn't give a place for still gets a button, aimed by its wording.
-    box.querySelectorAll("li").forEach((li) => {
-      if (li.querySelector(".bgo")) return;
-      const n = Number(li.textContent.match(/#(\d{4})\b/)?.[1]); if (!n) return;
-      li.insertAdjacentHTML("beforeend", goButton(n, placeFor(li.textContent)));
-    });
+      .replace(/\s*\{go:([\w-]{1,64})\}/g, (m, id) => ` <button type="button" class="bgo" data-do="person" data-id="${esc(id)}">Open →</button>`);
     box.querySelectorAll("li").forEach((li) => {
       const plain = li.cloneNode(true); plain.querySelectorAll(".bgo, .bmail").forEach((x) => x.remove());
       const key = briefKey(plain.textContent); const on = !!p.done?.[key]; total++; if (on) doneN++;
@@ -2802,8 +2166,8 @@ async function renderBrief() {
     const stamp = p.startedAt ? `${p.trigger === "morning" ? "Made on its own · " : ""}${today ? "Today" : when.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}, ${when.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}` : "";
     page.innerHTML = `<div class="bhead"><div style="flex:1;min-width:220px"><h2>Today's brief</h2><div class="dateline">${esc(stamp)}${stamp && sch ? " · " : ""}${esc(sch)}${p.startedAt && !today ? ` · <b>from an earlier day</b>` : ""}</div></div>${planBtn}</div>
       ${p.state === "done" && total ? `<div class="bprog"><div class="bar"><span style="width:${Math.round((doneN / total) * 100)}%"></span></div><b>${doneN} of ${total} done</b>${doneN ? `<button class="linkbtn" data-do="briefclear">Untick all</button>` : ""}</div>` : ""}
-      <div class="card brief ${p.state}">${p.state === "none" ? `<p class="muted" style="margin:0">No brief yet. ${status.agent ? "Press <b>Plan my day with Claude</b>, or wait for the morning one." : "Claude is off on this machine."}</p>`
-        : p.state === "running" ? `<div class="bwork"><span class="spin"></span>Claude is going through your jobs, inbox, calendar and tasks…</div>${p.steps.length ? `<div class="bsteps">${p.steps.slice(-5).map((x) => `<div>${esc(x)}</div>`).join("")}</div>` : ""}`
+      <div class="card brief ${p.state}">${p.state === "none" ? `<p class="muted" style="margin:0">No brief yet. ${status.agent ? "Press <b>Plan my day with Claude</b>, or wait for the morning one." : "Claude is off on this computer."}</p>`
+        : p.state === "running" ? `<div class="bwork"><span class="spin"></span>Claude is going through your lists, inbox, calendar and tasks…</div>${p.steps.length ? `<div class="bsteps">${p.steps.slice(-5).map((x) => `<div>${esc(x)}</div>`).join("")}</div>` : ""}`
         : p.state === "error" ? `<div class="small" style="color:var(--bad)">${esc(p.error || "Claude couldn't finish the plan.")}</div>`
         : `<div class="btext">${html}</div>`}</div>`;
     $("#briefplan")?.addEventListener("click", startPlan);
@@ -2824,16 +2188,16 @@ document.addEventListener("click", async (e) => {
   const u = e.target.closest("[data-do=briefclear]"); if (u && briefPlan?.done) { for (const k of Object.keys(briefPlan.done)) await api("/api/plan/check", { method: "POST", body: { key: k, done: false } }).catch(() => {}); renderBrief(); }
 });
 
-// ============================================================= Contacts: everyone from email + Homebase
+// ============================================================= Contacts: everyone from email, and the lists they're on
 let pplList = [], pplSel = store.get("pplsel", null), pplTimer = null;
-async function loadPeople(q = $("#ppl-q").value.trim(), homebase = false) {
-  let r; try { r = await api(`/api/contacts?${new URLSearchParams({ q, homebase: homebase ? "1" : "0" })}`); } catch (e) { $("#ppl-rows").innerHTML = `<div class="empty">${esc(e.message)}</div>`; return; }
+async function loadPeople(q = $("#ppl-q").value.trim()) {
+  let r; try { r = await api(`/api/contacts?${new URLSearchParams({ q })}`); } catch (e) { $("#ppl-rows").innerHTML = `<div class="empty">${esc(e.message)}</div>`; return; }
   pplList = r.contacts;
-  $("#ppl-count").textContent = q ? `${r.contacts.length} match${r.contacts.length === 1 ? "" : "es"}${homebase ? " (Homebase searched too)" : ""}` : `${r.total} people`;
-  $("#ppl-rows").innerHTML = pplList.map((p) => `<div class="job ${p.id === pplSel ? "sel" : ""}" data-pid="${esc(p.id)}"><div><b>${esc(p.name || p.emails[0] || "(no name)")}</b><div class="small muted">${esc([p.title, p.company].filter(Boolean).join(" · ") || p.emails[0] || "")}</div></div><div class="small muted" style="text-align:right">${p.jobs.length ? p.jobs.slice(0, 2).map((j) => `#${j.jobNumber}`).join(" ") : ""}</div></div>`).join("") || `<div class="empty">${q ? "Nobody matches." : "No contacts yet. They fill in as email comes in and jobs sync."}</div>`;
+  $("#ppl-count").textContent = q ? `${r.contacts.length} match${r.contacts.length === 1 ? "" : "es"}` : `${r.total} people`;
+  $("#ppl-rows").innerHTML = pplList.map((p) => `<div class="job ${p.id === pplSel ? "sel" : ""}" data-pid="${esc(p.id)}"><div><b>${esc(p.name || p.emails[0] || "(no name)")}</b><div class="small muted">${esc([p.title, p.company].filter(Boolean).join(" · ") || p.emails[0] || "")}</div></div><div class="small muted" style="text-align:right">${(p.lists || []).map((l) => esc(l.list)).slice(0, 2).join(", ")}</div></div>`).join("") || `<div class="empty">${q ? "Nobody matches." : "No contacts yet. They fill in as email comes in and jobs sync."}</div>`;
   if (pplSel && !q) showPerson(pplSel, false);
 }
-$("#ppl-q").addEventListener("input", () => { clearTimeout(pplTimer); const q = $("#ppl-q").value.trim(); pplTimer = setTimeout(() => loadPeople(q, q.length >= 3), q.length >= 3 ? 450 : 150); });
+$("#ppl-q").addEventListener("input", () => { clearTimeout(pplTimer); const q = $("#ppl-q").value.trim(); pplTimer = setTimeout(() => loadPeople(q), 200); });
 $("#ppl-rows").addEventListener("click", (e) => { const r = e.target.closest("[data-pid]"); if (r) showPerson(r.dataset.pid, true); });
 async function showPerson(id, refresh) {
   pplSel = id; store.set("pplsel", id);
@@ -2843,14 +2207,13 @@ async function showPerson(id, refresh) {
     if (!p) { $("#ppl-card").innerHTML = `<div class="empty">Not found.</div>`; return; }
     $("#ppl-card").innerHTML = `<div class="card">
       <div class="ppl-h">${avatarMini(`${p.name} <${p.emails[0] || ""}>`)}<div><h2>${esc(p.name || p.emails[0] || "(no name)")}</h2><div class="muted">${esc([p.title, p.company].filter(Boolean).join(" · "))}</div></div>
-        <span class="row" style="margin-left:auto;gap:6px">${p.emails[0] ? `<button class="btn small primary" data-pmail="${esc(p.emails[0])}">Email</button>` : ""}<button class="btn small" data-prefresh="${esc(p.id)}" ${busy ? "disabled" : ""}>${busy ? "Checking Homebase…" : "Refresh from Homebase"}</button></span></div>
+        <span class="row" style="margin-left:auto;gap:6px">${p.emails[0] ? `<button class="btn small primary" data-pmail="${esc(p.emails[0])}">Email</button>` : ""}<button class="btn small" data-prefresh="${esc(p.id)}" ${busy ? "disabled" : ""}>${busy ? "Refreshing…" : "Refresh"}</button></span></div>
       <dl class="ppl-dl">
         <dt>Email</dt><dd>${p.emails.map((e) => `<button type="button" class="pv" data-copy="${esc(e)}" title="Copy">${esc(e)} ${msI("content_copy")}</button>`).join("") || `<span class="muted">none yet</span>`}</dd>
         <dt>Phone</dt><dd>${p.phones.map((x) => `<span class="pv"><a href="tel:${esc(x.number.replace(/[^\d+]/g, ""))}">${esc(x.number)}</a>${x.label ? ` <span class="muted small">${esc(x.label)}</span>` : ""} <button type="button" class="linkbtn" data-copy="${esc(x.number)}" title="Copy">${msI("content_copy")}</button>${x.from === "email" ? ` <span class="muted small">from their email signature</span>` : ""}</span>`).join("") || `<span class="muted">none yet</span>`}</dd>
         ${p.title ? `<dt>Title</dt><dd>${esc(p.title)}</dd>` : ""}${p.company ? `<dt>Company</dt><dd>${esc(p.company)}</dd>` : ""}
-        <dt>Jobs</dt><dd>${p.jobs.map((j) => `<a href="#" class="pv" data-do="open" data-n="${j.jobNumber}">#${j.jobNumber} ${esc(j.name)} <span class="muted small">${esc(j.role)}</span></a>`).join("") || `<span class="muted">not on a job</span>`}</dd>
+        <dt>Lists</dt><dd>${(p.lists || []).map((l) => `<a href="#" class="pv" data-do="person" data-id="${esc(l.id)}">${esc(l.list)} <span class="muted small">${esc(l.stage)}</span></a>`).join("") || `<span class="muted">not on your lists</span>`}</dd>
         <dt>Email history</dt><dd>${p.emailCount ? `${p.emailCount} email${p.emailCount === 1 ? "" : "s"} from them seen${p.lastEmailAt ? ` · last ${fmtWhen(p.lastEmailAt)}` : ""}` : `<span class="muted">none seen yet</span>`} · <a href="#" data-pfind="${esc(p.emails[0] || p.name)}">Find in Gmail</a></dd>
-        <dt>In Homebase</dt><dd>${p.homebaseId ? "Yes" : `<span class="muted">not matched yet</span>`}</dd>
       </dl></div>`;
   };
   draw(p, refresh);
@@ -2861,136 +2224,6 @@ $("#ppl-card").addEventListener("click", (e) => {
   const r = e.target.closest("[data-prefresh]"); if (r) { showPerson(r.dataset.prefresh, true); return; }
   const f = e.target.closest("[data-pfind]"); if (f) { e.preventDefault(); showTab("mail"); $("#mq").value = f.dataset.pfind; $("#mq").dispatchEvent(new Event("input")); }
 });
-
-// ============================================================= job pickers you can type in
-// Every job dropdown (Estimator, event, compose, file-to, add-files) gets a search box: type part of the name,
-// street, job number or stage and the list narrows. The <select> stays underneath (hidden) and keeps the value, so
-// everything that reads or sets it works as before.
-const JOB_SELECTS = ["est-job", "fd-job", "ev-job", "cp-job", "fileto-job", "tk-job"];
-function jobPicker(sel) {
-  if (sel.dataset.jp) return; sel.dataset.jp = "1";
-  const wrap = document.createElement("div"); wrap.className = "jp";
-  const inp = document.createElement("input"); inp.type = "text"; inp.autocomplete = "off"; inp.spellcheck = false; inp.setAttribute("role", "combobox");
-  const pop = document.createElement("div"); pop.className = "jp-pop"; pop.hidden = true;
-  sel.after(wrap); wrap.append(inp, pop); sel.hidden = true; sel.tabIndex = -1;
-  const optText = (o) => (o ? o.textContent.trim() : "");
-  const placeholder = () => { const blank = [...sel.options].find((o) => !o.value); return blank ? optText(blank) : "Pick a job…"; };
-  const show = () => { const o = sel.selectedOptions[0]; inp.value = o && o.value ? optText(o) : ""; inp.placeholder = placeholder() + "  (type to search)"; };
-  let hits = [], pick = 0;
-  const hay = (o) => { const j = jobs.find((x) => String(x.jobNumber) === o.value); return `${optText(o)} ${j ? `${j.address || ""} ${j.stage || ""} ${j.customer || ""}` : ""}`.toLowerCase(); };
-  const filter = (q) => {
-    const words = q.toLowerCase().replace(/#/g, "").split(/\s+/).filter(Boolean);
-    hits = [...sel.options].filter((o) => !words.length || words.every((w) => hay(o).includes(w))).slice(0, 60);
-    pick = Math.max(0, hits.findIndex((o) => o.value)); if (pick < 0) pick = 0;
-    const loading = ![...sel.options].some((o) => o.value);
-    pop.innerHTML = loading ? `<div class="jp-none">Loading jobs from Homebase…</div>` : hits.length ? hits.map((o, i) => `<button type="button" data-i="${i}" class="${i === pick ? "on" : ""} ${o.value === sel.value ? "cur" : ""}">${esc(optText(o))}</button>`).join("") : `<div class="jp-none">No job matches “${esc(q)}”</div>`;
-    pop.hidden = false;
-  };
-  const choose = (o) => { if (!o) return; sel.value = o.value; sel.dispatchEvent(new Event("change", { bubbles: true })); show(); pop.hidden = true; inp.blur(); };
-  inp.addEventListener("focus", () => { inp.select(); filter(""); });
-  inp.addEventListener("input", () => filter(inp.value));
-  inp.addEventListener("keydown", (e) => {
-    if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); if (pop.hidden) filter(inp.value); pick = (pick + (e.key === "ArrowDown" ? 1 : hits.length - 1)) % Math.max(1, hits.length); pop.querySelectorAll("button").forEach((b, i) => { b.classList.toggle("on", i === pick); if (i === pick) b.scrollIntoView({ block: "nearest" }); }); }
-    else if (e.key === "Enter") { e.preventDefault(); e.stopPropagation(); choose(hits[pick]); }
-    else if (e.key === "Escape") { e.stopPropagation(); pop.hidden = true; show(); inp.blur(); }
-  });
-  pop.addEventListener("mousedown", (e) => { const b = e.target.closest("[data-i]"); if (b) { e.preventDefault(); choose(hits[Number(b.dataset.i)]); } });
-  inp.addEventListener("blur", () => setTimeout(() => { pop.hidden = true; show(); }, 120));
-  // Keep the box in step when the options are rebuilt or the value is set from code.
-  new MutationObserver(() => { if (document.activeElement === inp) filter(inp.value); else show(); }).observe(sel, { childList: true, subtree: true, attributes: true });
-  const proto = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value");
-  Object.defineProperty(sel, "value", { get() { return proto.get.call(this); }, set(v) { proto.set.call(this, v); show(); }, configurable: true });
-  sel.addEventListener("change", show);
-  show();
-}
-const enhanceJobSelects = () => JOB_SELECTS.forEach((id) => { const el = document.getElementById(id); if (el && el.tagName === "SELECT") jobPicker(el); });
-new MutationObserver(enhanceJobSelects).observe(document.body, { childList: true, subtree: true });
-enhanceJobSelects();
-
-// ============================================================= Selections: finishes to pick, budgets, and picks
-const usd0 = (n) => "$" + Math.round(Number(n) || 0).toLocaleString("en-US");
-const STATUS = [["needed", "Needs a pick"], ["selected", "Picked"], ["approved", "Approved"], ["ordered", "Ordered"]];
-async function renderSelections(el) {
-  const n = view.homebase.jobNumber;
-  el.innerHTML = `<div class="empty">Loading selections…</div>`;
-  let d; try { d = await api(`/api/jobs/${n}/selections`); } catch (e) { el.innerHTML = `<div class="empty">${esc(e.message)}</div>`; return; }
-  if (jobTab !== "selections" || view.homebase.jobNumber !== n) return;
-  const sm = d.summary, file = (rel) => `/api/jobs/${n}/file/${encodeURIComponent(rel)}`;
-  const img = (p) => p.image ? `<a href="${esc(p.url || (/^https?:/.test(p.image) ? p.image : file(p.image)))}" target="_blank" rel="noopener"><img src="${esc(/^https?:/.test(p.image) ? p.image : file(p.image))}" alt="" loading="lazy" referrerpolicy="no-referrer"></a>` : `<div class="noimg">${msI("image")}</div>`;
-  const cmpChip = (c) => c.verdict === "unknown" ? `<span class="cmp unk">price unknown${"" }</span>` : c.verdict === "on" ? `<span class="cmp on">on budget · ${usd0(c.total)}</span>` : `<span class="cmp ${c.verdict}">${usd0(Math.abs(c.diff))} ${c.verdict} budget (${c.pct > 0 ? "+" : ""}${c.pct}%) · ${usd0(c.total)}</span>`;
-  const head = `<div class="selhead card">
-      <div class="selsum">
-        <div><span class="k">Budget for finishes</span><b>${usd0(sm.budget)}</b></div>
-        <div><span class="k">Picked so far</span><b>${sm.picked ? usd0(sm.picked) : "—"}</b>${sm.pickedBudget ? `<small>vs ${usd0(sm.pickedBudget)} budget</small>` : ""}</div>
-        <div><span class="k">Difference</span><b class="${sm.diff > 0 ? "over" : sm.diff < 0 ? "under" : ""}">${sm.pickedBudget ? `${sm.diff > 0 ? "+" : sm.diff < 0 ? "−" : ""}${usd0(Math.abs(sm.diff))}` : "—"}</b><small>${sm.over ? `${sm.over} over budget` : sm.pickedBudget ? "within budget" : ""}</small></div>
-        <div><span class="k">Still to pick</span><b>${sm.open} of ${sm.count}</b></div>
-      </div>
-      <div class="row" style="gap:8px;flex-wrap:wrap">${d.claude ? `<button class="btn ${d.categories.length ? "" : "primary"}" data-sel="build" ${d.hasEstimate ? "" : "disabled title='No estimate in the job folder yet'"}>${d.categories.length ? "Rebuild from the estimate" : "Set up from the estimate with Claude"}</button>` : ""}<button class="btn" data-sel="addcat">Add a category</button>
-        <span class="small muted">Customer emails with picks (links or photos) are added here on their own.</span></div>
-    </div>`;
-  const body = d.categories.length ? d.categories.map((c) => `<div class="card selcat" data-cat="${esc(c.id)}">
-      <div class="selc-h"><div><h3 style="margin:0">${esc(c.name)}</h3><div class="small muted">${esc(c.room || "")}${c.room ? " · " : ""}${c.quantity ? `${Number(c.quantity).toLocaleString()} ${esc(c.unit)}` : "quantity not set"}</div></div>
-        <div class="selbud"><b>${c.budgetPerUnit ? `${usd(c.budgetPerUnit)}/${esc(c.unit)}` : "no budget"}</b><span class="small muted">${c.budgetTotal ? `${usd0(c.budgetTotal)} total` : ""}</span></div>
-        <select data-sel="status">${STATUS.map(([k, v]) => `<option value="${k}" ${c.status === k ? "selected" : ""}>${v}</option>`).join("")}</select></div>
-      ${c.basis ? `<div class="small muted" style="margin:-4px 0 8px">${esc(c.basis)}</div>` : ""}
-      <div class="picks">${c.picks.map((p) => `<div class="pick ${p.chosen ? "chosen" : ""}" data-pick="${esc(p.id)}">${img(p)}
-          <div class="pinfo"><div><b>${p.url ? `<a href="${esc(p.url)}" target="_blank" rel="noopener">${esc(p.product)} ↗</a>` : esc(p.product)}</b>${p.chosen && c.picks.length > 1 ? ` <span class="tag in">chosen</span>` : ""}</div>
-            <div class="small muted">${esc([p.brand, p.color, p.sku].filter(Boolean).join(" · "))}</div>
-            <div>${p.pricePerUnit !== undefined ? `<b>${usd(p.pricePerUnit)}/${esc(c.unit)}</b> ` : p.priceText ? `<b>${esc(p.priceText)}</b> ` : ""}${cmpChip(p.cmp)}</div>
-            <div class="small muted">${p.source === "email" ? `From ${esc((p.from || "").replace(/<.*>/, "").trim())}'s email · ${fmtDate(p.at)}${p.threadId ? ` · <a href="#" data-do="thread" data-thread="${esc(p.threadId)}">View email</a>` : ""}` : `Added ${fmtDate(p.at)}`}${p.note ? ` · ${esc(p.note)}` : ""}</div></div>
-          <div class="pacts">${!p.chosen ? `<button class="btn small" data-sel="choose">Choose</button>` : ""}<button class="btn small" data-sel="rmpick" title="Remove">✕</button></div></div>`).join("")}</div>
-      <form class="addpick" data-sel="addpick"><input type="text" name="url" placeholder="Paste a product link, or type a product name"><input type="number" step="0.01" min="0" name="price" placeholder="$ per ${esc(c.unit)}"><button class="btn small">Add pick</button></form>
-    </div>`).join("") : `<div class="card"><p class="muted" style="margin:0">${d.hasEstimate ? "No selections yet. Press <b>Set up from the estimate with Claude</b> to list the finishes the owner has to pick, with quantities and material budgets." : "No estimate in this job's folder yet. Once there is one, Claude can set up the selections from it. You can also add categories by hand."}</p></div>`;
-  el.innerHTML = `<div class="sels">${head}${body}</div>`;
-}
-document.addEventListener("click", async (e) => {
-  const b = e.target.closest("[data-sel]"); if (!b || !view || b.tagName === "FORM" || b.tagName === "SELECT") return;
-  const n = view.homebase.jobNumber, cat = b.closest("[data-cat]")?.dataset.cat, pick = b.closest("[data-pick]")?.dataset.pick;
-  const k = b.dataset.sel;
-  try {
-    if (k === "build") { await api(`/api/jobs/${n}/selections/build`, { method: "POST", body: {} }); snack("Claude is reading the estimate. The categories show up here when it's done."); return; }
-    if (k === "addcat") {
-      const name = prompt("What needs picking? (e.g. Kitchen backsplash tile)"); if (!name) return;
-      const qty = prompt("Quantity and unit (e.g. 45 SF)", "1 EA") || "1 EA"; const [q, u] = qty.trim().split(/\s+/);
-      const bud = prompt(`Material budget per ${u || "EA"} ($)`, "0") || "0";
-      await api(`/api/jobs/${n}/selections/category`, { method: "POST", body: { name, quantity: Number(q) || 1, unit: (u || "EA").toUpperCase(), budgetPerUnit: Number(bud.replace(/[$,]/g, "")) || 0 } });
-    }
-    if (k === "choose") await api(`/api/jobs/${n}/selections/update`, { method: "POST", body: { categoryId: cat, pickId: pick, choose: true } });
-    if (k === "rmpick") { if (!confirm("Remove this pick?")) return; await api(`/api/jobs/${n}/selections/update`, { method: "POST", body: { categoryId: cat, pickId: pick, remove: true } }); }
-    if (["addcat", "choose", "rmpick"].includes(k)) renderJobTab();
-  } catch (err) { log(err.message, "t-err"); }
-});
-document.addEventListener("change", async (e) => {
-  const s = e.target.closest("select[data-sel=status]"); if (!s || !view) return;
-  await api(`/api/jobs/${view.homebase.jobNumber}/selections/update`, { method: "POST", body: { categoryId: s.closest("[data-cat]").dataset.cat, status: s.value } }).catch((err) => log(err.message, "t-err"));
-});
-document.addEventListener("submit", async (e) => {
-  const f = e.target.closest("form[data-sel=addpick]"); if (!f || !view) return;
-  e.preventDefault();
-  const v = f.url.value.trim(); if (!v) return;
-  const isUrl = /^https?:\/\//i.test(v);
-  f.querySelector("button").disabled = true; f.querySelector("button").textContent = isUrl ? "Reading the page…" : "Adding…";
-  try { await api(`/api/jobs/${view.homebase.jobNumber}/selections/pick`, { method: "POST", body: { categoryId: f.closest("[data-cat]").dataset.cat, url: isUrl ? v : undefined, product: isUrl ? undefined : v, pricePerUnit: f.price.value } }); renderJobTab(); }
-  catch (err) { log(err.message, "t-err"); f.querySelector("button").disabled = false; f.querySelector("button").textContent = "Add pick"; }
-});
-
-// ---- "Take me there": a job and the place on it where the work starts
-const GO_LABEL = { estimator: "Open estimator", selections: "Open selections", notes: "Open notes", photos: "Open photos", files: "Open documents", timeline: "Open timeline", job: "Open job" };
-function placeFor(t) {
-  t = String(t).toLowerCase();
-  if (/\b(estimate|estimating|pric(e|ing)|scope(?! ?walk)|xactimate|esx|revis|supplement|agreement|photo report|line item)/.test(t) && !/\b(email|reply|follow[- ]?up|send|call)\b/.test(t)) return "estimator";
-  if (/\bselection|allowance|finish(es)? pick|pick(ed|s)? (the|their)/.test(t)) return "selections";
-  if (/\bnote/.test(t)) return "notes";
-  if (/\bphotos?\b/.test(t) && !/\b(send|email)\b/.test(t)) return "photos";
-  return "job";
-}
-const goButton = (n, place) => ` <button type="button" class="bgo" data-go="${n}" data-place="${esc(GO_LABEL[place] ? place : "job")}" title="#${n}">${esc(GO_LABEL[place] || "Open job")} →</button>`;
-async function goTo(n, place) {
-  if (place === "estimator") { showTab("est"); if (estJob !== n || !estData) { $("#est-job").value = String(n); await openEst(n); } return; }
-  jobTab = ["selections", "notes", "photos", "files", "timeline"].includes(place) ? place : "overview"; store.set("jobtab", jobTab);
-  showTab("jobs"); openJob(n);
-}
-document.addEventListener("click", (e) => { const b = e.target.closest("[data-go]"); if (!b) return; e.preventDefault(); goTo(Number(b.dataset.go), b.dataset.place); });
 
 // ---- text size: everything a bit bigger by default (about 12%), adjustable with A− / A+ (remembered)
 const TSIZES = [1, 1.06, 1.12, 1.2, 1.3, 1.4];
@@ -3003,48 +2236,15 @@ document.addEventListener("click", (e) => {
 });
 applyTextSize();
 
-// ---- changing a job's stage (Homebase asks for a loss reason on Closed Lost; every change is confirmed first)
-function openStagePicker() {
-  const pop = $("#stagepop"), cur = view.homebase.stage, stages = meta.stages?.length ? meta.stages : [];
-  const reasons = (meta.vocab?.lossReasons || []).filter((r) => r !== "Referred out");
-  const draw = (q = "") => {
-    const list = stages.filter((x) => !q || x.toLowerCase().includes(q.toLowerCase()));
-    pop.querySelector(".sl").innerHTML = list.map((x) => `<button type="button" data-stage="${esc(x)}" class="${x === cur ? "cur" : ""}">${x === cur ? "● " : ""}${esc(x)}</button>`).join("") || `<div class="jp-none">No stage matches.</div>`;
-  };
-  pop.innerHTML = `<input type="text" placeholder="Type to find a stage" autocomplete="off"><div class="sl"></div>
-    <form class="lost" hidden><b>Why was it lost?</b><select name="r">${reasons.map((r) => `<option>${esc(r)}</option>`).join("")}</select><input type="text" name="o" placeholder="Say why (for Other)" hidden><div class="row" style="gap:6px"><button class="btn small primary">Move to Closed Lost</button><button type="button" class="btn small" data-x="1">Cancel</button></div><span class="small muted">For Referred out, use Homebase (it needs the contractor).</span></form>`;
-  pop.hidden = false; draw();
-  const inp = pop.querySelector("input"); inp.focus();
-  inp.addEventListener("input", () => draw(inp.value));
-  inp.addEventListener("keydown", (e) => { if (e.key === "Escape") pop.hidden = true; if (e.key === "Enter") { e.preventDefault(); pop.querySelector(".sl button")?.click(); } });
-  const lost = pop.querySelector(".lost");
-  lost.r.addEventListener("change", () => { lost.o.hidden = lost.r.value !== "Other"; });
-  lost.addEventListener("submit", (e) => { e.preventDefault(); if (lost.r.value === "Other" && !lost.o.value.trim()) { lost.o.focus(); return; } moveStage("Closed Lost", { lossReason: lost.r.value, lossReasonOther: lost.o.value.trim() || undefined }); });
-  lost.querySelector("[data-x]").addEventListener("click", () => { lost.hidden = true; pop.querySelector(".sl").hidden = false; inp.hidden = false; });
-  pop.querySelector(".sl").addEventListener("click", (e) => {
-    const b = e.target.closest("[data-stage]"); if (!b || b.dataset.stage === cur) return;
-    if (b.dataset.stage === "Closed Lost") { lost.hidden = false; pop.querySelector(".sl").hidden = true; inp.hidden = true; lost.o.hidden = lost.r.value !== "Other"; return; }
-    moveStage(b.dataset.stage, {});
-  });
-}
-async function moveStage(stage, extra) {
-  $("#stagepop").hidden = true;
-  try { await api(`/api/jobs/${view.homebase.jobNumber}/stage`, { method: "POST", body: { stage, ...extra } }); } catch (e) { log(e.message, "t-err"); }
-}
-document.addEventListener("click", (e) => {
-  if (e.target.closest("#stagebtn")) { const pop = $("#stagepop"); if (pop.hidden) openStagePicker(); else pop.hidden = true; return; }
-  if (!e.target.closest("#stagepop") && $("#stagepop") && !$("#stagepop").hidden) $("#stagepop").hidden = true;
-});
 const es = new EventSource("/api/events");
 es.onmessage = (m) => {
   const e = JSON.parse(m.data);
   if (e.type === "log") log(e.text);
-  if (e.type === "studio") onStudio(e);
   if (e.type === "answer") onAnswer(e);
   if (e.type === "approval") { if (!approvals.some((a) => a.id === e.id)) approvals.push(e); showApproval(); }
   if (e.type === "approval-done") { const i = approvals.findIndex((a) => a.id === e.id); if (i >= 0) { approvals.splice(i, 1); showApproval(); } }
   if (e.type === "task") {
-    if (e.state === "running") { log(`▶ ${e.label}`, "t-run"); if (e.label.startsWith("Sync jobs")) loadSyncState(); }
+    if (e.state === "running") log(`▶ ${e.label}`, "t-run");
     if (e.state === "done") log(`✓ ${e.label}`, "t-ok");
     if (e.state === "error") log(`✗ ${e.label}: ${e.error}`, "t-err");
   }
@@ -3052,22 +2252,21 @@ es.onmessage = (m) => {
   if (e.type === "changed" && e.what === "plan") { renderBrief(); return; }
   if (e.type === "changed") {
     if (e.what === "mail" && mailLoaded) { loadThreads(); if (mailThread) openThread(mailThread); }
-    if ((e.what === "job" || e.what === "timeline") && view && (!e.job || e.job === view.homebase.jobNumber)) openJob(view.homebase.jobNumber, true);
-    if (e.what === "job" && !e.job) { loadSyncState(); loadJobs(); if (store.get("tab", "today") === "today") loadToday(); }
+    if (e.what === "lists") { if (store.get("tab", "today") === "lists") loadLists(); if (store.get("tab", "today") === "today") loadToday(); }
+    if (e.what === "calendar" && store.get("tab", "today") === "today") loadToday();
   }
 };
 
 // Refresh the Today list and the inbox every few minutes while open.
-setInterval(() => { loadSyncState(); if (store.get("tab", "today") === "today") loadToday(); if (mailLoaded && !$("#composedlg").open) loadThreads(); }, 120000);
+setInterval(() => { if (store.get("tab", "today") === "today") loadToday(); if (mailLoaded && !$("#composedlg").open) loadThreads(); }, 120000);
 
 renderRecent();
 spHandleRedirect().catch((e) => { spLastErr = e.message; log(`Spotify: ${e.message}`, "t-err"); store.set("tab", "music"); }).finally(() => { if (spTok.get() && store.get("tab", "today") !== "music") renderMusic().catch(() => {}); });
 loadStatus().then(async () => {
   renderBrief();
+  lists = await api("/api/lists").catch(() => lists);
   showTab(store.get("tab", "today"));
-  await loadJobs();
-  loadSyncState();
-  if (selected && store.get("tab", "today") === "jobs") openJob(selected);
+  if (curPerson && store.get("tab", "today") === "lists") openPerson(curPerson);
 }).catch((e) => log(e.message, "t-err"));
 </script>
 </body>

@@ -24,7 +24,6 @@ export interface Task {
   completedAt?: string;
   updated: string;
   link?: string;
-  jobNumber?: number;
 }
 
 export interface TaskInput {
@@ -44,11 +43,6 @@ export interface TasksClient {
   update(listId: string, id: string, t: TaskInput): Promise<Task>;
   remove(listId: string, id: string): Promise<void>;
 }
-
-const jobRef = (s: string) => {
-  const m = s.match(/#(\d{4})\b/);
-  return m ? Number(m[1]) : undefined;
-};
 
 export class GoogleTasks implements TasksClient {
   readonly kind = "google" as const;
@@ -76,7 +70,6 @@ export class GoogleTasks implements TasksClient {
       completedAt: t.completed ?? undefined,
       updated: t.updated ?? "",
       link: t.webViewLink ?? undefined,
-      jobNumber: jobRef(`${t.title ?? ""} ${t.notes ?? ""}`),
     };
   }
 
@@ -152,9 +145,9 @@ export class MockTasks implements TasksClient {
     if (existsSync(this.file)) return JSON.parse(readFileSync(this.file, "utf8"));
     const day = (n: number) => new Date(Date.now() + n * 864e5).toISOString().slice(0, 10);
     return [
-      { id: "t1", listId: "default", title: "Send Xactimate to adjuster #9001", due: day(0), completed: false, updated: new Date().toISOString(), jobNumber: 9001 },
-      { id: "t2", listId: "default", title: "Follow up with Sam #9002", due: day(-1), completed: false, updated: new Date().toISOString(), jobNumber: 9002 },
-      { id: "t3", listId: "default", title: "Order tile samples", due: day(2), completed: false, updated: new Date().toISOString() },
+      { id: "t1", listId: "default", title: "Post the workshop reminder on Instagram", due: day(0), completed: false, updated: new Date().toISOString() },
+      { id: "t2", listId: "default", title: "Send Frankie the workshop slides", due: day(-1), completed: false, updated: new Date().toISOString() },
+      { id: "t3", listId: "default", title: "Review the coaching intake Google Doc", due: day(2), completed: false, updated: new Date().toISOString() },
     ];
   }
   private save(t: Task[]) {
@@ -168,7 +161,7 @@ export class MockTasks implements TasksClient {
     return this.load().filter((t) => (o.showCompleted || !t.completed) && (!o.dueMin || !t.due || t.due >= o.dueMin.slice(0, 10)) && (!o.dueMax || !t.due || t.due <= o.dueMax.slice(0, 10)));
   }
   async create(t: TaskInput & { title: string }) {
-    const task: Task = { id: `t${Date.now().toString(36)}`, listId: t.listId || "default", title: t.title, notes: t.notes, due: t.due ?? undefined, completed: !!t.completed, updated: new Date().toISOString(), jobNumber: jobRef(`${t.title} ${t.notes ?? ""}`) };
+    const task: Task = { id: `t${Date.now().toString(36)}`, listId: t.listId || "default", title: t.title, notes: t.notes, due: t.due ?? undefined, completed: !!t.completed, updated: new Date().toISOString() };
     this.save([...this.load(), task]);
     return task;
   }

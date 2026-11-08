@@ -83,8 +83,7 @@ export interface MailClient {
   listThreads?(o: { label?: string; q?: string; pageToken?: string; max?: number }): Promise<{ threads: ThreadSummary[]; nextPageToken?: string }>;
   labels?(): Promise<Label[]>;
   /**
-   * Sends now. Called by the Mail tab's Send button (after the owner confirms) and by auto-filing, which forwards job
-   * emails only to the job's office+<job#> log addresses (estimating; removed in PLAN step 4).
+   * Sends now. Called only by the Mail tab's Send button, after the owner confirms.
    */
   send?(d: DraftInput): Promise<{ id: string; threadId: string; messageId: string }>;
   /** Sends an existing draft as it is (attachments included). Only the Mail tab's Send button calls it, after the owner confirms. */

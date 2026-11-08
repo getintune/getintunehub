@@ -1,8 +1,8 @@
 import { createInterface } from "node:readline/promises";
 
 /**
- * Everything irreversible goes through an Approver: Homebase writes (stage, proposal, fields, notes, files), sending
- * an email, and overwriting an estimate. Creating a Gmail draft does not ask.
+ * Everything that changes something goes through an Approver: sending an email, calendar and task changes, and
+ * Claude's changes to her lists. Creating a Gmail draft does not ask.
  */
 export interface Approver {
   confirm(action: string, details?: string[]): Promise<boolean>;

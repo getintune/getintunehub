@@ -156,7 +156,7 @@ export class MockGmail implements MailClient {
       { id: "SPAM", name: "SPAM", type: "system" },
       { id: "TRASH", name: "TRASH", type: "system" },
       // Two made-up labels of her own, so sorting by label can be tried without a real account.
-      { id: "Label_1", name: "Adjusters", type: "user" },
+      { id: "Label_1", name: "Workshop", type: "user" },
       { id: "Label_2", name: "Receipts", type: "user" },
     ];
   }

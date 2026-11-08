@@ -122,7 +122,7 @@ Outlook** (the Gmail tab becomes Outlook; Gmail stays only to catch team request
       (still estimating examples), the "Plan my day" prompt (all about jobs), `Connect CompanyCam.bat`.
       Her work address marlys@getintunemusictherapy.com is confirmed (2026-11-08). To check in step 7: setup clones the
       default branch, so this branch must be merged first.
-- [ ] **4. Take out what's Forefront-only.**
+- [x] **4. Take out what's Forefront-only.**
       - Estimating: the Estimator tab (`src/agent/studio.ts`), Selections (`src/agent/selections.ts`,
         `src/workflows/selections.ts`), the send-off and Homebase sync (`src/workflows/sendoff.ts`, `sync.ts`,
         `files.ts`, `pull.ts`, `background.ts`), the estimating skill (`src/connectors/skill`, ESTIMATOR_DIR,
@@ -135,6 +135,16 @@ Outlook** (the Gmail tab becomes Outlook; Gmail stays only to catch team request
       Keep: dashboard, daily brief with checkboxes and go-buttons, Gmail tab (drafts-only Claude, Claude drafts
       folder, summaries, drag to labels), Calendar + Google Tasks, drive times, Contacts, notes, Ask Claude (it
       routes to the right tab), Music, foldable panels, text size, the Claude env guard.
+      *Done 2026-11-08:* all of the above removed. Her six lists live in `src/connectors/lists` (stages, extra
+      fields and hints per list in `PROGRAMS`), saved to `data/lists.json` (HUB_DATA_DIR) with a backup on each
+      save; practice people in `fixtures/lists.json`. Therapy clients are initials-only (no email/phone stored)
+      and Claude never sees their notes. `src/workflows/needs.ts` works out "Needs you" (next steps due, people
+      waiting too long at a stage, rules in `WAITING`) and the workshop sign-up counts by source. Page: a
+      **Clients** tab (one list per program, add/move/notes), a new dashboard (sign-up count, needs, lists,
+      today), contacts and email threads show which list a person is on, the brief's go-buttons open a person
+      (`{go:ID}`). Drive times use each event's own address from HUB_DAY_START_ADDRESS. Practice mail, calendar
+      and tasks are made-up Get In Tune examples. Still to come: Outlook in place of Gmail as her main mailbox,
+      Motion in place of Google Tasks, and the Grow Therapy email rule (step 6).
 - [ ] **5. Claude costs.** Claude features stay off until she adds an Anthropic API key. Use the fast model
       (`HUB_FAST_MODEL`) for everything routine (summaries, tasks from email) and the big one only for the brief
       and Ask Claude. Add on/off switches in the app for each background Claude feature. Add a cost meter: record

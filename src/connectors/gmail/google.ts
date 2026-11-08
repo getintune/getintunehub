@@ -7,7 +7,7 @@ import type { DraftInput, DraftRef, DraftStatus, Label, MailClient, Message, Thr
 
 // modify = read, label (archive / mark read / star / trash) and send; compose = drafts. Claude and the workflows only
 // create drafts; sending happens from the Gmail tab's Send button after the owner confirms, and auto-filing forwards
-// to the job's own office+<job#> addresses (estimating only; goes in PLAN step 4).
+// nowhere on its own.
 export { openBrowser, type GoogleOpts };
 
 export class GoogleGmail implements MailClient {

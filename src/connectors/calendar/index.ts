@@ -27,8 +27,6 @@ export interface CalEvent {
   link?: string; // open in Google Calendar
   meet?: string;
   attendees?: { email: string; name?: string; response?: string }[];
-  /** A job number the event mentions (#3226), so the app can link it. */
-  jobNumber?: number;
   /** The series a repeating event belongs to (Google's recurringEventId). */
   recurringId?: string;
   /** Her own answer when she's an invitee: "accepted", "declined", "tentative", "needsAction". */
@@ -59,11 +57,6 @@ export interface CalendarClient {
   /** Busy blocks across the given calendars, for finding free time. */
   busy(o: { start: string; end: string; calendarIds?: string[] }): Promise<{ start: string; end: string }[]>;
 }
-
-const jobRef = (s: string) => {
-  const m = s.match(/#(\d{4})\b/);
-  return m ? Number(m[1]) : undefined;
-};
 
 export class GoogleCalendar implements CalendarClient {
   readonly kind = "google" as const;
@@ -112,7 +105,6 @@ export class GoogleCalendar implements CalendarClient {
       link: e.htmlLink ?? undefined,
       meet: e.hangoutLink ?? undefined,
       attendees: (e.attendees ?? []).filter((a) => !a.self).map((a) => ({ email: a.email!, name: a.displayName ?? undefined, response: a.responseStatus ?? undefined })),
-      jobNumber: jobRef(text),
       recurringId: e.recurringEventId ?? undefined,
       myResponse: e.attendees?.find((a) => a.self)?.responseStatus ?? undefined,
     };
@@ -185,10 +177,10 @@ export class MockCalendar implements CalendarClient {
       return d.toISOString();
     };
     return [
-      { id: "e1", calendarId: "primary", title: "Scope walk #9001 Sample", start: day(0, 9), end: day(0, 10), allDay: false, location: "123 Main St, Denver, CO 80211", color: "#7aa7ff", jobNumber: 9001 },
-      { id: "e2", calendarId: "primary", title: "Recon wrap-up", start: day(0, 15, 30), end: day(0, 16), allDay: false, color: "#7aa7ff" },
-      { id: "e3", calendarId: "primary", title: "Call adjuster re #9002", start: day(1, 11), end: day(1, 11, 30), allDay: false, color: "#e6ad55", jobNumber: 9002 },
-      { id: "e4", calendarId: "team", title: "Team meeting", start: day(2, 8), end: day(2, 9), allDay: false, color: "#6fc394" },
+      { id: "e1", calendarId: "primary", title: "Grow session (A.R.)", start: day(0, 10), end: day(0, 10, 50), allDay: false, location: "https://zoom.us/j/000000", color: "#7c79c4" },
+      { id: "e2", calendarId: "primary", title: "Free consult: Priya Example", start: day(2, 12), end: day(2, 12, 30), allDay: false, location: "https://zoom.us/j/000001", color: "#4241a0" },
+      { id: "e3", calendarId: "primary", title: "Music therapy group, Sunrise Recovery (example)", start: day(1, 15), end: day(1, 16, 30), allDay: false, location: "1600 Example St, Denver, CO 80202", color: "#e6ad55" },
+      { id: "e4", calendarId: "team", title: "Team check-in with Kristin and Frankie", start: day(0, 13), end: day(0, 13, 30), allDay: false, color: "#6fc394" },
     ];
   }
   private save(e: CalEvent[]) {
@@ -197,7 +189,7 @@ export class MockCalendar implements CalendarClient {
   }
   async calendars() {
     return [
-      { id: "primary", name: "Marlys Woods", color: "#7aa7ff", primary: true, writable: true },
+      { id: "primary", name: "Marlys Woods", color: "#4241a0", primary: true, writable: true },
       { id: "team", name: "Get In Tune team (test)", color: "#6fc394", primary: false, writable: true },
     ];
   }
@@ -205,7 +197,7 @@ export class MockCalendar implements CalendarClient {
     return this.load().filter((e) => e.end > o.start && e.start < o.end && (!o.calendarIds?.length || o.calendarIds.includes(e.calendarId)) && (!o.q || e.title.toLowerCase().includes(o.q.toLowerCase())));
   }
   async create(e: EventInput) {
-    const ev: CalEvent = { id: `e${Date.now().toString(36)}`, calendarId: e.calendarId || "primary", title: e.title, start: e.start, end: e.end, allDay: !!e.allDay, location: e.location, description: e.description, color: "#7aa7ff", jobNumber: jobRef(`${e.title} ${e.description ?? ""}`) };
+    const ev: CalEvent = { id: `e${Date.now().toString(36)}`, calendarId: e.calendarId || "primary", title: e.title, start: e.start, end: e.end, allDay: !!e.allDay, location: e.location, description: e.description, color: "#7aa7ff" };
     this.save([...this.load(), ev]);
     return ev;
   }
