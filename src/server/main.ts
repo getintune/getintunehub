@@ -98,6 +98,9 @@ const server = http.createServer(async (req, res) => {
         claude: { endpoint: ce.claudeEndpoint(), ignored: ce.ignoredRedirects() },
         lines: describe(hub),
         lists: hub.lists.kind,
+        outlook: hub.outlook.kind,
+        outlookConnected: hub.outlook.connected(),
+        mailboxes: hub.outlook.mailboxes(),
         gmail: hub.gmail.kind,
         gmailFull: hub.gmail.fullAccess?.() ?? false,
         calendar: hub.calendar.kind,
@@ -109,12 +112,52 @@ const server = http.createServer(async (req, res) => {
       });
     }
     // ---- Spotify: only the app's client ID lives on this computer (in .env); sign-in tokens stay in the browser.
+    // ---- work email (Outlook, read-only), Grow alerts and sign-ups from info@
+    if (p === "/api/work/messages") {
+      const mailbox = q("mailbox") || hub.outlook.mailboxes()[0];
+      if (!hub.outlook.mailboxes().includes(mailbox)) return send(res, 400, { error: "That mailbox isn't one of yours." });
+      return send(res, 200, { mailbox, messages: await hub.outlook.list({ mailbox, q: q("q") || undefined }) });
+    }
+    const wm = p.match(/^\/api\/work\/messages\/([^/]+)\/([^/]+)$/);
+    if (wm) {
+      const mailbox = decodeURIComponent(wm[1]);
+      if (!hub.outlook.mailboxes().includes(mailbox)) return send(res, 400, { error: "That mailbox isn't one of yours." });
+      const m = await hub.outlook.get(mailbox, decodeURIComponent(wm[2]));
+      const { isGrow } = await import("../workflows/grow.js");
+      // Grow emails are opened in Outlook, not shown here (her HIPAA rule): only a pointer to them.
+      if (isGrow(m)) return send(res, 200, { ...m, subject: "Grow Therapy email", preview: "", body: "", grow: true });
+      noteMessages(hub, [{ id: m.id, from: m.from.name ? `${m.from.name} <${m.from.address}>` : m.from.address, to: m.to, cc: [], date: m.receivedAt, subject: m.subject, body: m.body ?? "", attachments: [] }]);
+      return send(res, 200, m);
+    }
+    if (p === "/api/grow/dismiss" && req.method === "POST") {
+      (await import("../workflows/grow.js")).dismissGrow(hub, String((await body(req)).id));
+      return send(res, 200, { ok: true });
+    }
+    if (p === "/api/signups/accept" && req.method === "POST") {
+      const b = await body(req);
+      const e = (await import("../workflows/signups.js")).acceptSignup(hub, { messageId: String(b.messageId), name: String(b.name), email: String(b.email), source: b.source, event: String(b.event) });
+      bus.emit({ type: "changed", what: "lists" });
+      return send(res, 200, e);
+    }
+    if (p === "/api/signups/dismiss" && req.method === "POST") {
+      (await import("../workflows/signups.js")).dismissSignup(hub, String((await body(req)).messageId));
+      return send(res, 200, { ok: true });
+    }
+
     // ---- "Do this in Claude": the request written out for her own Claude app (no API key needed)
     if (p === "/api/handoff" && req.method === "POST") {
       const b = await body(req);
       const h = await import("../workflows/handoff.js");
       if (b.kind === "plan") return send(res, 200, { prompt: await h.planPrompt(hub) });
       if (b.kind === "person") return send(res, 200, { prompt: h.personPrompt(hub, hub.lists.get(String(b.id)), b.ask ? String(b.ask) : undefined) });
+      if (b.kind === "workreply") {
+        const mailbox = String(b.mailbox);
+        if (!hub.outlook.mailboxes().includes(mailbox)) return send(res, 400, { error: "That mailbox isn't one of yours." });
+        const m = await hub.outlook.get(mailbox, String(b.id));
+        const { isGrow } = await import("../workflows/grow.js");
+        if (isGrow(m)) return send(res, 400, { error: "Grow Therapy emails stay in Grow and Outlook, not in Claude." });
+        return send(res, 200, { prompt: h.replyPrompt(hub, { subject: m.subject, from: `${m.from.name} <${m.from.address}> (in my ${mailbox} Outlook mailbox)`, date: m.receivedAt, body: m.body ?? m.preview }) });
+      }
       if (b.kind === "reply") {
         const t = await hub.gmail.getThread(String(b.threadId));
         const last = t.messages.filter((m) => !m.labelIds?.includes("DRAFT")).at(-1) ?? t.messages.at(-1)!;
@@ -162,7 +205,18 @@ const server = http.createServer(async (req, res) => {
         .list()
         .slice(0, 8)
         .map((e) => ({ id: e.id, name: e.name, program: e.program, list: hub.lists.program(e.program).name, stage: e.stage, at: e.updatedAt }));
+      const { growAlerts } = await import("../workflows/grow.js");
+      const { signupSuggestions } = await import("../workflows/signups.js");
+      let grow: unknown[] = [], signups: unknown[] = [], workError = "";
+      try {
+        [grow, signups] = await Promise.all([growAlerts(hub), signupSuggestions(hub)]);
+      } catch (e) {
+        workError = (e as Error).message;
+      }
       return send(res, 200, {
+        grow,
+        signups,
+        workError,
         needs: needs(hub),
         ...listCounts(hub),
         schedule,

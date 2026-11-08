@@ -4,7 +4,7 @@ import { createInterface } from "node:readline/promises";
 import { loadConfig } from "../core/config.js";
 import { GoogleGmail, openBrowser } from "../connectors/gmail/google.js";
 
-/** Guided set-up for Gmail and CompanyCam: opens the right pages, takes the values, saves them to .env, tests them. */
+/** Guided set-up for Gmail and Outlook: opens the right pages, takes the values, saves them to .env, tests them. */
 
 function envPath() {
   return path.join(loadConfig().hubRoot, ".env");
@@ -114,4 +114,52 @@ export async function connectGmail() {
     console.log(`Google Tasks didn't answer: ${(e as Error).message}\n  If it says the API isn't enabled, enable it (step 5) and run Connect Gmail again.`);
   }
   console.log(`Restart ${app} (close its window, open it again) to use it.`);
+}
+
+/**
+ * Outlook (Microsoft 365), read-only: a one-time "app registration" in her own Microsoft 365, then a sign-in
+ * with a short code. She's the admin of her Microsoft 365, so she can approve it herself.
+ */
+export async function connectOutlook() {
+  const cfg = loadConfig();
+  const app = cfg.profile.appName;
+  console.log(`Connecting your work email (${cfg.outlook.mailboxes.join(" and ")}) to ${app}. It only READS mail: it can't send, move or delete anything.`);
+  if (!cfg.outlook.clientId) {
+    console.log("\nMicrosoft needs a one-time 'app registration'. Each page opens in your browser; sign in with your Microsoft 365 admin account.");
+    step(1, `Click "+ New registration". Name: ${app}. Who can use it: "Accounts in this organizational directory only". Leave Redirect URI empty. Click Register.`);
+    openBrowser("https://entra.microsoft.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade");
+    await ask("   Press Enter when it's registered... ");
+    const id = await ask('2. On the page that opened, copy the "Application (client) ID" and paste it here: ');
+    const tenant = await ask('3. Copy the "Directory (tenant) ID" and paste it here: ');
+    if (!/^[0-9a-f-]{36}$/i.test(id) || !/^[0-9a-f-]{36}$/i.test(tenant)) throw new Error("Those don't look like Microsoft IDs (they look like 1a2b3c4d-....). Run Connect Outlook again and copy them once more.");
+    step(4, 'In the menu on the left click "Authentication". Under "Advanced settings", set "Allow public client flows" to Yes, then Save.');
+    await ask("   Press Enter when saved... ");
+    step(5, 'Click "API permissions" > "+ Add a permission" > Microsoft Graph > Delegated permissions. Tick Mail.Read and Mail.Read.Shared, then "Add permissions". Then click "Grant admin consent for ..." and Yes.');
+    await ask("   Press Enter when the permissions show a green tick... ");
+    setEnv({ MS_CLIENT_ID: id, MS_TENANT: tenant });
+  }
+  const c = loadConfig({ ...process.env, MS_CLIENT_ID: cfg.outlook.clientId || loadEnvValue("MS_CLIENT_ID"), MS_TENANT: loadEnvValue("MS_TENANT") || cfg.outlook.tenant, HUB_MODE: "live" });
+  const { GraphMail } = await import("../connectors/outlook/index.js");
+  const g = new GraphMail({ clientId: c.outlook.clientId, tenant: c.outlook.tenant, tokenFile: c.outlook.tokenFile, mailboxes: c.outlook.mailboxes });
+  await g.login((code, url) => {
+    console.log(`\n6. Sign in: on the page that opens, type this code: ${code}\n   Then sign in as ${c.outlook.mailboxes[0]} and click Accept.`);
+    openBrowser(url);
+  });
+  for (const mb of c.outlook.mailboxes) {
+    try {
+      const l = await g.list({ mailbox: mb, max: 1 });
+      console.log(`${mb}: connected. Newest email: "${l[0]?.subject ?? "(empty inbox)"}".`);
+    } catch (e) {
+      console.log(`${mb}: ${(e as Error).message}`);
+    }
+  }
+  console.log(`\nRestart ${app} (close its window, open it again) to use it.`);
+}
+
+function loadEnvValue(k: string): string {
+  try {
+    return readFileSync(envPath(), "utf8").match(new RegExp(`^${k}=(.*)$`, "m"))?.[1]?.trim() ?? "";
+  } catch {
+    return "";
+  }
 }

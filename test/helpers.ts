@@ -8,6 +8,7 @@ import { MockGmail } from "../src/connectors/gmail/mock.js";
 import { MockCalendar } from "../src/connectors/calendar/index.js";
 import { MockTasks } from "../src/connectors/tasks/index.js";
 import { MockTravel } from "../src/connectors/travel/index.js";
+import { MockWorkMail } from "../src/connectors/outlook/index.js";
 import type { Hub } from "../src/hub.js";
 
 /** A whole Hub on mocks and practice data, in a fresh temp folder. `answer` is how every Yes/No card is answered. */
@@ -20,6 +21,7 @@ export function testHub(answer = true) {
   const hub: Hub = {
     cfg,
     lists: new MockLists(cfg.stateDir, path.join(HUB_ROOT, "fixtures", "lists.json")),
+    outlook: new MockWorkMail(path.join(HUB_ROOT, "fixtures", "outlook.json"), cfg.outlook.mailboxes),
     gmail,
     calendar: new MockCalendar(cfg.stateDir),
     tasks: new MockTasks(cfg.stateDir),

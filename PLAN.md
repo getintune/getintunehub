@@ -165,6 +165,19 @@ Outlook** (the Gmail tab becomes Outlook; Gmail stays only to catch team request
       Calendar and Microsoft 365 connectors are connected.
 - [ ] **6. Her tools.** One at a time, each as a connector with a mock and tests: booking/scheduling, invoicing/
       payments, files/photos. Turn what they know into dashboard reminders and lines in the daily brief.
+      - [x] **Outlook (2026-11-08):** info@ gets Grow Therapy, Wix and Eventbrite email; Marlys set up her Microsoft
+        365 herself (she's the admin). `src/connectors/outlook`: Microsoft Graph, **read-only** (Mail.Read,
+        Mail.Read.Shared), device-code sign-in (`Connect Outlook.command`, guide in `connectOutlook()`), reads
+        OUTLOOK_MAILBOXES (marlys@ and info@). Practice mail in `fixtures/outlook.json` (Grow/Wix/Eventbrite wording
+        invented: **check the patterns in `src/workflows/grow.ts` and `signups.ts` against her real emails once
+        connected**). Work email tab (read, search, Open in Outlook, Draft reply in Claude). Grow alerts card (her four
+        kinds, initials only, no subject or preview kept; Grow emails aren't shown in the app or sent to Claude, only
+        "Open in Outlook"). Sign-up suggestions from Wix/Eventbrite emails, added to the workshop list when she clicks
+        Add. Plan my day in Claude includes the Grow alerts. Calendar stays on Google for now (she says all her
+        calendars are synced).
+      - [ ] Motion (tasks with Kristin and Frankie), in place of Google Tasks; then switch "tasks from email" to Motion.
+      - [ ] Payments (Stripe or Square) once she picks one; the PayPal-for-contractors change (HIPAA).
+      - [ ] The coaching intake/stages from her Google Doc.
 - [ ] **7. On her computer.** Walk her through setup: install, `Connect Gmail` (her own Google Cloud project and
       OAuth client: the guide is in `src/cli/connect.ts`), her API key in `.env`, Spotify if she wants Music.
 - [ ] **8. Tidy up.** Remove anything left from Keystone that she doesn't use. README in plain words for her.

@@ -56,6 +56,8 @@ export interface Config {
   /** A fast, cheaper model for small jobs like one-line email summaries. */
   fastModel: string;
   gmail: { driver: "mock" | "google"; clientId: string; clientSecret: string; address: string; tokenFile: string };
+  /** Work email in Microsoft 365 (read-only): marlys@ and the shared info@ mailbox. */
+  outlook: { driver: "mock" | "microsoft"; clientId: string; tenant: string; tokenFile: string; mailboxes: string[] };
   spotify: { clientId: string };
   /** Drive times for calendar events: where the day's driving starts (HUB_DAY_START_ADDRESS, e.g. home). */
   travel: { start: string };
@@ -103,6 +105,13 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env, root = HUB_ROOT
       clientSecret: e("GOOGLE_CLIENT_SECRET"),
       address: e("GMAIL_ADDRESS", "getintunemusictherapy@gmail.com"),
       tokenFile: path.join(root, "auth", "google-token.json"),
+    },
+    outlook: {
+      driver: live && e("MS_CLIENT_ID") ? "microsoft" : "mock",
+      clientId: e("MS_CLIENT_ID"),
+      tenant: e("MS_TENANT", "organizations"),
+      tokenFile: path.join(root, "auth", "microsoft-token.json"),
+      mailboxes: e("OUTLOOK_MAILBOXES", `${profile.email},info@getintunemusictherapy.com`).split(",").map((x) => x.trim().toLowerCase()).filter(Boolean),
     },
     spotify: { clientId: e("SPOTIFY_CLIENT_ID") },
     travel: { start: e("HUB_DAY_START_ADDRESS") },

@@ -12,6 +12,8 @@ describe("Do this in Claude", () => {
     expect(p).toContain("Today's calendar:");
     expect(p).toContain("plus 1 therapy admin item");
     expect(p).not.toContain("K.L.");
+    expect(p).toContain("- New client: J.R.");
+    expect(p).not.toMatch(/Jordan|Rivera|Aetna/);
     expect(p).toMatch(/drafts only/);
   });
 

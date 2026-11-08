@@ -711,6 +711,7 @@
       <button data-tab="today" class="active" title="Dashboard"><span class="ms">space_dashboard</span><span class="nm">Dashboard</span> <span class="count" id="todaycount" hidden></span></button>
       <button data-tab="brief" title="Today's brief"><span class="ms">checklist</span><span class="nm">Brief</span> <span class="count" id="briefcount" hidden></span></button>
       <button data-tab="lists" title="Your lists"><span class="ms">groups</span><span class="nm">Clients</span></button>
+      <button data-tab="work" title="Work email (Outlook)"><span class="ms">inbox</span><span class="nm">Work email</span> <span class="count" id="workcount" hidden></span></button>
       <button data-tab="mail" title="Gmail"><span class="ms">mail</span><span class="nm">Gmail</span> <span class="count" id="mailcount" hidden></span></button>
       <button data-tab="people" title="Contacts"><span class="ms">contacts</span><span class="nm">Contacts</span></button>
       <button data-tab="cal" title="Calendar"><span class="ms">calendar_month</span><span class="nm">Calendar</span></button>
@@ -759,6 +760,21 @@
         <div class="list" id="llist"><div class="empty">Loading…</div></div>
       </aside>
       <div class="scroll" id="lmain"><div class="page" id="lperson"><div class="empty">Pick someone on the left, or press Add.</div></div></div>
+    </div>
+  </section>
+
+  <!-- WORK EMAIL: Outlook, read-only -->
+  <section class="view" id="v-work" hidden>
+    <div class="split">
+      <aside>
+        <div class="pad">
+          <div class="ltabs" id="wboxes"></div>
+          <input type="search" id="wq" placeholder="Search this mailbox">
+          <div class="small muted" id="wcount"></div>
+        </div>
+        <div class="list" id="wlist"><div class="empty">Loading…</div></div>
+      </aside>
+      <div class="scroll"><div class="page" id="wread"><div class="empty">Pick an email on the left. This tab only reads your mail: reply in Outlook, or let Claude draft it.</div></div></div>
     </div>
   </section>
 
@@ -928,7 +944,7 @@ $("#congrip").addEventListener("pointerdown", (e) => {
 conApply();
 
 // ============================================================= tabs
-const TAB_NAMES = { today: "Dashboard", brief: "Today's brief", lists: "Clients", mail: "Gmail", people: "Contacts", cal: "Calendar", music: "Music" };
+const TAB_NAMES = { today: "Dashboard", brief: "Today's brief", lists: "Clients", work: "Work email", mail: "Gmail", people: "Contacts", cal: "Calendar", music: "Music" };
 function showTab(t) {
   if (!TAB_NAMES[t]) t = "today";
   store.set("tab", t);
@@ -937,6 +953,7 @@ function showTab(t) {
   if (t === "people") loadPeople();
   if (t === "brief") renderBrief();
   if (t === "lists") loadLists();
+  if (t === "work") loadWork();
   if (t === "cal") loadCal();
   if (t === "music" && !$("#sp-bar")) renderMusic();
   setCrumbs(`<b>${TAB_NAMES[t]}</b>`);
@@ -961,6 +978,7 @@ async function loadStatus() {
   const chip = (label, on, title) => `<span class="chip ${on ? "" : "off"}" title="${esc(title)}">${on ? "●" : "○"} ${label}</span>`;
   $("#chips").innerHTML = [
     chip("Lists", status.lists !== "mock", status.lists === "mock" ? "Practice lists (made-up people)" : "Your lists, saved on this computer"),
+    chip("Outlook", status.outlook === "microsoft" && status.outlookConnected, status.outlook === "microsoft" ? (status.outlookConnected ? `Reading ${status.mailboxes.join(" and ")}` : "Not signed in: double-click Connect Outlook") : "Not connected (practice mail)"),
     chip("Gmail", status.gmail === "google", status.gmail === "google" ? (status.gmailFull ? "Connected" : "Connected for drafts only; reconnect to send from {{APP_NAME}}") : "Not connected (practice inbox)"),
     chip("Claude", true, status.agent ? `In the app · requests go to ${(status.claude?.endpoint || "").replace(/^https?:\/\//, "")}${status.claude?.ignored?.length ? `. Ignored a setting on this computer that tried to send them elsewhere: ${status.claude.ignored.map((r) => r.name + (r.host ? " → " + r.host : "")).join(", ")}` : ""}` : "Opens in your Claude app (your subscription, no extra cost)"),
   ].join("");
@@ -998,6 +1016,11 @@ async function loadToday() {
     </div>
     <div class="cols">
       <div class="side">
+        ${d.workError ? `<div class="banner">Work email: ${esc(d.workError)}</div>` : ""}
+        ${d.grow.length ? `<div class="card"><h3><span>Grow Therapy</span><span class="small muted">from info@ · details stay in Grow</span></h3>
+          <div class="needs">${d.grow.map((g) => `<div class="rem"><div class="l"><div class="ttl">${esc(g.title)}</div><div class="small muted">${fmtWhen(g.at)}</div></div><div class="r"><a class="btn small" href="${esc(g.webLink)}" target="_blank" rel="noopener">Open in Outlook</a><button class="btn small" data-grow-done="${esc(g.id)}" title="Hide this alert">Done</button></div></div>`).join("")}</div></div>` : ""}
+        ${d.signups.length ? `<div class="card"><h3><span>New workshop sign-ups</span><span class="small muted">from Wix and Eventbrite emails</span></h3>
+          <div class="needs">${d.signups.map((x, i) => `<div class="rem"><div class="l"><div class="ttl">${esc(x.name)} <span class="small muted">${esc(x.email)}</span></div><div class="small muted">${esc(x.source)} · ${esc(x.event)} · ${fmtWhen(x.at)}</div></div><div class="r"><button class="btn small primary" data-signup-add="${i}">Add to list</button><button class="btn small" data-signup-skip="${i}" title="Not a sign-up, or already added">Skip</button></div></div>`).join("")}</div></div>` : ""}
         <div class="card"><h3>Needs you <span class="small muted">${d.needs.length ? `${d.needs.length} thing${d.needs.length === 1 ? "" : "s"}` : ""}</span></h3>
           <div class="needs">${d.needs.length ? d.needs.map(needRow).join("") : `<div class="alldone">Nothing on your lists is waiting on you.</div>`}</div></div>
         ${d.workshops.map((x) => `<div class="card"><h3><span>${esc(x.event)}</span><button class="btn small" data-prog="workshop">See everyone</button></h3>
@@ -1017,8 +1040,19 @@ async function loadToday() {
       </div>
     </div>`;
   $("#plan")?.addEventListener("click", startPlan);
+  dashSignups = d.signups;
   renderBrief();
 }
+let dashSignups = [];
+$("#today").addEventListener("click", async (e) => {
+  const g = e.target.closest("[data-grow-done]"), a = e.target.closest("[data-signup-add]"), k = e.target.closest("[data-signup-skip]");
+  if (!g && !a && !k) return;
+  try {
+    if (g) { await api("/api/grow/dismiss", { method: "POST", body: { id: g.dataset.growDone } }); g.closest(".rem")?.remove(); }
+    if (a) { const x = dashSignups[Number(a.dataset.signupAdd)]; await api("/api/signups/accept", { method: "POST", body: x }); log(`Added ${x.name} to ${x.event}.`); loadToday(); }
+    if (k) { const x = dashSignups[Number(k.dataset.signupSkip)]; await api("/api/signups/dismiss", { method: "POST", body: { messageId: x.messageId } }); k.closest(".rem")?.remove(); }
+  } catch (err) { log(err.message, "t-err"); }
+});
 // Claude's costs and the switches for what it does on its own.
 const money = (n) => "$" + (n < 1 && n > 0 ? n.toFixed(2) : n.toFixed(2));
 function claudeCard(c) {
@@ -1156,6 +1190,39 @@ $("#ladddlg").addEventListener("close", async () => {
   const body = { program: curProg, extra: {} };
   for (const f of $$("#la-fields [data-a]")) { const k = f.dataset.a; if (k.startsWith("x.")) body.extra[k.slice(2)] = f.value; else body[k] = f.value; }
   try { const e = await api("/api/lists", { method: "POST", body }); await loadLists(); openPerson(e.id); log(`Added ${e.name}.`); } catch (err) { log(err.message, "t-err"); $("#ladddlg").showModal(); }
+});
+
+// ============================================================= WORK EMAIL (Outlook, read-only)
+let workBox = store.get("workbox", null), workMsgs = [], workSel = null, workTimer = null;
+const isGrowMail = (m) => /growtherapy|grow therapy/i.test(`${m.from.address} ${m.from.name}`);
+async function loadWork() {
+  const boxes = status.mailboxes || [];
+  if (!boxes.includes(workBox)) workBox = boxes[0];
+  $("#wboxes").innerHTML = boxes.map((b) => `<button type="button" data-box="${esc(b)}" class="${b === workBox ? "on" : ""}">${esc(b.split("@")[0])}@</button>`).join("");
+  let r;
+  try { r = await api(`/api/work/messages?${new URLSearchParams({ mailbox: workBox, q: $("#wq").value.trim() })}`); } catch (e) { $("#wlist").innerHTML = `<div class="empty">${esc(e.message)}</div>`; return; }
+  workMsgs = r.messages;
+  const unread = workMsgs.filter((m) => m.unread).length;
+  $("#wcount").textContent = `${workMsgs.length} email${workMsgs.length === 1 ? "" : "s"}${unread ? ` · ${unread} unread` : ""}${status.outlook === "mock" ? " · practice mail" : ""}`;
+  $("#workcount").textContent = unread; $("#workcount").hidden = !unread;
+  $("#wlist").innerHTML = workMsgs.map((m) => `<div class="job ${m.id === workSel ? "sel" : ""}" data-wid="${esc(m.id)}">
+      <div class="t" style="${m.unread ? "" : "font-weight:500"}">${esc(m.from.name || m.from.address)}</div><div class="amt small muted">${fmtWhen(m.receivedAt)}</div>
+      <div class="sub">${isGrowMail(m) ? `<span class="stage">Grow</span> open in Outlook` : esc(m.subject || "(no subject)")}</div><div></div></div>`).join("") || `<div class="empty">No email here.</div>`;
+}
+$("#wboxes").addEventListener("click", (e) => { const b = e.target.closest("[data-box]"); if (!b) return; workBox = b.dataset.box; store.set("workbox", workBox); workSel = null; $("#wread").innerHTML = `<div class="empty">Pick an email on the left.</div>`; loadWork(); });
+$("#wq").addEventListener("input", () => { clearTimeout(workTimer); workTimer = setTimeout(loadWork, 300); });
+$("#wlist").addEventListener("click", async (e) => {
+  const el = e.target.closest("[data-wid]"); if (!el) return;
+  workSel = el.dataset.wid; $$("#wlist [data-wid]").forEach((x) => x.classList.toggle("sel", x.dataset.wid === workSel));
+  let m; try { m = await api(`/api/work/messages/${encodeURIComponent(workBox)}/${encodeURIComponent(workSel)}`); } catch (err) { $("#wread").innerHTML = `<div class="empty">${esc(err.message)}</div>`; return; }
+  const on = lists.entries.filter((x) => x.email && x.email.toLowerCase() === m.from.address);
+  $("#wread").innerHTML = m.grow ? `<div class="card"><h2 style="margin-top:0">Grow Therapy email</h2><p>To keep client details private, Grow emails open in Outlook, not here. The dashboard shows what kind it is.</p><a class="btn primary" href="${esc(m.webLink)}" target="_blank" rel="noopener">Open in Outlook</a></div>` : `<div class="card">
+      <h2 style="margin-top:0">${esc(m.subject || "(no subject)")}</h2>
+      <div class="small muted">From <b>${esc(m.from.name)}</b> &lt;${esc(m.from.address)}&gt; · ${new Date(m.receivedAt).toLocaleString("en-US", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} · in ${esc(m.mailbox)}</div>
+      ${on.map((x) => `<a href="#" class="chip" data-do="person" data-id="${esc(x.id)}">${esc(program(x.program)?.name || x.program)} · ${esc(x.stage)}</a>`).join(" ")}
+      <div class="actions" style="margin:12px 0"><button class="btn primary" id="wclaude">${status.agent ? "Draft reply with Claude" : "Draft reply in Claude"}</button><a class="btn" href="${esc(m.webLink)}" target="_blank" rel="noopener">Open in Outlook</a></div>
+      <div style="white-space:pre-wrap;line-height:1.55">${esc(m.body || m.preview)}</div></div>`;
+  $("#wclaude")?.addEventListener("click", () => handoff({ kind: "workreply", mailbox: workBox, id: m.id }));
 });
 
 // ============================================================= MAIL (Gmail-style)

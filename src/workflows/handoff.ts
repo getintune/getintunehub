@@ -30,6 +30,9 @@ export async function planPrompt(hub: Hub, now = new Date()): Promise<string> {
   lines.push("From my app, things on my lists that need me:");
   lines.push(...(n.length ? n.map((x) => `- ${x.name} (${x.list}, ${x.stage}): ${x.title}${x.kind === "next" ? (x.days > 0 ? `, ${x.days} day${x.days === 1 ? "" : "s"} overdue` : ", due today") : `, waiting ${x.days} days`}`) : ["- nothing"]));
   if (therapy) lines.push(`- plus ${therapy} therapy admin item${therapy === 1 ? "" : "s"} (check Grow Therapy)`);
+  const { growAlerts } = await import("./grow.js");
+  const grow = await growAlerts(hub, 3, now).catch(() => []);
+  if (grow.length) lines.push("", "Grow Therapy (from info@, initials only; details stay in Grow):", ...grow.map((g) => `- ${g.title}`));
   if (workshops.length) lines.push("", `Workshop sign-ups: ${workshops.map((w) => `${w.event}: ${w.total} so far (${w.newToday} new in the last day; ${w.bySource.map((s) => `${s.source} ${s.count}`).join(", ")})`).join("; ")}.`);
   if (hub.calendar.connected()) {
     const d0 = new Date(now), d1 = new Date(now);
@@ -46,7 +49,7 @@ export async function planPrompt(hub: Hub, now = new Date()): Promise<string> {
   }
   lines.push(
     "",
-    "Also look at my email from the last 2 days (Outlook work email and Gmail) for anything waiting on my reply, especially from my team (Kristin, Frankie) and from Grow Therapy (new clients, schedule changes, new messages, anything I need to do).",
+    "Also look at my email from the last 2 days (Outlook work email and Gmail) for anything waiting on my reply, especially from my team (Kristin, Frankie). Leave Grow Therapy emails out: those are listed above.",
     "",
     "Then give me a short brief: one line on today at a glance, then a numbered list of what to do in order (most urgent first), then today's appointments. Offer to draft the most important replies.",
     RULES,

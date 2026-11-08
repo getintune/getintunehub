@@ -40,6 +40,7 @@ program
 
 const connect = program.command("connect").description("Guided set-up for a connection");
 connect.command("gmail").description("Connect Gmail and Google Calendar step by step").action(async () => (await import("./connect.js")).connectGmail());
+connect.command("outlook").description("Connect your work email (Outlook, read-only) step by step").action(async () => (await import("./connect.js")).connectOutlook());
 
 program.parseAsync().catch((e) => {
   console.error(`\n${e.message ?? e}`);
