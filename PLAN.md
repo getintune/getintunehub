@@ -68,6 +68,11 @@ Owner: Marlys. Fill in as you learn it:
   (America/Denver).
 - What eats her time (what the dashboard and daily brief should focus on): client sessions and marketing the
   workshop.
+- **Workshop sign-ups (Suddenly Untethered, Nov 13, 2026, 10am MT):** her first workshop, no sign-up goal; she
+  wants to **see how many have signed up**. People come from Instagram to the website's Register Now button
+  (**Wix**), from an **Eventbrite** listing, and from sites like **Freaking Nomads**. **Kristin already set up the
+  pre- and post-workshop emails in Wix automations**, so the app should not draft those; it should show the count
+  (by source: Wix / Eventbrite / other) and check that Eventbrite people get the Zoom link and reminders too.
 - **Privacy (HIPAA):** client health information must be handled carefully. Keep clinical notes in Grow Therapy;
   the app should only need names, dates and "there's an email about this client". Anything the app sends to
   Claude goes to Anthropic, so before Claude reads client emails, check with her about a BAA (business
