@@ -17,7 +17,7 @@ DocuSketch, adjusters, Hunter's name) is still in the code: replace or remove it
 - TypeScript (ESM, Node 22), run with `tsx`. `npm test` (vitest) and `npm run typecheck` must pass before every
   push. Add or update tests with every change.
 - A local web server (`src/server/main.ts`) and one page (`src/server/ui.html`) opened in her browser at
-  http://127.0.0.1:4317. `npm run app` starts it; the Windows `Start ... .bat` file does that for her.
+  http://127.0.0.1:4317. `npm run app` starts it; on her Mac, `Start Get In Tune Hub.command` (the Desktop icon) does that for her.
 - Every outside system lives in `src/connectors/<name>` behind a small interface **with a mock**, so the whole
   app runs with no accounts connected (`HUB_MODE=mock`). Nothing outside a connector talks to a live service
   directly; everything goes through the `Hub` object from `makeHub()` (`src/hub.ts`).

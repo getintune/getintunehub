@@ -1,8 +1,8 @@
 {
-  "name": "forefront-hub",
+  "name": "getintunehub",
   "version": "0.1.0",
   "private": true,
-  "description": "Forefront Building + Restoration estimator's work hub: Homebase, Gmail, CompanyCam, DocuSketch and the forefront-estimate skill behind one Claude agent.",
+  "description": "Get In Tune Hub: Marlys Woods's app for running Get In Tune (email, calendar, tasks, clients and a daily brief, with Claude built in).",
   "type": "module",
   "engines": {
     "node": ">=20"

@@ -62,7 +62,7 @@ Owner: Marlys. Fill in as you learn it:
   coaching will likely be **Stripe or Square** (not set up yet); some contractors' private-pay clients pay by
   **PayPal**, which she wants to replace because it isn't HIPAA-compliant.
 - Where she keeps files: Google Drive / Google Docs.
-- Computer: **Mac** (the Windows .bat / .ps1 setup files need Mac versions). Time zone: **Mountain Time**
+- Computer: **Mac** (Mac setup/start files done in step 3). Time zone: **Mountain Time**
   (America/Denver).
 - What eats her time (what the dashboard and daily brief should focus on): client sessions and marketing the
   workshop.
@@ -89,12 +89,23 @@ Outlook** (the Gmail tab becomes Outlook; Gmail stays only to catch team request
       Some tests need Hunter's estimator repo (`../estimator`) for the estimating skill; they go away in step 4.
       *Done 2026-11-07:* installs, typecheck passes, app runs in mock mode with no page errors. 70 tests pass;
       the 6 that fail (`test/files.test.ts`, `test/sendoff.test.ts`) all need `../estimator` and go in step 4.
-- [ ] **3. Her name, her business, her app.** Add profile settings to `.env` / `src/core/config.ts`: owner name,
+- [x] **3. Her name, her business, her app.** Add profile settings to `.env` / `src/core/config.ts`: owner name,
       business name, her email address, time zone, app name. Replace every hard-coded "Hunter", "Forefront",
       "hunter@forefrontteam.com", "America/Denver" and "Colorado" (prompts in `src/agent/`, `src/server/main.ts`,
       `src/workflows/`, and the page) with those settings. Rename the app on the page (sidebar logo, tab title,
       icon), the setup and start files (`Setup Forefront Hub.bat`, `Start Keystone.bat`, `Start Hub.bat`,
       `setup.ps1`: install folder, desktop shortcut, and the repo URL they download from), README and package.json.
+      *Done 2026-11-08:* `profile` in `src/core/config.ts` (HUB_OWNER_NAME, HUB_BUSINESS_NAME, HUB_OWNER_EMAIL,
+      HUB_TIME_ZONE, HUB_APP_NAME, HUB_BUSINESS_ABOUT; defaults are hers). Times use `TIME_ZONE` from config. The
+      page gets `{{APP_NAME}}`, `{{FIRST}}`, `{{GMAIL}}`... filled in by `src/server/page.ts`. Her logo is
+      `assets/logo.png`, the icon (the face from the logo) `assets/icon.png`; themes are "Get In Tune" (light,
+      default) and "Night". Windows files replaced by Mac ones: `Setup Get In Tune Hub.command` (installs to
+      ~/Get In Tune Hub from github.com/getintune/getintunehub, Desktop link), `Start Get In Tune Hub.command`,
+      `Connect Gmail.command`. Left for step 4: "Hunter"/"Forefront" in the files step 4 deletes (estimating,
+      Homebase, CompanyCam, DocuSketch, reminders), the practice data in `fixtures/` and the mock calendar/mail
+      (still estimating examples), the "Plan my day" prompt (all about jobs), `Connect CompanyCam.bat`.
+      To check in step 7: her work address is assumed to be marlys@getintunemusictherapy.com; setup clones the
+      default branch, so this branch must be merged first.
 - [ ] **4. Take out what's Forefront-only.**
       - Estimating: the Estimator tab (`src/agent/studio.ts`), Selections (`src/agent/selections.ts`,
         `src/workflows/selections.ts`), the send-off and Homebase sync (`src/workflows/sendoff.ts`, `sync.ts`,
