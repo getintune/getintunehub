@@ -34,7 +34,7 @@ DocuSketch, adjusters, Hunter's name) is still in the code: replace or remove it
 - **Secrets never go in GitHub:** keys and logins live in `.env` and `auth/` on her computer (both git-ignored).
 - **No real client data in the repo.** Test data in `fixtures/` is made up.
 - **The app's agent runs on Google Gemini's free tier (her choice, 2026-11-09):** `GEMINI_API_KEY` in `.env`,
-  default model `gemini-2.5-flash` (`gemini-2.5-flash-lite` for routine work). Runs are $0.00 and the meter counts
+  default model `gemini-3.5-flash` (`gemini-3.5-flash-lite` for routine work; if Google retires a model the app switches to the replacement on its own). Runs are $0.00 and the meter counts
   runs and tokens. On the free tier Google may use what's sent to improve its products, so: Grow Therapy email
   and therapy clients' notes never go to Gemini, client sessions on her calendar go only as "Client session",
   and background features (summaries, tasks from email, morning brief) start off. Don't route the app through

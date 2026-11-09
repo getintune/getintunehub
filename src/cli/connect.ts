@@ -194,9 +194,16 @@ export async function connectGemini() {
   const key = await ask("\n2. Paste the key here and press Enter: ");
   if (!key) throw new Error("No key; double-click Connect Gemini again when you have it.");
   const { LiveGemini } = await import("../connectors/gemini/index.js");
-  const r = await new LiveGemini(key).generate({ model: cfg.fastModel, system: "Reply with one word.", contents: [{ role: "user", parts: [{ text: "Say ready." }] }] });
+  const r = await new LiveGemini(key).generate({ model: cfg.fastModel, system: "Reply with one word.", contents: [{ role: "user", parts: [{ text: "Say ready." }] }] }).catch((e) => {
+    throw new Error(`${(e as Error).message}\nCopy this message to Claude.`);
+  });
   // Also replace any old Claude model names in .env (from before the switch) with the Gemini ones.
-  setEnv({ GEMINI_API_KEY: key, HUB_MODEL: cfg.model, HUB_FAST_MODEL: cfg.fastModel });
+  // Check the main model too, and save the ones that answered (Google retires models; the app switches on its own).
+  const gm = new LiveGemini(key);
+  const fast = (await gm.generate({ model: cfg.fastModel, system: "Reply with one word.", contents: [{ role: "user", parts: [{ text: "Say ready." }] }] })).model ?? cfg.fastModel;
+  const main = (await gm.generate({ model: cfg.model, system: "Reply with one word.", contents: [{ role: "user", parts: [{ text: "Say ready." }] }] })).model ?? cfg.model;
+  setEnv({ GEMINI_API_KEY: key, HUB_MODEL: main, HUB_FAST_MODEL: fast });
+  console.log(`Using ${main} (Ask, Plan my day) and ${fast} (routine work).`);
   console.log(`\nGemini is connected (it said: "${r.text.trim().slice(0, 40)}").`);
   console.log(`Restart ${cfg.profile.appName} (close its window, open it again) to use it.`);
 }

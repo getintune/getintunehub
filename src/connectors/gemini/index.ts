@@ -37,6 +37,8 @@ export interface GenerateResult {
   /** The model's turn as it should go back into `contents` (keeps function calls paired with their answers). */
   content: GeminiContent;
   usage: { input: number; output: number };
+  /** The model that answered (differs from the one asked for when Google retired that one). */
+  model?: string;
 }
 
 export interface GeminiClient {
@@ -45,44 +47,92 @@ export interface GeminiClient {
   generate(r: GenerateRequest): Promise<GenerateResult>;
 }
 
+/** The bit of Google's SDK the app uses (so tests can stand in for it). */
+export interface GenAiSdk {
+  models: {
+    generateContent(params: any): Promise<any>;
+    list(params?: any): Promise<AsyncIterable<{ name?: string; supportedActions?: string[] }>>;
+  };
+}
+
+/**
+ * Picks the replacement when Google retires a model: the one Google's error names ("use models/gemini-3.5-flash-lite"),
+ * else the newest model of the same kind (flash, or flash-lite) that Google lists for generateContent.
+ */
+export function replacementModel(retired: string, errorText: string, available: string[]): string | null {
+  const named = errorText.match(/use (?:models\/)?(gemini-[\w.-]+)/i)?.[1];
+  if (named && named !== retired) return named;
+  const lite = /-lite\b/.test(retired);
+  const family = available
+    .map((n) => n.replace(/^models\//, ""))
+    .filter((n) => /^gemini-\d+(\.\d+)?-flash(-lite)?$/.test(n) && /-lite$/.test(n) === lite)
+    .sort((a, b) => parseFloat(b.slice(7)) - parseFloat(a.slice(7)));
+  return family.find((n) => n !== retired) ?? null;
+}
+
 /** The real thing, through Google's official SDK (@google/genai). */
 export class LiveGemini implements GeminiClient {
   readonly kind = "gemini" as const;
-  private ai: any;
-  constructor(private apiKey: string, private baseUrl = "") {}
+  /** Models Google retired, and what's used instead (for the rest of this run). */
+  private swaps: Record<string, string> = {};
+  constructor(private apiKey: string, private baseUrl = "", private sdk?: GenAiSdk) {}
   connected() {
     return !!this.apiKey;
   }
-  private async client() {
-    if (!this.ai) {
+  private async client(): Promise<GenAiSdk> {
+    if (!this.sdk) {
       const { GoogleGenAI } = await import("@google/genai");
-      this.ai = new GoogleGenAI({ apiKey: this.apiKey, ...(this.baseUrl ? { httpOptions: { baseUrl: this.baseUrl } } : {}) });
+      this.sdk = new GoogleGenAI({ apiKey: this.apiKey, ...(this.baseUrl ? { httpOptions: { baseUrl: this.baseUrl } } : {}) }) as unknown as GenAiSdk;
     }
-    return this.ai;
+    return this.sdk;
+  }
+  private async availableModels(ai: GenAiSdk): Promise<string[]> {
+    const out: string[] = [];
+    try {
+      for await (const m of await ai.models.list()) if (m.name && (!m.supportedActions || m.supportedActions.includes("generateContent"))) out.push(m.name);
+    } catch {
+      /* no list: rely on the error's suggestion */
+    }
+    return out;
   }
   async generate(r: GenerateRequest): Promise<GenerateResult> {
     const ai = await this.client();
-    let res: any;
-    try {
-      res = await ai.models.generateContent({
-        model: r.model,
-        contents: r.contents,
-        config: {
-          systemInstruction: r.system,
-          ...(r.tools?.length ? { tools: [{ functionDeclarations: r.tools }] } : {}),
-          ...(r.json ? { responseMimeType: "application/json", responseJsonSchema: r.json } : {}),
-        },
-      });
-    } catch (e) {
-      const msg = String((e as Error).message ?? e);
-      if (/429|RESOURCE_EXHAUSTED|quota/i.test(msg)) throw new Error("Gemini's free tier limit is used up for now. Try again in a minute (or tomorrow, for the daily limit).");
-      if (/API key|401|403|PERMISSION_DENIED/i.test(msg)) throw new Error("Gemini didn't accept the key. Check GEMINI_API_KEY in the .env file (from aistudio.google.com → Get API key).");
-      throw new Error(`Gemini: ${msg}`);
+    let model = this.swaps[r.model] ?? r.model;
+    for (let attempt = 0; ; attempt++) {
+      try {
+        return { ...(await this.call(ai, model, r)), model };
+      } catch (e) {
+        const msg = String((e as Error).message ?? e);
+        if (attempt === 0 && /404|NOT_FOUND|no longer available|not found/i.test(msg)) {
+          const next = replacementModel(model, msg, await this.availableModels(ai));
+          if (next) {
+            this.swaps[r.model] = next;
+            model = next;
+            continue;
+          }
+        }
+        if (/429|RESOURCE_EXHAUSTED|quota/i.test(msg)) throw new Error("Gemini's free tier limit is used up for now. Try again in a minute (or tomorrow, for the daily limit).");
+        if (/API key|401|403|PERMISSION_DENIED/i.test(msg)) throw new Error("Gemini didn't accept the key. Check GEMINI_API_KEY in the .env file (from aistudio.google.com → Get API key).");
+        throw new Error(`Gemini: ${msg}`);
+      }
     }
+  }
+  private async call(ai: GenAiSdk, model: string, r: GenerateRequest): Promise<GenerateResult> {
+    const res: any = await ai.models.generateContent({
+      model,
+      contents: r.contents,
+      config: {
+        systemInstruction: r.system,
+        ...(r.tools?.length ? { tools: [{ functionDeclarations: r.tools }] } : {}),
+        ...(r.json ? { responseMimeType: "application/json", responseJsonSchema: r.json } : {}),
+      },
+    });
     const content: GeminiContent = res.candidates?.[0]?.content ?? { role: "model", parts: [] };
+    const calls = res.functionCalls ?? (content.parts ?? []).filter((p: GeminiPart) => p.functionCall).map((p: GeminiPart) => p.functionCall);
+    const text = typeof res.text === "string" ? res.text : (content.parts ?? []).map((p: GeminiPart) => p.text ?? "").join("");
     return {
-      text: res.text ?? "",
-      calls: (res.functionCalls ?? []).map((c: any) => ({ id: c.id, name: String(c.name), args: c.args ?? {} })),
+      text: text ?? "",
+      calls: (calls ?? []).map((c: any) => ({ id: c.id, name: String(c.name), args: c.args ?? {} })),
       content: { role: "model", parts: content.parts ?? [] },
       usage: { input: res.usageMetadata?.promptTokenCount ?? 0, output: res.usageMetadata?.candidatesTokenCount ?? 0 },
     };

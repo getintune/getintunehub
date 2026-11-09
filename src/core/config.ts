@@ -101,8 +101,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env, root = HUB_ROOT
     profile,
     geminiApiKey,
     // An older .env may still name Claude models (from before the switch to Gemini): those are ignored.
-    model: geminiModel(e("HUB_MODEL"), "gemini-2.5-flash"),
-    fastModel: geminiModel(e("HUB_FAST_MODEL"), "gemini-2.5-flash-lite"),
+    model: geminiModel(e("HUB_MODEL"), "gemini-3.5-flash"),
+    fastModel: geminiModel(e("HUB_FAST_MODEL"), "gemini-3.5-flash-lite"),
     gmail: {
       driver: live && gmailReady ? "google" : "mock",
       clientId: e("GOOGLE_CLIENT_ID"),
