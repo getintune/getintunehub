@@ -67,8 +67,11 @@ rm -rf "$TMPD"
 say_step "Get In Tune Hub"
 if [ $mode = copy ]; then
   echo "Installing the app to $HUB (keeping your lists, settings and logins)..."
+  case "$HUB" in "$HOME/Get In Tune Hub") ;; *) stop "Unexpected install folder: $HUB" ;; esac
   mkdir -p "$HUB"
-  rsync -a --delete --exclude ".env" --exclude "auth/" --exclude "data/" --exclude ".hub/" --exclude "node_modules/" "$HERE/" "$HUB/" || stop "Couldn't copy the app into $HUB."
+  # Replace the app's own files; keep .env (settings), auth/ (logins), data/ (lists), .hub/ and node_modules/.
+  find "$HUB" -mindepth 1 -maxdepth 1 ! -name ".env" ! -name "auth" ! -name "data" ! -name ".hub" ! -name "node_modules" -exec rm -rf {} + || stop "Couldn't clear the old copy in $HUB."
+  cp -R "$HERE/." "$HUB/" || stop "Couldn't copy the app into $HUB."
   touch "$HUB/.installed"
 elif [ $mode = inplace ]; then
   echo "Setting up the app in $HUB"
