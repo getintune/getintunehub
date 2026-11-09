@@ -195,7 +195,8 @@ export async function connectGemini() {
   if (!key) throw new Error("No key; double-click Connect Gemini again when you have it.");
   const { LiveGemini } = await import("../connectors/gemini/index.js");
   const r = await new LiveGemini(key).generate({ model: cfg.fastModel, system: "Reply with one word.", contents: [{ role: "user", parts: [{ text: "Say ready." }] }] });
-  setEnv({ GEMINI_API_KEY: key });
+  // Also replace any old Claude model names in .env (from before the switch) with the Gemini ones.
+  setEnv({ GEMINI_API_KEY: key, HUB_MODEL: cfg.model, HUB_FAST_MODEL: cfg.fastModel });
   console.log(`\nGemini is connected (it said: "${r.text.trim().slice(0, 40)}").`);
   console.log(`Restart ${cfg.profile.appName} (close its window, open it again) to use it.`);
 }

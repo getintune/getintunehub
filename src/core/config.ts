@@ -100,8 +100,9 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env, root = HUB_ROOT
     mode,
     profile,
     geminiApiKey,
-    model: e("HUB_MODEL", "gemini-2.5-flash"),
-    fastModel: e("HUB_FAST_MODEL", "gemini-2.5-flash-lite"),
+    // An older .env may still name Claude models (from before the switch to Gemini): those are ignored.
+    model: geminiModel(e("HUB_MODEL"), "gemini-2.5-flash"),
+    fastModel: geminiModel(e("HUB_FAST_MODEL"), "gemini-2.5-flash-lite"),
     gmail: {
       driver: live && gmailReady ? "google" : "mock",
       clientId: e("GOOGLE_CLIENT_ID"),
@@ -122,4 +123,9 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env, root = HUB_ROOT
     stateDir,
     dataDir: e("HUB_DATA_DIR", path.join(root, "data")),
   };
+}
+
+/** A Gemini model name from .env, or the default when it's blank or names some other model (e.g. an old claude-*). */
+export function geminiModel(v: string, fallback: string): string {
+  return /^(models\/)?gemini-/i.test(v) ? v : fallback;
 }

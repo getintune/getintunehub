@@ -31,3 +31,12 @@ describe("where the app's agent requests go (Gemini)", () => {
     expect(agentEndpoint()).toBe("https://my-proxy.example");
   });
 });
+
+describe("an older .env from before the switch", () => {
+  it("ignores Claude model names and uses Gemini's", () => {
+    const cfg = loadConfig({ HUB_MODE: "mock", HUB_MODEL: "claude-opus-5-5", HUB_FAST_MODEL: "claude-haiku-5-5" }, "/tmp/hub-agent");
+    expect(cfg.model).toBe("gemini-2.5-flash");
+    expect(cfg.fastModel).toBe("gemini-2.5-flash-lite");
+    expect(loadConfig({ HUB_MODE: "mock", HUB_MODEL: "gemini-2.5-pro" }, "/tmp/hub-agent").model).toBe("gemini-2.5-pro");
+  });
+});
