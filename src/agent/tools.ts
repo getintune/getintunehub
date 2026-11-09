@@ -150,7 +150,8 @@ export function hubTools(hub: Hub): AgentTool[] {
       "calendar_events",
       `${me}'s calendar events between two times (ISO), all calendars unless calendarIds is given.`,
       { start: z.string(), end: z.string(), q: z.string().optional() },
-      wrap(async ({ start, end, q }) => hub.calendar.events({ start, end, q })),
+      // Client sessions go to Gemini only as "Client session": no name, place, notes or guests.
+      wrap(async ({ start, end, q }) => (await hub.calendar.events({ start, end, q })).map((e) => (e.private ? { id: e.id, calendarId: e.calendarId, title: "Client session (details private)", start: e.start, end: e.end, allDay: e.allDay, private: true } : e))),
     ),
     tool(
       "calendar_free_time",

@@ -78,3 +78,27 @@ describe("which calendar events are client sessions", () => {
     expect(looksLikeClientSession({ subject: "Telehealth appointment", organizer: me })).toBe(true);
   });
 });
+
+import { clientSessionReason } from "../src/connectors/outlook/calendar.js";
+import { hubTools } from "../src/agent/tools.js";
+
+describe("client sessions: why, and what Gemini sees", () => {
+  it("says why an event counts as a client session", () => {
+    expect(clientSessionReason({ subject: "Intake call" })).toBe('the title says "Intake"');
+    expect(clientSessionReason({ subject: "Session", organizer: "noreply@growtherapy.com" })).toBe('the organizer says "growtherapy"');
+    expect(clientSessionReason({ subject: "Team check-in", organizer: "marlys@getintunemusictherapy.com" })).toBeNull();
+  });
+
+  it("gives Gemini's calendar tool only 'Client session' for private events", async () => {
+    const { testHub } = await import("./helpers.js");
+    const { hub } = testHub();
+    hub.calendar.events = async () => [
+      { id: "a", calendarId: "outlook:c1", title: "Session with Jordan Rivera", start: "2026-11-10T17:00:00Z", end: "2026-11-10T18:00:00Z", allDay: false, location: "Zoom", private: true },
+      { id: "b", calendarId: "outlook:c1", title: "Coffee with Kris", start: "2026-11-10T20:00:00Z", end: "2026-11-10T21:00:00Z", allDay: false },
+    ];
+    const out = JSON.stringify(await hubTools(hub).find((t) => t.name === "calendar_events")!.run({ start: "2026-11-10T00:00:00Z", end: "2026-11-11T00:00:00Z" }));
+    expect(out).toContain("Client session (details private)");
+    expect(out).toContain("Coffee with Kris");
+    expect(out).not.toContain("Jordan");
+  });
+});
