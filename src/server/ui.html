@@ -212,6 +212,9 @@
   .tbl tr:last-child td { border-bottom: 0; }
   .tbl tr[data-stage] { cursor: pointer; } .tbl tr[data-stage]:hover td { background: var(--soft); }
   .sbar { display: inline-block; height: 8px; background: var(--ink); opacity: .55; border-radius: 0 4px 4px 0; vertical-align: middle; min-width: 2px; }
+  .evtip { position: fixed; z-index: 70; pointer-events: none; max-width: 320px; background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-left: 5px solid var(--brand); border-radius: 10px; padding: 10px 12px; box-shadow: 0 8px 24px rgba(0,0,0,.18); font-size: 13px; line-height: 1.45; }
+  .evtip b { display: block; font-size: 14px; margin-bottom: 2px; overflow-wrap: anywhere; }
+  .evtip .muted { color: var(--muted); }
   .tip { position: fixed; pointer-events: none; background: var(--ink); color: var(--bg); font-size: 12px; padding: 4px 8px; border-radius: 6px; z-index: 60; }
   .banner { background: var(--soft); border-left: 3px solid var(--ink); padding: 10px 14px; border-radius: 0 4px 4px 0; font-size: 14px; }
 
@@ -750,6 +753,7 @@
   <section class="view" id="v-brief" hidden><div class="scroll"><div class="briefpage" id="briefpage"><div class="empty">Loading…</div></div></div></section>
   <section class="view" id="v-today"><div class="scroll"><div class="dash" id="today"><div class="empty">Loading…</div></div></div></section>
   <div class="tip" id="tip" hidden></div>
+  <div class="evtip" id="evtip" hidden></div>
 
   <!-- LISTS: one per program -->
   <section class="view" id="v-lists" hidden>
@@ -1749,7 +1753,7 @@ function legLine(g) {
   return `${g.late ? `<b style="color:var(--bad)">⚠ ${g.late} min short</b> coming from ${esc(g.fromLabel)}. ` : ""}About <b>${g.minutes} min</b> (${g.miles} mi) from ${esc(g.fromLabel)}${g.rush ? " at rush hour" : ""} · leave by <b>${t}</b> · <a href="${esc(g.mapsUrl)}" target="_blank" rel="noopener">Directions ↗</a>`;
 }
 const taskChip = (k) => `<div class="ev chip" style="background:var(--panel-2);color:var(--ink);border-color:var(--line)" data-task="${esc(k.id)}" data-list="${esc(k.listId)}" title="${esc(k.title)}"><span data-check="1" style="cursor:pointer">${k.completed ? "☑" : "☐"}</span> <span style="${k.completed ? "text-decoration:line-through;opacity:.6" : ""}">${esc(k.title)}</span></div>`;
-const evChip = (e) => `<div class="ev chip" style="background:${esc(calColor(e))};color:${inkOn(calColor(e))}" data-ev="${esc(e.id)}" data-cal="${esc(e.calendarId)}" title="${esc(e.title)}${calLegs[e.id] ? ` · ${calLegs[e.id].minutes} min drive` : ""}">${e.allDay ? "" : hm(e.start) + " "}${esc(e.title)}${calLegs[e.id] ? ` <span class="evdrive">🚗${calLegs[e.id].minutes}m</span>` : ""}</div>`;
+const evChip = (e) => `<div class="ev chip" style="background:${esc(calColor(e))};color:${inkOn(calColor(e))}" data-ev="${esc(e.id)}" data-cal="${esc(e.calendarId)}">${e.allDay ? "" : hm(e.start) + " "}${esc(e.title)}${calLegs[e.id] ? ` <span class="evdrive">🚗${calLegs[e.id].minutes}m</span>` : ""}</div>`;
 function renderWeek(start, days) {
   const today = new Date();
   const dates = Array.from({ length: days }, (_, i) => new Date(start.getTime() + i * 864e5));
@@ -1789,7 +1793,31 @@ const shift = (dir) => { const d = new Date(calDate); if (calView === "day") d.s
 $("#cal-prev").addEventListener("click", () => shift(-1));
 $("#cal-next").addEventListener("click", () => shift(1));
 $("#cal-new").addEventListener("click", () => { const s = new Date(); s.setMinutes(s.getMinutes() < 30 ? 30 : 60, 0, 0); openEvent({ start: s.toISOString(), end: new Date(s.getTime() + 3600e3).toISOString() }); });
+// ---- hover over an event: a card with what it is (name, time, place, calendar, drive time)
+function evTipHtml(e) {
+  const day = (iso) => new Date(iso.length === 10 ? `${iso}T12:00:00` : iso).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+  const when = e.allDay ? `${day(e.start)} · all day` : `${day(e.start)} · ${hm(e.start)} – ${hm(e.end)}`;
+  const cal = cals.find((c) => c.id === e.calendarId)?.name || "";
+  const g = calLegs[e.id];
+  const place = e.location && !/^https?:/i.test(e.location) ? e.location : e.location || e.meet ? "Online" : "";
+  return `<b>${esc(e.title || "(no title)")}</b><div>${esc(when)}</div>${place ? `<div class="muted">📍 ${esc(place)}</div>` : ""}${g ? `<div>🚗 Leave by ${hm(g.leaveBy)} · ${g.minutes} min${g.late ? ` <span style="color:var(--bad)">(${g.late} min short)</span>` : ""}</div>` : ""}${cal ? `<div class="muted">${esc(cal)}</div>` : ""}${e.private ? `<div class="muted">Client session: kept private in Claude and Gemini requests</div>` : ""}<div class="muted" style="margin-top:4px">Click to open</div>`;
+}
+$("#cal-body").addEventListener("mousemove", (ev) => {
+  const tip = $("#evtip"), el = ev.target.closest("[data-ev]");
+  if (!el) { tip.hidden = true; return; }
+  const e = calEvents.find((x) => x.id === el.dataset.ev && x.calendarId === el.dataset.cal);
+  if (!e) { tip.hidden = true; return; }
+  if (tip.dataset.for !== e.id) { tip.innerHTML = evTipHtml(e); tip.style.borderLeftColor = calColor(e); tip.dataset.for = e.id; }
+  tip.hidden = false;
+  const z = ZOOM(), w = tip.offsetWidth, h = tip.offsetHeight;
+  let x = ev.clientX / z + 14, y = ev.clientY / z + 16;
+  if (x + w > innerWidth / z - 8) x = ev.clientX / z - w - 14;
+  if (y + h > innerHeight / z - 8) y = ev.clientY / z - h - 12;
+  tip.style.left = x + "px"; tip.style.top = y + "px";
+});
+$("#cal-body").addEventListener("mouseleave", () => { $("#evtip").hidden = true; delete $("#evtip").dataset.for; });
 $("#cal-body").addEventListener("click", async (e) => {
+  $("#evtip").hidden = true;
   const tk = e.target.closest("[data-task]");
   if (tk) { const k = calTasks.find((x) => x.id === tk.dataset.task) || openTasks.find((x) => x.id === tk.dataset.task); if (!k) return; if (e.target.closest("[data-check]")) { await toggleTask(k); } else openTask(k); return; }
   const ev = e.target.closest("[data-ev]");
