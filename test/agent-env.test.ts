@@ -74,3 +74,32 @@ describe("when Google retires a model", () => {
     expect(asked).toEqual(["gemini-2.5-flash-lite", "gemini-3.5-flash-lite", "gemini-3.5-flash-lite"]); // remembered
   });
 });
+
+import { GeminiLimitError, quotaInfo } from "../src/connectors/gemini/index.js";
+
+describe("Gemini's free limits", () => {
+  const perMinute = '{"error":{"code":429,"message":"You exceeded your current quota","status":"RESOURCE_EXHAUSTED","details":[{"violations":[{"quotaId":"GenerateRequestsPerMinutePerProjectPerModel-FreeTier"}]},{"@type":"type.googleapis.com/google.rpc.RetryInfo","retryDelay":"27s"}]}}';
+  const perDay = '{"error":{"code":429,"message":"You exceeded your current quota","status":"RESOURCE_EXHAUSTED","details":[{"violations":[{"quotaId":"GenerateRequestsPerDayPerProjectPerModel-FreeTier"}]}]}}';
+
+  it("tells the per-minute limit from the daily one, and reads how long to wait", () => {
+    expect(quotaInfo(perMinute)).toEqual({ daily: false, retrySeconds: 27 });
+    expect(quotaInfo(perDay).daily).toBe(true);
+  });
+
+  it("waits out the per-minute limit and carries on; stops with a clear message on the daily one", async () => {
+    const waited: number[] = [];
+    let calls = 0;
+    const ok = { text: "done", candidates: [{ content: { role: "model", parts: [{ text: "done" }] } }] };
+    const sdk = (fail: string, times: number) => ({ models: { async generateContent() { calls++; if (calls <= times) throw new Error(fail); return ok; }, async list() { return (async function* () {})(); } } });
+    const req = { model: "m", system: "s", contents: [{ role: "user" as const, parts: [{ text: "hi" }] }], onWait: (s: number) => waited.push(s) };
+    const g = new LiveGemini("k", "", sdk(perMinute, 2), async () => {});
+    expect((await g.generate(req)).text).toBe("done");
+    expect(waited).toEqual([27, 27]);
+    calls = 0;
+    const d = new LiveGemini("k", "", sdk(perDay, 1), async () => {});
+    const err = await d.generate(req).catch((e) => e);
+    expect(err).toBeInstanceOf(GeminiLimitError);
+    expect(err.daily).toBe(true);
+    expect(err.message).toMatch(/Plan my day in Claude/);
+  });
+});

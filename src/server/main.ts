@@ -641,6 +641,12 @@ Your final reply is my brief for the day, shown at the top of my dashboard. Writ
       plan.text = await withDraftSource(trigger === "morning" ? "Morning brief" : "Plan my day", async () => (await import("../agent/run.js")).ask(hub, prompt + note, {
         use: "brief",
         onMessage: (m) => {
+          if (m.type === "wait") {
+            plan.steps.push(`Waiting ${m.seconds} s for Gemini's free per-minute limit…`);
+            savePlan(plan);
+            bus.emit({ type: "changed", what: "plan" });
+            return;
+          }
           if (m.type !== "tool") return;
           plan.steps.push(describeTool(m.name, m.input));
           savePlan(plan);
