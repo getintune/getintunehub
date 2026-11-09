@@ -6,8 +6,8 @@ import { buildMime, htmlToText, newMessageId } from "./mime.js";
 import type { DraftInput, DraftRef, DraftStatus, Label, MailClient, Message, ThreadSummary } from "./types.js";
 
 // modify = read, label (archive / mark read / star / trash) and send; compose = drafts. Claude and the workflows only
-// create drafts; sending happens from the Gmail tab's Send button after Hunter confirms, and auto-filing forwards
-// to Forefront's own office+<job#> addresses.
+// create drafts; sending happens from the Gmail tab's Send button after the owner confirms, and auto-filing forwards
+// nowhere on its own.
 export { openBrowser, type GoogleOpts };
 
 export class GoogleGmail implements MailClient {
@@ -28,7 +28,7 @@ export class GoogleGmail implements MailClient {
 
   /**
    * Every Gmail request goes through a pacer and a retry: Google allows a limited number of quota units per user
-   * per minute (and per second), and Keystone's background checks plus the Gmail tab can add up. Calls wait their
+   * per minute (and per second), and the app's background checks plus the Gmail tab can add up. Calls wait their
    * turn instead of failing, and a "slow down" answer is retried after a pause.
    */
   private gmail(): gmail_v1.Gmail {
@@ -39,7 +39,7 @@ export class GoogleGmail implements MailClient {
   private summaries = new Map<string, { historyId: string; s: ThreadSummary }>();
   private full = new Map<string, { historyId: string; t: { id: string; messages: Message[] } }>();
 
-  /** Hunter's Gmail signature and display name, so drafts look exactly like the ones he types. */
+  /** The owner's Gmail signature and display name, so drafts look exactly like the ones she types. */
   private async sendAs() {
     if (this.signature) return this.signature;
     const { data } = await this.gmail().users.settings.sendAs.list({ userId: "me" });
@@ -74,7 +74,7 @@ export class GoogleGmail implements MailClient {
     await this.gmail().users.drafts.send({ userId: "me", requestBody: { id: draftId } });
   }
 
-  /** keepMessageId: the draft's Message-ID header, kept so Keystone still recognizes it once it's sent. */
+  /** keepMessageId: the draft's Message-ID header, kept so the app still recognizes it once it's sent. */
   async updateDraft(draftId: string, d: DraftInput, keepMessageId?: string) {
     for (const f of d.attachments) if (!existsSync(f)) throw new Error(`Attachment not found: ${f}`);
     const { html, from } = await this.sendAs();

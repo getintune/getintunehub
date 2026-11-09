@@ -6,15 +6,14 @@ import { freeSlots, MockCalendar } from "../src/connectors/calendar/index.js";
 import { MockTasks } from "../src/connectors/tasks/index.js";
 
 describe("calendar", () => {
-  it("creates, moves and deletes events, and links job numbers", async () => {
+  it("creates, moves and deletes events", async () => {
     const cal = new MockCalendar(mkdtempSync(path.join(os.tmpdir(), "cal-")));
-    const ev = await cal.create({ title: "Scope walk #3226 Augustine", start: "2026-11-10T16:00:00.000Z", end: "2026-11-10T17:00:00.000Z", location: "1071 Acapulco Ct" });
-    expect(ev.jobNumber).toBe(3226);
-    await cal.update(ev.calendarId, ev.id, { start: "2026-11-10T18:00:00.000Z", end: "2026-11-10T19:00:00.000Z" });
-    const got = await cal.events({ start: "2026-11-10T00:00:00Z", end: "2026-11-11T00:00:00Z" });
-    expect(got.map((e) => [e.title, e.start])).toEqual([["Scope walk #3226 Augustine", "2026-11-10T18:00:00.000Z"]]);
+    const ev = await cal.create({ title: "Free consult: Priya", start: "2031-11-10T16:00:00.000Z", end: "2031-11-10T17:00:00.000Z", location: "https://zoom.us/j/1" });
+    await cal.update(ev.calendarId, ev.id, { start: "2031-11-10T18:00:00.000Z", end: "2031-11-10T19:00:00.000Z" });
+    const got = await cal.events({ start: "2031-11-10T00:00:00Z", end: "2031-11-11T00:00:00Z" });
+    expect(got.map((e) => [e.title, e.start])).toEqual([["Free consult: Priya", "2031-11-10T18:00:00.000Z"]]);
     await cal.remove(ev.calendarId, ev.id);
-    expect(await cal.events({ start: "2026-11-10T00:00:00Z", end: "2026-11-11T00:00:00Z" })).toEqual([]);
+    expect(await cal.events({ start: "2031-11-10T00:00:00Z", end: "2031-11-11T00:00:00Z" })).toEqual([]);
   });
 
   it("finds open weekday time around busy blocks", () => {
@@ -28,8 +27,8 @@ describe("calendar", () => {
 describe("Google Tasks", () => {
   it("adds, checks off and reopens tasks", async () => {
     const t = new MockTasks(mkdtempSync(path.join(os.tmpdir(), "tasks-")));
-    const k = await t.create({ title: "Call Eileen re #3226", due: "2026-11-09" });
-    expect(k).toMatchObject({ jobNumber: 3226, due: "2026-11-09", completed: false });
+    const k = await t.create({ title: "Call Priya about the consult", due: "2026-11-09" });
+    expect(k).toMatchObject({ due: "2026-11-09", completed: false });
     await t.update(k.listId, k.id, { completed: true });
     expect((await t.tasks()).some((x) => x.id === k.id)).toBe(false); // done ones hidden unless asked
     expect((await t.tasks({ showCompleted: true })).find((x) => x.id === k.id)?.completed).toBe(true);

@@ -1,11 +1,10 @@
-import { query } from "@anthropic-ai/claude-agent-sdk";
-import { claudeEnv } from "./env.js";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
+import { featureOn, recordCost } from "./costs.js";
 import type { Hub } from "../hub.js";
 
 /**
- * One line, 10 words or less, saying what a conversation is about, for the Gmail tab's list ("Adjuster wants
+ * One line, 10 words or less, saying what a conversation is about, for the Gmail tab's list ("Priya asks
  * hallway flooring photos before approving LVP"). Claude writes them in batches with the fast model; each is kept
  * until the thread changes (its historyId moves), so a thread is summarized once per new message.
  */
@@ -32,7 +31,7 @@ function save(hub: Hub) {
   writeFileSync(file(hub), JSON.stringify(c));
 }
 
-export const enabled = (hub: Hub) => !!hub.cfg.anthropicApiKey && (process.env.HUB_MAIL_SUMMARIES ?? "on") !== "off";
+export const enabled = (hub: Hub) => featureOn(hub, "summaries");
 
 /** Summaries already written for these threads (only those still current). */
 export function summariesFor(hub: Hub, threads: { id: string; historyId?: string }[]): Record<string, string> {
@@ -88,31 +87,23 @@ async function summarizeBatch(hub: Hub, batch: { id: string; historyId?: string;
     if (!th || !last) continue;
     const fromMe = last.from.toLowerCase().includes(me);
     const body = last.body.replace(/\r/g, "").split(/\n(?:On .+wrote:|-{2,}\s*(?:Original|Forwarded) Message)/)[0].replace(/\s+/g, " ").trim().slice(0, 1200);
-    items.push({ t, text: `Subject: ${last.subject}\nFrom: ${fromMe ? "Hunter (me)" : last.from}\nTo: ${last.to.join(", ")}\n${th.messages.length > 1 ? `(${th.messages.length} messages in the conversation; this is the latest)\n` : ""}${body}` });
+    items.push({ t, text: `Subject: ${last.subject}\nFrom: ${fromMe ? `${hub.cfg.profile.first} (me)` : last.from}\nTo: ${last.to.join(", ")}\n${th.messages.length > 1 ? `(${th.messages.length} messages in the conversation; this is the latest)\n` : ""}${body}` });
   }
   if (!items.length) return 0;
-  const prompt = `Hunter Patterson is an estimator at Forefront Building + Restoration (Colorado reconstruction after water/fire damage). For each email below, write ONE line of 10 words or fewer that tells him what it is at a glance: what it's about and what it asks or says. Plain and specific, no quotes, no trailing period, don't start with "Email" or the sender's name. Use the job or street when it helps. If Hunter wrote it, say what he sent or asked ("Sent Wegener the revised estimate and Xactimate"). Newsletters, receipts and notifications get a short label ("QuickBooks receipt for Home Depot order").
+  const p = hub.cfg.profile;
+  const prompt = `${p.owner}: ${p.about}. For each email below, write ONE line of 10 words or fewer that tells her what it is at a glance: what it's about and what it asks or says. Plain and specific, no quotes, no trailing period, don't start with "Email" or the sender's name. If ${p.first} wrote it, say what she sent or asked ("Sent Frankie the workshop post edits"). Newsletters, receipts and notifications get a short label ("Wix receipt for supervision membership").
 
 ${items.map((x, i) => `#${i + 1}\n${x.text}`).join("\n\n---\n\n")}`;
   let out: { n: number; summary: string }[] = [];
-  for await (const m of query({
-    prompt,
-    options: {
-      model: hub.cfg.fastModel,
-      maxTurns: 2,
-      allowedTools: [],
-      settingSources: [],
-      outputFormat: { type: "json_schema", schema: SCHEMA },
-      canUseTool: async () => ({ behavior: "deny", message: "No tools needed." }),
-      systemPrompt: "You write very short, specific one-line email summaries.",
-      env: claudeEnv(hub),
-    },
-  })) {
-    if (m.type === "result" && m.subtype === "success") {
-      const so = (m as any).structured_output ?? JSON.parse(m.result.match(/\{[\s\S]*\}/)?.[0] ?? '{"items":[]}');
-      out = so.items ?? [];
-    }
+  const r = await hub.gemini.generate({ model: hub.cfg.fastModel, system: "You write very short, specific one-line email summaries.", contents: [{ role: "user", parts: [{ text: prompt }] }], json: SCHEMA });
+  recordCost(hub, "summaries", { tokens: r.usage }, hub.cfg.fastModel);
+  try {
+    const so = JSON.parse(r.text.match(/\{[\s\S]*\}/)?.[0] ?? '{"items":[]}');
+    out = so.items ?? [];
+  } catch {
+    out = [];
   }
+
   const c = load(hub);
   let n = 0;
   for (const r of out) {

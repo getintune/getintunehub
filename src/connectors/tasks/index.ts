@@ -5,8 +5,8 @@ import type { Config } from "../../core/config.js";
 import { GoogleAuth, SCOPES } from "../google/auth.js";
 
 /**
- * Google Tasks, read and write. Keystone works on Hunter's real task lists, so a task made in Keystone is on his phone
- * and in Chrome at once, and one made on his phone shows in Keystone on its next refresh. Google keeps only a due
+ * Google Tasks, read and write. The app works on the owner's real task lists, so a task made in the app is on her phone
+ * and in Chrome at once, and one made on her phone shows in the app on its next refresh. Google keeps only a due
  * DATE for tasks (no time of day).
  */
 export interface TaskList {
@@ -24,7 +24,6 @@ export interface Task {
   completedAt?: string;
   updated: string;
   link?: string;
-  jobNumber?: number;
 }
 
 export interface TaskInput {
@@ -45,11 +44,6 @@ export interface TasksClient {
   remove(listId: string, id: string): Promise<void>;
 }
 
-const jobRef = (s: string) => {
-  const m = s.match(/#(\d{4})\b/);
-  return m ? Number(m[1]) : undefined;
-};
-
 export class GoogleTasks implements TasksClient {
   readonly kind = "google" as const;
   private api?: tasks_v1.Tasks;
@@ -60,7 +54,7 @@ export class GoogleTasks implements TasksClient {
   }
 
   private t() {
-    if (!this.connected()) throw new Error("Google Tasks isn't connected yet: double-click Connect Gmail in the Keystone folder (forefront-hub) and click Allow (it covers Calendar and Tasks too).");
+    if (!this.connected()) throw new Error("Google Tasks isn't connected yet: double-click Connect Gmail in the app's folder and click Allow (it covers Calendar and Tasks too).");
     this.api ??= google.tasks({ version: "v1", auth: this.auth.client() });
     return this.api;
   }
@@ -76,7 +70,6 @@ export class GoogleTasks implements TasksClient {
       completedAt: t.completed ?? undefined,
       updated: t.updated ?? "",
       link: t.webViewLink ?? undefined,
-      jobNumber: jobRef(`${t.title ?? ""} ${t.notes ?? ""}`),
     };
   }
 
@@ -138,7 +131,7 @@ export class GoogleTasks implements TasksClient {
   }
 }
 
-/** Tasks on disk with a few made-up ones, so Keystone works without Google. */
+/** Tasks on disk with a few made-up ones, so the app works without Google. */
 export class MockTasks implements TasksClient {
   readonly kind = "mock" as const;
   private file: string;
@@ -152,9 +145,9 @@ export class MockTasks implements TasksClient {
     if (existsSync(this.file)) return JSON.parse(readFileSync(this.file, "utf8"));
     const day = (n: number) => new Date(Date.now() + n * 864e5).toISOString().slice(0, 10);
     return [
-      { id: "t1", listId: "default", title: "Send Xactimate to adjuster #9001", due: day(0), completed: false, updated: new Date().toISOString(), jobNumber: 9001 },
-      { id: "t2", listId: "default", title: "Follow up with Sam #9002", due: day(-1), completed: false, updated: new Date().toISOString(), jobNumber: 9002 },
-      { id: "t3", listId: "default", title: "Order tile samples", due: day(2), completed: false, updated: new Date().toISOString() },
+      { id: "t1", listId: "default", title: "Post the workshop reminder on Instagram", due: day(0), completed: false, updated: new Date().toISOString() },
+      { id: "t2", listId: "default", title: "Send Frankie the workshop slides", due: day(-1), completed: false, updated: new Date().toISOString() },
+      { id: "t3", listId: "default", title: "Review the coaching intake Google Doc", due: day(2), completed: false, updated: new Date().toISOString() },
     ];
   }
   private save(t: Task[]) {
@@ -168,7 +161,7 @@ export class MockTasks implements TasksClient {
     return this.load().filter((t) => (o.showCompleted || !t.completed) && (!o.dueMin || !t.due || t.due >= o.dueMin.slice(0, 10)) && (!o.dueMax || !t.due || t.due <= o.dueMax.slice(0, 10)));
   }
   async create(t: TaskInput & { title: string }) {
-    const task: Task = { id: `t${Date.now().toString(36)}`, listId: t.listId || "default", title: t.title, notes: t.notes, due: t.due ?? undefined, completed: !!t.completed, updated: new Date().toISOString(), jobNumber: jobRef(`${t.title} ${t.notes ?? ""}`) };
+    const task: Task = { id: `t${Date.now().toString(36)}`, listId: t.listId || "default", title: t.title, notes: t.notes, due: t.due ?? undefined, completed: !!t.completed, updated: new Date().toISOString() };
     this.save([...this.load(), task]);
     return task;
   }
@@ -193,6 +186,6 @@ export class MockTasks implements TasksClient {
 }
 
 export function makeTasks(cfg: Config): TasksClient {
-  if (cfg.gmail.driver === "google") return new GoogleTasks(new GoogleAuth({ clientId: cfg.gmail.clientId, clientSecret: cfg.gmail.clientSecret, tokenFile: cfg.gmail.tokenFile, address: cfg.gmail.address }));
+  if (cfg.gmail.driver === "google" || cfg.mode === "live") return new GoogleTasks(new GoogleAuth({ clientId: cfg.gmail.clientId, clientSecret: cfg.gmail.clientSecret, tokenFile: cfg.gmail.tokenFile, address: cfg.gmail.address }));
   return new MockTasks(cfg.stateDir);
 }

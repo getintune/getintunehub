@@ -1,11 +1,12 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import type { Config } from "../../core/config.js";
+import { TIME_ZONE } from "../../core/config.js";
 
 /**
  * Drive times between addresses, for "leave by" times on calendar events. Free, no account or key:
  * OpenStreetMap's Nominatim finds the address and the public OSRM router times the drive. OSRM assumes empty
- * roads, so Keystone pads it, more at rush hour (see padFor). Light use only: one look-up per new address and
+ * roads, so the app pads it, more at rush hour (see padFor). Light use only: one look-up per new address and
  * per pair of addresses, kept in .hub/travel.json.
  */
 export interface Drive {
@@ -27,7 +28,7 @@ export const RUSH_PAD = 1.45;
 
 /** Weekday 6:30-9:00 AM and 3:30-6:30 PM, Denver time. */
 export function isRushHour(at: Date): boolean {
-  const p = Object.fromEntries(new Intl.DateTimeFormat("en-US", { timeZone: "America/Denver", weekday: "short", hour: "2-digit", minute: "2-digit", hour12: false }).formatToParts(at).map((x) => [x.type, x.value]));
+  const p = Object.fromEntries(new Intl.DateTimeFormat("en-US", { timeZone: TIME_ZONE, weekday: "short", hour: "2-digit", minute: "2-digit", hour12: false }).formatToParts(at).map((x) => [x.type, x.value]));
   if (p.weekday === "Sat" || p.weekday === "Sun") return false;
   const m = (Number(p.hour) % 24) * 60 + Number(p.minute);
   return (m >= 390 && m < 540) || (m >= 930 && m < 1110);
@@ -76,7 +77,7 @@ export function addressVariants(address: string): string[] {
   const out = [address.trim(), clean, zip && street ? `${street}, ${zip}` : "", tail && /\d/.test(street) ? `${street}, ${tail.replace(/\b\d{5}(-\d{4})?\b/, "").trim()}` : "", tail || zip || ""];
   return [...new Set(out.map((x) => x.replace(/[,\s]+$/, "").trim()).filter((x) => x.length >= 5))];
 }
-const UA = "ForefrontHub/1.0 (personal work hub; light use)";
+const UA = "GetInTuneHub/1.0 (personal work hub; light use)";
 
 export class OsmTravel extends Cached implements TravelClient {
   readonly kind = "osm" as const;

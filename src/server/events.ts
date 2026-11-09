@@ -1,15 +1,13 @@
 import type { ServerResponse } from "node:http";
-import type { StudioEvent } from "../agent/studio.js";
 import type { Approver } from "../core/approval.js";
 
 export type HubEvent =
-  | { type: "log"; text: string; job?: number }
+  | { type: "log"; text: string }
   | { type: "approval"; id: string; action: string; details: string[]; text?: string }
   | { type: "approval-done"; id: string; answer: boolean }
-  | { type: "task"; id: string; state: "running" | "done" | "error"; label: string; error?: string; job?: number }
-  | { type: "changed"; job?: number; what: "timeline" | "mail" | "job" | "calendar" | "plan" | "summaries" }
-  | ({ type: "studio" } & StudioEvent)
-  | { type: "answer"; id: string; prompt: string; text: string; error?: string; drafts: { threadId?: string; subject: string; to: string[] }[]; jobs: number[]; contacts: string[] };
+  | { type: "task"; id: string; state: "running" | "done" | "error"; label: string; error?: string }
+  | { type: "changed"; what: "lists" | "mail" | "calendar" | "plan" | "summaries" }
+  | { type: "answer"; id: string; prompt: string; text: string; error?: string; drafts: { threadId?: string; subject: string; to: string[] }[]; people: { id: string; name: string; program: string }[]; contacts: string[] };
 
 /** Server-sent events to every open window. */
 export class EventBus {

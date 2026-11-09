@@ -1,46 +1,46 @@
-import { claudeEndpoint, ignoredRedirects } from "./agent/env.js";
+import { agentEndpoint } from "./agent/env.js";
+import { makeGemini, type GeminiClient } from "./connectors/gemini/index.js";
 import { makeTravel, type TravelClient } from "./connectors/travel/index.js";
 import path from "node:path";
 import { CliApprover, type Approver } from "./core/approval.js";
 import { loadConfig, type Config } from "./core/config.js";
-import { JobStore } from "./core/job.js";
-import { makeCompanyCam, type PhotoClient } from "./connectors/companycam/index.js";
-import { DocuSketch, type SketchSource } from "./connectors/docusketch/index.js";
 import { makeGmail, type MailClient } from "./connectors/gmail/index.js";
 import { makeCalendar, type CalendarClient } from "./connectors/calendar/index.js";
 import { makeTasks, type TasksClient } from "./connectors/tasks/index.js";
-import { makeHomebase, type HomebaseClient } from "./connectors/homebase/index.js";
-import { EstimateSkill } from "./connectors/skill/index.js";
+import { makeLists, type ListsClient } from "./connectors/lists/index.js";
+import { makeWorkMail, type WorkMailClient } from "./connectors/outlook/index.js";
+import { makeMotion, type MotionClient } from "./connectors/motion/index.js";
 
 /** Everything a workflow or agent tool needs, in one place. Tests build one from mocks. */
 export interface Hub {
   cfg: Config;
-  jobs: JobStore;
-  homebase: HomebaseClient;
+  /** Her lists: one per program (therapy, coaching, workshop, ...). */
+  lists: ListsClient;
+  /** Work email (Outlook / Microsoft 365), read-only. */
+  outlook: WorkMailClient;
   gmail: MailClient;
   calendar: CalendarClient;
+  /** Motion: her tasks (and the team's), scheduled by Motion. */
+  motion: MotionClient;
   tasks: TasksClient;
   travel: TravelClient;
-  photos: PhotoClient;
-  sketches: SketchSource;
-  skill: EstimateSkill;
+  /** Google Gemini, behind the app's own agent (off without GEMINI_API_KEY). */
+  gemini: GeminiClient;
   approver: Approver;
   say: (msg: string) => void;
 }
 
 export function makeHub(cfg: Config = loadConfig(), approver: Approver = new CliApprover()): Hub {
-  const gmail = makeGmail(cfg);
   return {
     cfg,
-    jobs: new JobStore(cfg.jobsRoot),
-    homebase: makeHomebase(cfg),
-    gmail,
+    lists: makeLists(cfg),
+    outlook: makeWorkMail(cfg),
+    gmail: makeGmail(cfg),
     calendar: makeCalendar(cfg),
+    motion: makeMotion(cfg),
     tasks: makeTasks(cfg),
     travel: makeTravel(cfg),
-    photos: makeCompanyCam(cfg),
-    sketches: new DocuSketch(gmail, cfg.docusketch.downloadsDir),
-    skill: new EstimateSkill(cfg.skillDir, cfg.python),
+    gemini: makeGemini(cfg),
     approver,
     say: (m) => console.log(m),
   };
@@ -50,16 +50,13 @@ export function describe(hub: Hub): string[] {
   const c = hub.cfg;
   return [
     `mode        ${c.mode}`,
-    `jobs        ${c.jobsRoot}`,
-    `skill       ${c.skillDir}${hub.skill.check() ? `  (!) ${hub.skill.check()}` : ""}`,
-    `python      ${c.python}`,
-    `claude      ${c.anthropicApiKey ? `on, requests go to ${claudeEndpoint()}` : "off (no Anthropic API key)"}${ignoredRedirects().length ? `  (ignoring ${ignoredRedirects().map((r) => r.name).join(", ")} set on this PC)` : ""}`,
-    `claude      ${c.anthropicApiKey ? `API key set (${c.model})` : "(!) no ANTHROPIC_API_KEY and no Estimator data/api_key.txt"}`,
-    `homebase    ${hub.homebase.kind}${hub.homebase.kind === "browser" ? `  login: ${path.relative(c.hubRoot, c.homebase.authFile)}` : ""}`,
+    `for         ${c.profile.owner}, ${c.profile.business} (${c.profile.timeZone})`,
+    `lists       ${hub.lists.kind === "mock" ? "practice data" : path.join(c.dataDir, "lists.json")}`,
+    `agent       ${c.geminiApiKey ? `Gemini on (${c.model}), requests go to ${agentEndpoint()}` : "off (no GEMINI_API_KEY in .env): Claude buttons open the Claude app"}`,
+    `outlook     ${hub.outlook.kind === "mock" ? "practice mail" : `${hub.cfg.outlook.mailboxes.join(", ")}${hub.outlook.connected() ? "" : "  (!) not signed in: Connect Outlook"}`}`,
     `gmail       ${hub.gmail.kind}${hub.gmail.kind === "mock" ? `  (drafts go to ${path.join(c.stateDir, "outbox")})` : ` ${c.gmail.address}`}`,
-    `companycam  ${hub.photos.kind}`,
     `calendar    ${hub.calendar.kind}${hub.calendar.kind === "google" && !hub.calendar.connected() ? "  (!) reconnect Google to add Calendar" : ""}`,
+    `motion      ${hub.motion.kind === "mock" ? "practice tasks" : "connected"}`,
     `tasks       ${hub.tasks.kind}${hub.tasks.kind === "google" && !hub.tasks.connected() ? "  (!) reconnect Google to add Tasks" : ""}`,
-    `docusketch  gmail delivery emails + ESX from ${c.docusketch.downloadsDir}`,
   ];
 }

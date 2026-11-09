@@ -7,41 +7,36 @@ import { testHub } from "./helpers.js";
 const ev = (id: string, start: string, end: string, location?: string): CalEvent => ({ id, calendarId: "primary", title: id, start, end, allDay: false, location });
 
 describe("drive times for calendar events", () => {
-  it("times only job visits, chaining straight from one job to the next", async () => {
+  it("times in-person appointments, chaining straight from one to the next", async () => {
     const { hub } = testHub();
-    hub.cfg.travel.start = "169 Inverness Dr W, Englewood, CO";
-    hub.jobs.upsert(3226, { name: "Augustine", address: "1071 Acapulco Ct, Colorado Springs, CO 80910" });
-    hub.jobs.upsert(3184, { name: "Wegener", address: "123 Main St, Denver, CO 80211" });
+    hub.cfg.travel.start = "100 Home St, Denver, CO";
     const legs = await travelFor(hub, [
-      { ...ev("walk", "2026-11-09T09:00:00-07:00", "2026-11-09T10:00:00-07:00"), jobNumber: 3226, title: "Scope walk #3226" }, // no location: the job's address
-      ev("lunch", "2026-11-09T10:15:00-07:00", "2026-11-09T10:45:00-07:00", "4500 Lunch Pl, Denver, CO"), // not a job
+      ev("Sunrise Recovery group", "2026-11-09T09:00:00-07:00", "2026-11-09T10:00:00-07:00", "1071 Acapulco Ct, Colorado Springs, CO 80910"),
       ev("zoom", "2026-11-09T10:30:00-07:00", "2026-11-09T11:00:00-07:00", "https://zoom.us/j/123"),
-      ev("next", "2026-11-09T10:20:00-07:00", "2026-11-09T11:00:00-07:00", "123 Main Street, Denver, CO"), // a job by its address
+      ev("next", "2026-11-09T10:20:00-07:00", "2026-11-09T11:00:00-07:00", "123 Main Street, Denver, CO"),
       { ...ev("team", "2026-11-09T12:00:00-07:00", "2026-11-09T13:00:00-07:00", "1071 Acapulco Ct, Colorado Springs, CO"), calendarId: "team" },
     ], { calendars: new Set(["primary"]) });
-    expect(Object.keys(legs).sort()).toEqual(["next", "walk"]);
+    expect(Object.keys(legs).sort()).toEqual(["Sunrise Recovery group", "next"]);
     const calls = (hub.travel as MockTravel).calls;
-    expect(calls[0]).toEqual({ from: "169 Inverness Dr W, Englewood, CO", to: "1071 Acapulco Ct, Colorado Springs, CO 80910" });
-    expect(calls[1].from).toBe("1071 Acapulco Ct, Colorado Springs, CO 80910"); // straight from Augustine, lunch ignored
-    expect(legs.walk.fromLabel).toBe("the office");
-    expect(legs.next.fromLabel).toBe("#3226 Augustine");
-    expect(legs.next.jobNumber).toBe(3184);
-    const leave = new Date("2026-11-09T09:00:00-07:00").getTime() - (legs.walk.minutes + SPARE_MINUTES) * 60_000;
-    expect(legs.walk.leaveBy).toBe(new Date(leave).toISOString());
+    expect(calls[0]).toEqual({ from: "100 Home St, Denver, CO", to: "1071 Acapulco Ct, Colorado Springs, CO 80910" });
+    expect(calls[1].from).toBe("1071 Acapulco Ct, Colorado Springs, CO 80910");
+    const first = legs["Sunrise Recovery group"];
+    expect(first.fromLabel).toBe("home");
+    expect(legs.next.fromLabel).toBe("Sunrise Recovery group");
+    const leave = new Date("2026-11-09T09:00:00-07:00").getTime() - (first.minutes + SPARE_MINUTES) * 60_000;
+    expect(first.leaveBy).toBe(new Date(leave).toISOString());
     expect(legs.next.late).toBeGreaterThan(0); // 20 minutes between them isn't enough
     expect(legs.next.mapsUrl).toContain("google.com/maps/dir");
   });
 
-  it("starts each day from the office again", async () => {
+  it("starts each day from home again", async () => {
     const { hub } = testHub();
-    hub.cfg.travel.start = "169 Inverness Dr W, Englewood, CO";
-    hub.jobs.upsert(3226, { name: "Augustine", address: "1071 Acapulco Ct, Colorado Springs, CO 80910" });
-    hub.jobs.upsert(3184, { name: "Wegener", address: "123 Main St, Denver, CO 80211" });
+    hub.cfg.travel.start = "100 Home St, Denver, CO";
     const legs = await travelFor(hub, [
-      { ...ev("mon", "2026-11-09T09:00:00-07:00", "2026-11-09T10:00:00-07:00"), jobNumber: 3226 },
-      { ...ev("tue", "2026-11-10T09:00:00-07:00", "2026-11-10T10:00:00-07:00"), jobNumber: 3184 },
+      ev("mon", "2026-11-09T09:00:00-07:00", "2026-11-09T10:00:00-07:00", "1071 Acapulco Ct, Colorado Springs, CO"),
+      ev("tue", "2026-11-10T09:00:00-07:00", "2026-11-10T10:00:00-07:00", "123 Main St, Denver, CO"),
     ]);
-    expect(legs.tue.fromLabel).toBe("the office");
+    expect(legs.tue.fromLabel).toBe("home");
   });
 
   it("knows Denver's weekday rush hours", async () => {
@@ -79,20 +74,7 @@ describe("travel connectors", () => {
   }, 10_000);
 });
 
-describe("finding the job and the address", () => {
-  it("recognizes a job visit by number, by address, or by the job's name", async () => {
-    const { jobForEvent } = await import("../src/workflows/travel.js");
-    const jobs: any[] = [
-      { jobNumber: 3226, name: "Augustine", address: "1071 Acapulco Ct, Colorado Springs, CO 80910" },
-      { jobNumber: 3184, name: "Wegener", address: "123 Main St, Denver, CO 80211" },
-    ];
-    const base = { id: "x", calendarId: "primary", start: "", end: "", allDay: false };
-    expect(jobForEvent({ ...base, title: "Walk", jobNumber: 3184 }, jobs)?.jobNumber).toBe(3184);
-    expect(jobForEvent({ ...base, title: "Walk", location: "1071 Acapulco Court, Colorado Springs" }, jobs)?.jobNumber).toBe(3226);
-    expect(jobForEvent({ ...base, title: "Augustine final walkthrough" }, jobs)?.jobNumber).toBe(3226);
-    expect(jobForEvent({ ...base, title: "Lunch with Sam" }, jobs)).toBeUndefined();
-  });
-
+describe("addresses", () => {
   it("asks for an address without the suite when the full one isn't found", async () => {
     const { addressVariants } = await import("../src/connectors/travel/index.js");
     const v = addressVariants("169 Inverness Dr W Ste 120, Englewood, CO 80112");
@@ -102,10 +84,9 @@ describe("finding the job and the address", () => {
 
   it("says why an event got no drive time", async () => {
     const { hub } = testHub();
-    hub.jobs.upsert(3226, { name: "Augustine", address: "1071 Acapulco Ct, Colorado Springs, CO 80910" });
     const why: Record<string, string> = {};
-    await travelFor(hub, [ev("lunch", "2026-11-09T12:00:00-07:00", "2026-11-09T13:00:00-07:00", "4500 Lunch Pl, Denver, CO"), { ...ev("team", "2026-11-09T14:00:00-07:00", "2026-11-09T15:00:00-07:00"), calendarId: "team", jobNumber: 3226 }], { calendars: new Set(["primary"]), why });
-    expect(why.lunch).toMatch(/which job/);
+    await travelFor(hub, [ev("visit", "2026-11-09T12:00:00-07:00", "2026-11-09T13:00:00-07:00", "4500 Lunch Pl, Denver, CO"), { ...ev("team", "2026-11-09T14:00:00-07:00", "2026-11-09T15:00:00-07:00", "1 Main St, Denver, CO"), calendarId: "team" }], { calendars: new Set(["primary"]), why });
+    expect(why.visit).toMatch(/HUB_DAY_START_ADDRESS/);
     expect(why.team).toMatch(/shared calendar/);
   });
 });

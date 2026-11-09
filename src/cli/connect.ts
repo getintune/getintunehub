@@ -4,7 +4,7 @@ import { createInterface } from "node:readline/promises";
 import { loadConfig } from "../core/config.js";
 import { GoogleGmail, openBrowser } from "../connectors/gmail/google.js";
 
-/** Guided set-up for Gmail and CompanyCam: opens the right pages, takes the values, saves them to .env, tests them. */
+/** Guided set-up for Gmail and Outlook: opens the right pages, takes the values, saves them to .env, tests them. */
 
 function envPath() {
   return path.join(loadConfig().hubRoot, ".env");
@@ -36,7 +36,7 @@ function step(n: number, text: string) {
 
 /** Google's "Download JSON" for a Desktop client lands in Downloads as client_secret_<id>.json. */
 function findClientJson(): { id: string; secret: string; file: string } | null {
-  const dl = loadConfig().docusketch.downloadsDir;
+  const dl = path.join(process.env.HOME || process.env.USERPROFILE || ".", "Downloads");
   if (!existsSync(dl)) return null;
   const files = readdirSync(dl)
     .filter((f) => /^client_secret_.*\.json$/i.test(f))
@@ -56,20 +56,21 @@ function findClientJson(): { id: string; secret: string; file: string } | null {
 
 export async function connectGmail() {
   const cfg = loadConfig();
-  console.log("Connecting Gmail (hunter@forefrontteam.com) for Keystone's Mail tab: reading, drafts, archive/labels, and sending when you press Send.");
+  const app = cfg.profile.appName;
+  console.log(`Connecting Gmail (${cfg.gmail.address}) for ${app}'s Gmail tab: reading, drafts, archive/labels, and sending when you press Send.`);
   if (!cfg.gmail.clientId) {
-    console.log("Google needs a one-time 'app' entry for Keystone. Each page opens in your browser; sign in as hunter@forefrontteam.com.");
-    step(1, "Create a project named Keystone (Create).");
+    console.log(`Google needs a one-time 'app' entry for ${app}. Each page opens in your browser; sign in as ${cfg.gmail.address}.`);
+    step(1, `Create a project named ${app} (Create).`);
     openBrowser("https://console.cloud.google.com/projectcreate");
     await ask("   Press Enter when it's created... ");
-    step(2, "Make sure Keystone is the selected project at the top, then click Enable on the Gmail API.");
+    step(2, `Make sure ${app} is the selected project at the top, then click Enable on the Gmail API.`);
     openBrowser("https://console.cloud.google.com/apis/library/gmail.googleapis.com");
     await ask("   Press Enter when it says API enabled... ");
-    step(3, "Click Get started: app name Keystone, your email, Audience = Internal, your email again, agree, Create.");
-    console.log("   (If Internal is greyed out, pick External and add hunter@forefrontteam.com as a test user.)");
+    step(3, `Click Get started: app name ${app}, your email, Audience = External (a personal Gmail can't pick Internal), your email again, agree, Create.`);
+    console.log(`   Then under Audience > Test users, add ${cfg.gmail.address}.`);
     openBrowser("https://console.cloud.google.com/auth/overview");
     await ask("   Press Enter when it's done... ");
-    step(4, "Create client: Application type = Desktop app, name Keystone, Create. Then click Download JSON.");
+    step(4, `Create client: Application type = Desktop app, name ${app}, Create. Then click Download JSON.`);
     openBrowser("https://console.cloud.google.com/auth/clients/create");
     await ask("   Press Enter once the JSON file is downloaded (or if you'd rather paste the ID and secret)... ");
 
@@ -85,7 +86,7 @@ export async function connectGmail() {
   }
 
   // Calendar and Tasks are APIs of their own: each needs one Enable click in the same Google project.
-  step(5, "Turn on the Google Calendar API and the Google Tasks API: click Enable on each page that opens (check Keystone is the project at the top).");
+  step(5, `Turn on the Google Calendar API and the Google Tasks API: click Enable on each page that opens (check ${app} is the project at the top).`);
   openBrowser("https://console.cloud.google.com/apis/library/calendar-json.googleapis.com");
   openBrowser("https://console.cloud.google.com/apis/library/tasks.googleapis.com");
   await ask("   Press Enter when both say API enabled (or Manage)... ");
@@ -112,21 +113,97 @@ export async function connectGmail() {
   } catch (e) {
     console.log(`Google Tasks didn't answer: ${(e as Error).message}\n  If it says the API isn't enabled, enable it (step 5) and run Connect Gmail again.`);
   }
-  console.log("Restart Keystone (close its window, open the desktop icon) to use it.");
+  console.log(`Restart ${app} (close its window, open it again) to use it.`);
 }
 
-export async function connectCompanyCam() {
-  console.log("Connecting CompanyCam.");
-  step(1, "In CompanyCam (signed in as an admin) open the menu > Company Settings > Integrations (or Access Tokens / API).");
-  console.log("   Create a new access token named Keystone and copy it.");
-  console.log("   If there's no such page on your plan, ask CompanyCam support for 'a v2 API access token'.");
-  openBrowser("https://app.companycam.com/");
-  const token = await ask("\n2. Paste the token here and press Enter: ");
-  if (!token) throw new Error("No token; run Connect CompanyCam again when you have one.");
-  const res = await fetch("https://api.companycam.com/v2/users/current", { headers: { Authorization: `Bearer ${token}`, Accept: "application/json" } });
-  if (!res.ok) throw new Error(`CompanyCam didn't accept that token (${res.status}). Check you copied all of it and try again.`);
-  const me: any = await res.json();
-  setEnv({ COMPANYCAM_TOKEN: token });
-  console.log(`\nCompanyCam is connected as ${[me.first_name, me.last_name].filter(Boolean).join(" ") || me.email_address || "you"}.`);
-  console.log("Restart Keystone (close its window, open the desktop icon) to use it.");
+/**
+ * Outlook (Microsoft 365), read-only: a one-time "app registration" in her own Microsoft 365, then a sign-in
+ * with a short code. She's the admin of her Microsoft 365, so she can approve it herself.
+ */
+export async function connectOutlook() {
+  const cfg = loadConfig();
+  const app = cfg.profile.appName;
+  console.log(`Connecting your work email (${cfg.outlook.mailboxes.join(" and ")}) to ${app}. It only READS mail: it can't send, move or delete anything.`);
+  if (!cfg.outlook.clientId) {
+    console.log("\nMicrosoft needs a one-time 'app registration'. Each page opens in your browser; sign in with your Microsoft 365 admin account.");
+    step(1, `Click "+ New registration". Name: ${app}. Supported account types: "Single tenant only - <your organization>" (older screens call it "Accounts in this organizational directory only"). Leave Redirect URI empty. Click Register.`);
+    openBrowser("https://entra.microsoft.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade");
+    await ask("   Press Enter when it's registered... ");
+    const id = await ask('2. On the page that opened, copy the "Application (client) ID" and paste it here: ');
+    const tenant = await ask('3. Copy the "Directory (tenant) ID" and paste it here: ');
+    if (!/^[0-9a-f-]{36}$/i.test(id) || !/^[0-9a-f-]{36}$/i.test(tenant)) throw new Error("Those don't look like Microsoft IDs (they look like 1a2b3c4d-....). Run Connect Outlook again and copy them once more.");
+    step(4, 'In the left menu under Manage, click "Authentication" (maybe "Authentication (Preview)"). Newer page: open the "Settings" tab and turn on "Allow public client flows". Older page: at the bottom, under "Advanced settings", set "Enable the following mobile and desktop flows" to Yes. Click Save. (Not there? Left menu "Manifest": set "allowPublicClient": true, Save.)');
+    await ask("   Press Enter when saved... ");
+    step(5, 'Click "API permissions" > "+ Add a permission" > Microsoft Graph > Delegated permissions. Tick Mail.Read, Mail.Read.Shared and Calendars.Read, then "Add permissions". Then click "Grant admin consent for ..." and Yes.');
+    await ask("   Press Enter when the permissions show a green tick... ");
+    setEnv({ MS_CLIENT_ID: id, MS_TENANT: tenant });
+  } else {
+    console.log("\nYour app registration is already there. One check first (your Outlook calendar needs it):");
+    step(1, `In ${app}'s page (opening now): "API permissions" > "+ Add a permission" > Microsoft Graph > Delegated permissions. Make sure Mail.Read, Mail.Read.Shared and Calendars.Read are all listed (add any that aren't), then click "Grant admin consent for ..." and Yes.`);
+    openBrowser(`https://entra.microsoft.com/#view/Microsoft_AAD_RegisteredApps/ApplicationMenuBlade/~/CallAnApi/appId/${cfg.outlook.clientId}`);
+    await ask("   Press Enter when all three show a green tick... ");
+  }
+  const c = loadConfig({ ...process.env, MS_CLIENT_ID: cfg.outlook.clientId || loadEnvValue("MS_CLIENT_ID"), MS_TENANT: loadEnvValue("MS_TENANT") || cfg.outlook.tenant, HUB_MODE: "live" });
+  const { GraphMail } = await import("../connectors/outlook/index.js");
+  const g = new GraphMail({ clientId: c.outlook.clientId, tenant: c.outlook.tenant, tokenFile: c.outlook.tokenFile, mailboxes: c.outlook.mailboxes });
+  await g.login((code, url) => {
+    console.log(`\n6. Sign in: on the page that opens, type this code: ${code}\n   Then sign in as ${c.outlook.mailboxes[0]} and click Accept.`);
+    openBrowser(url);
+  });
+  for (const mb of c.outlook.mailboxes) {
+    try {
+      const l = await g.list({ mailbox: mb, max: 1 });
+      console.log(`${mb}: connected. Newest email: "${l[0]?.subject ?? "(empty inbox)"}".`);
+    } catch (e) {
+      console.log(`${mb}: ${(e as Error).message}`);
+    }
+  }
+  console.log(`\nRestart ${app} (close its window, open it again) to use it.`);
+}
+
+function loadEnvValue(k: string): string {
+  try {
+    return readFileSync(envPath(), "utf8").match(new RegExp(`^${k}=(.*)$`, "m"))?.[1]?.trim() ?? "";
+  } catch {
+    return "";
+  }
+}
+
+/** Motion: paste the API key from Motion's settings; it's tested, then saved to .env on this Mac only. */
+export async function connectMotion() {
+  const app = loadConfig().profile.appName;
+  console.log(`Connecting Motion to ${app}. The app shows what Motion scheduled and adds tasks only when you say Yes. It never moves, edits or deletes Motion tasks.`);
+  step(1, 'In Motion (signed in), open Settings, find "API" (it may be under "API & Integrations"), and click "Create API key". Name it ' + app + ", then copy the key.");
+  openBrowser("https://app.usemotion.com/web/settings/api");
+  const key = await ask("\n2. Paste the key here and press Enter: ");
+  if (!key) throw new Error("No key; double-click Connect Motion again when you have it.");
+  const { LiveMotion } = await import("../connectors/motion/index.js");
+  const tasks = await new LiveMotion({ apiKey: key, workspaceId: "" }).tasks();
+  setEnv({ MOTION_API_KEY: key });
+  console.log(`\nMotion is connected: you have ${tasks.length} open task${tasks.length === 1 ? "" : "s"}.`);
+  console.log(`Restart ${app} (close its window, open it again) to use it.`);
+}
+
+/** Gemini (the app's own agent, free tier): paste the key from Google AI Studio; it's tested, then saved to .env. */
+export async function connectGemini() {
+  const cfg = loadConfig();
+  console.log(`Connecting Google Gemini to ${cfg.profile.appName} (free tier), so Ask and Plan my day run inside the app.`);
+  console.log("Note: on Gemini's free tier Google may use what's sent to improve its products. Grow Therapy email and therapy clients' notes are never sent, and background features start off.");
+  step(1, 'In the page that opens (sign in with your Google account), click "Create API key", then copy it.');
+  openBrowser("https://aistudio.google.com/apikey");
+  const key = await ask("\n2. Paste the key here and press Enter: ");
+  if (!key) throw new Error("No key; double-click Connect Gemini again when you have it.");
+  const { LiveGemini } = await import("../connectors/gemini/index.js");
+  const r = await new LiveGemini(key).generate({ model: cfg.fastModel, system: "Reply with one word.", contents: [{ role: "user", parts: [{ text: "Say ready." }] }] }).catch((e) => {
+    throw new Error(`${(e as Error).message}\nCopy this message to Claude.`);
+  });
+  // Also replace any old Claude model names in .env (from before the switch) with the Gemini ones.
+  // Check the main model too, and save the ones that answered (Google retires models; the app switches on its own).
+  const gm = new LiveGemini(key);
+  const fast = (await gm.generate({ model: cfg.fastModel, system: "Reply with one word.", contents: [{ role: "user", parts: [{ text: "Say ready." }] }] })).model ?? cfg.fastModel;
+  const main = (await gm.generate({ model: cfg.model, system: "Reply with one word.", contents: [{ role: "user", parts: [{ text: "Say ready." }] }] })).model ?? cfg.model;
+  setEnv({ GEMINI_API_KEY: key, HUB_MODEL: main, HUB_FAST_MODEL: fast });
+  console.log(`Using ${main} (Ask, Plan my day) and ${fast} (routine work).`);
+  console.log(`\nGemini is connected (it said: "${r.text.trim().slice(0, 40)}").`);
+  console.log(`Restart ${cfg.profile.appName} (close its window, open it again) to use it.`);
 }

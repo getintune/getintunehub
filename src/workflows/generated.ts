@@ -5,8 +5,8 @@ import type { DraftInput, DraftRef } from "../connectors/gmail/types.js";
 import type { Hub } from "../hub.js";
 
 /**
- * Drafts Keystone made for Hunter (Claude's replies, Plan my day, the send-off, the Estimator tab), kept apart from
- * the ones he writes himself so they're easy to find: the Gmail tab's "Claude drafts" folder lists them, and in
+ * Drafts the app made for the owner (Claude's replies, Plan my day), kept apart from
+ * the ones she writes herself so they're easy to find: the Gmail tab's "Claude drafts" folder lists them, and in
  * Gmail itself they carry the "Claude drafts" label. A draft drops off the folder once it's sent or deleted.
  */
 export const GENERATED_LABEL = "Claude drafts";
@@ -19,8 +19,7 @@ export interface GeneratedDraft {
   subject: string;
   snippet: string;
   attachments: number;
-  jobNumber?: number;
-  /** What made it: "Send-off", "Plan my day", "Estimator", "Claude". */
+  /** What made it: "Plan my day", "Morning brief", "Claude". */
   source: string;
   createdAt: string;
   state?: "draft" | "sent" | "gone";
@@ -47,8 +46,8 @@ function save(hub: Hub, list: GeneratedDraft[]) {
   writeFileSync(file(hub), JSON.stringify(list.slice(-300), null, 2));
 }
 
-/** Makes a Gmail draft for Keystone and files it under Claude drafts. Every hub-made draft goes through here. */
-export async function createGeneratedDraft(hub: Hub, d: DraftInput, meta: { jobNumber?: number; source?: string } = {}): Promise<DraftRef> {
+/** Makes a Gmail draft for the app and files it under Claude drafts. Every hub-made draft goes through here. */
+export async function createGeneratedDraft(hub: Hub, d: DraftInput, meta: { source?: string } = {}): Promise<DraftRef> {
   const ref = await hub.gmail.createDraft({ ...d, labels: [GENERATED_LABEL] });
   const list = generatedDrafts(hub);
   list.push({
@@ -59,7 +58,6 @@ export async function createGeneratedDraft(hub: Hub, d: DraftInput, meta: { jobN
     subject: d.subject,
     snippet: d.body.replace(/\s+/g, " ").trim().slice(0, 160),
     attachments: d.attachments.length,
-    jobNumber: meta.jobNumber,
     source: meta.source ?? where.getStore()?.source ?? "Claude",
     createdAt: new Date().toISOString(),
     state: "draft",
@@ -69,7 +67,7 @@ export async function createGeneratedDraft(hub: Hub, d: DraftInput, meta: { jobN
   return ref;
 }
 
-/** Keystone's drafts still waiting in Gmail, newest first (checks whether each is still a draft every few minutes). */
+/** The app's drafts still waiting in Gmail, newest first (checks whether each is still a draft every few minutes). */
 export async function openGeneratedDrafts(hub: Hub): Promise<GeneratedDraft[]> {
   const list = generatedDrafts(hub);
   let changed = false;

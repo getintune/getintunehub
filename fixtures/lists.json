@@ -1,0 +1,23 @@
+{
+  "_note": "Made-up practice people for HUB_MODE=mock and the tests. No real clients. Dates are days from today (-3 = three days ago).",
+  "entries": [
+    { "id": "t1", "program": "therapy", "name": "A.R.", "stage": "Active", "stageSince": -60, "extra": { "sessionTime": "Tue 10:00" } },
+    { "id": "t2", "program": "therapy", "name": "J.M.", "stage": "Active", "stageSince": -30, "extra": { "sessionTime": "Thu 14:00" } },
+    { "id": "t3", "program": "therapy", "name": "K.L.", "stage": "New client", "stageSince": -1, "nextStep": "Check the intake paperwork in Grow", "nextDate": 0 },
+
+    { "id": "c1", "program": "coaching", "name": "Priya Example", "email": "priya@example.com", "stage": "Free consult booked", "stageSince": -2, "nextStep": "Free consult call", "nextDate": 2, "extra": { "location": "Lisbon, Portugal", "source": "Instagram" } },
+    { "id": "c2", "program": "coaching", "name": "Tom Sample", "email": "tom@example.com", "stage": "Consult done", "stageSince": -5, "nextStep": "Send the coaching program details", "nextDate": -1, "extra": { "location": "Chiang Mai, Thailand", "source": "Website" }, "notes": [{ "at": -5, "text": "Moved 4 months ago, feeling unsettled. Interested in the 3-month program; wants to start in December." }] },
+
+    { "id": "w1", "program": "workshop", "name": "Maya Placeholder", "email": "maya@example.com", "stage": "Signed up", "createdAt": -6, "extra": { "event": "Suddenly Untethered (Nov 13)", "source": "Website (Wix)", "paid": "Yes", "location": "Mexico City" } },
+    { "id": "w2", "program": "workshop", "name": "Leo Testperson", "email": "leo@example.com", "stage": "Signed up", "createdAt": -4, "extra": { "event": "Suddenly Untethered (Nov 13)", "source": "Eventbrite", "paid": "Yes", "location": "Bali" } },
+    { "id": "w3", "program": "workshop", "name": "Ana Madeup", "email": "ana@example.com", "stage": "Signed up", "createdAt": -1, "extra": { "event": "Suddenly Untethered (Nov 13)", "source": "Freaking Nomads", "paid": "Yes", "location": "Medellín" } },
+    { "id": "w4", "program": "workshop", "name": "Sam Fakename", "email": "sam.f@example.com", "stage": "Signed up", "createdAt": 0, "extra": { "event": "Suddenly Untethered (Nov 13)", "source": "Website (Wix)", "paid": "Yes", "location": "Berlin" } },
+
+    { "id": "r1", "program": "trainees", "name": "Dana Trainee", "email": "dana@example.com", "stage": "Interested", "stageSince": -3, "nextStep": "Answer questions about CMTE credits", "nextDate": 1, "extra": { "cohort": "Aug 2027", "credential": "MT-BC" } },
+
+    { "id": "s1", "program": "supervision", "name": "Chris Member", "email": "chris@example.com", "stage": "Active", "stageSince": -90, "extra": { "since": "2026-08" } },
+    { "id": "s2", "program": "supervision", "name": "Jordan Member", "email": "jordan@example.com", "stage": "Active", "stageSince": -40, "extra": { "since": "2026-09" } },
+
+    { "id": "f1", "program": "facilities", "name": "Sunrise Recovery Center (example)", "email": "director@sunrise.example", "phone": "555-0100", "stage": "In conversation", "stageSince": -8, "nextStep": "Follow up on weekly group proposal", "nextDate": 0, "extra": { "contact": "Pat Director", "city": "Denver, CO" } }
+  ]
+}

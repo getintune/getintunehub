@@ -1,5 +1,5 @@
 /**
- * Gmail. Claude and the workflows only ever make drafts (createDraft). `send` exists for the Mail tab, where Hunter
+ * Gmail. Claude and the workflows only ever make drafts (createDraft). `send` exists for the Mail tab, where the owner
  * presses Send himself and confirms; nothing calls it on its own.
  */
 export interface DraftInput {
@@ -7,7 +7,7 @@ export interface DraftInput {
   cc?: string[];
   bcc: string[];
   subject: string;
-  /** Plain text in Hunter's voice; paragraphs separated by blank lines. The Gmail signature is appended. */
+  /** Plain text in the owner's voice; paragraphs separated by blank lines. The Gmail signature is appended. */
   body: string;
   /** Local file paths, attached as-is. */
   attachments: string[];
@@ -83,11 +83,10 @@ export interface MailClient {
   listThreads?(o: { label?: string; q?: string; pageToken?: string; max?: number }): Promise<{ threads: ThreadSummary[]; nextPageToken?: string }>;
   labels?(): Promise<Label[]>;
   /**
-   * Sends now. Called by the Mail tab's Send button (after Hunter confirms) and by auto-filing, which forwards job
-   * emails only to Forefront's own office+<job#> log addresses.
+   * Sends now. Called only by the Mail tab's Send button, after the owner confirms.
    */
   send?(d: DraftInput): Promise<{ id: string; threadId: string; messageId: string }>;
-  /** Sends an existing draft as it is (attachments included). Only the Mail tab's Send button calls it, after Hunter confirms. */
+  /** Sends an existing draft as it is (attachments included). Only the Mail tab's Send button calls it, after the owner confirms. */
   sendDraft?(draftId: string): Promise<void>;
   deleteDraft?(draftId: string): Promise<void>;
   /** Replaces a draft's contents in place (same draft, same thread). Returns the new message id. */

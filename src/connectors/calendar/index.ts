@@ -3,8 +3,11 @@ import path from "node:path";
 import { google, type calendar_v3 } from "googleapis";
 import type { Config } from "../../core/config.js";
 import { GoogleAuth, SCOPES } from "../google/auth.js";
+import { TIME_ZONE } from "../../core/config.js";
+import { CombinedCalendar, OutlookCalendar } from "../outlook/calendar.js";
+import { GraphMail } from "../outlook/index.js";
 
-/** Google Calendar: Hunter's calendars and events, read and write. */
+/** Google Calendar: the owner's calendars and events, read and write. */
 export interface CalendarInfo {
   id: string;
   name: string;
@@ -26,12 +29,14 @@ export interface CalEvent {
   link?: string; // open in Google Calendar
   meet?: string;
   attendees?: { email: string; name?: string; response?: string }[];
-  /** A job number the event mentions (#3226), so Keystone can link it. */
-  jobNumber?: number;
   /** The series a repeating event belongs to (Google's recurringEventId). */
   recurringId?: string;
-  /** Hunter's own answer when he's an invitee: "accepted", "declined", "tentative", "needsAction". */
+  /** Her own answer when she's an invitee: "accepted", "declined", "tentative", "needsAction". */
   myResponse?: string;
+  /** Looks like a client session (e.g. from Grow): shown to her, but never put into Claude requests. */
+  private?: boolean;
+  /** Where it lives: Google Calendar or her Outlook calendar (read-only here). */
+  source?: "google" | "outlook";
 }
 
 export interface EventInput {
@@ -48,7 +53,7 @@ export interface EventInput {
 }
 
 export interface CalendarClient {
-  readonly kind: "mock" | "google";
+  readonly kind: "mock" | "google" | "outlook" | "combined";
   connected(): boolean;
   calendars(): Promise<CalendarInfo[]>;
   events(o: { start: string; end: string; calendarIds?: string[]; q?: string }): Promise<CalEvent[]>;
@@ -59,23 +64,18 @@ export interface CalendarClient {
   busy(o: { start: string; end: string; calendarIds?: string[] }): Promise<{ start: string; end: string }[]>;
 }
 
-const jobRef = (s: string) => {
-  const m = s.match(/#(\d{4})\b/);
-  return m ? Number(m[1]) : undefined;
-};
-
 export class GoogleCalendar implements CalendarClient {
   readonly kind = "google" as const;
   private api?: calendar_v3.Calendar;
   private colors?: Record<string, string>;
-  constructor(private auth: GoogleAuth, private tz = "America/Denver") {}
+  constructor(private auth: GoogleAuth, private tz = TIME_ZONE) {}
 
   connected() {
     return this.auth.hasScope(SCOPES.calendar);
   }
 
   private cal() {
-    if (!this.connected()) throw new Error("Google Calendar isn't connected yet: double-click Connect Gmail in the Keystone folder (forefront-hub) and click Allow (it now covers Calendar too).");
+    if (!this.connected()) throw new Error("Google Calendar isn't connected yet: double-click Connect Gmail in the app's folder and click Allow (it now covers Calendar too).");
     this.api ??= google.calendar({ version: "v3", auth: this.auth.client() });
     return this.api;
   }
@@ -111,7 +111,6 @@ export class GoogleCalendar implements CalendarClient {
       link: e.htmlLink ?? undefined,
       meet: e.hangoutLink ?? undefined,
       attendees: (e.attendees ?? []).filter((a) => !a.self).map((a) => ({ email: a.email!, name: a.displayName ?? undefined, response: a.responseStatus ?? undefined })),
-      jobNumber: jobRef(text),
       recurringId: e.recurringEventId ?? undefined,
       myResponse: e.attendees?.find((a) => a.self)?.responseStatus ?? undefined,
     };
@@ -184,10 +183,10 @@ export class MockCalendar implements CalendarClient {
       return d.toISOString();
     };
     return [
-      { id: "e1", calendarId: "primary", title: "Scope walk #9001 Sample", start: day(0, 9), end: day(0, 10), allDay: false, location: "123 Main St, Denver, CO 80211", color: "#7aa7ff", jobNumber: 9001 },
-      { id: "e2", calendarId: "primary", title: "Recon wrap-up", start: day(0, 15, 30), end: day(0, 16), allDay: false, color: "#7aa7ff" },
-      { id: "e3", calendarId: "primary", title: "Call adjuster re #9002", start: day(1, 11), end: day(1, 11, 30), allDay: false, color: "#e6ad55", jobNumber: 9002 },
-      { id: "e4", calendarId: "team", title: "Team meeting", start: day(2, 8), end: day(2, 9), allDay: false, color: "#6fc394" },
+      { id: "e1", calendarId: "primary", title: "Grow session (A.R.)", start: day(0, 10), end: day(0, 10, 50), allDay: false, location: "https://zoom.us/j/000000", color: "#7c79c4" },
+      { id: "e2", calendarId: "primary", title: "Free consult: Priya Example", start: day(2, 12), end: day(2, 12, 30), allDay: false, location: "https://zoom.us/j/000001", color: "#4241a0" },
+      { id: "e3", calendarId: "primary", title: "Music therapy group, Sunrise Recovery (example)", start: day(1, 15), end: day(1, 16, 30), allDay: false, location: "1600 Example St, Denver, CO 80202", color: "#e6ad55" },
+      { id: "e4", calendarId: "team", title: "Team check-in with Kristin and Frankie", start: day(0, 13), end: day(0, 13, 30), allDay: false, color: "#6fc394" },
     ];
   }
   private save(e: CalEvent[]) {
@@ -196,15 +195,15 @@ export class MockCalendar implements CalendarClient {
   }
   async calendars() {
     return [
-      { id: "primary", name: "Hunter Patterson", color: "#7aa7ff", primary: true, writable: true },
-      { id: "team", name: "Forefront team (test)", color: "#6fc394", primary: false, writable: true },
+      { id: "primary", name: "Marlys Woods", color: "#4241a0", primary: true, writable: true },
+      { id: "team", name: "Get In Tune team (test)", color: "#6fc394", primary: false, writable: true },
     ];
   }
   async events(o: { start: string; end: string; calendarIds?: string[]; q?: string }) {
     return this.load().filter((e) => e.end > o.start && e.start < o.end && (!o.calendarIds?.length || o.calendarIds.includes(e.calendarId)) && (!o.q || e.title.toLowerCase().includes(o.q.toLowerCase())));
   }
   async create(e: EventInput) {
-    const ev: CalEvent = { id: `e${Date.now().toString(36)}`, calendarId: e.calendarId || "primary", title: e.title, start: e.start, end: e.end, allDay: !!e.allDay, location: e.location, description: e.description, color: "#7aa7ff", jobNumber: jobRef(`${e.title} ${e.description ?? ""}`) };
+    const ev: CalEvent = { id: `e${Date.now().toString(36)}`, calendarId: e.calendarId || "primary", title: e.title, start: e.start, end: e.end, allDay: !!e.allDay, location: e.location, description: e.description, color: "#7aa7ff" };
     this.save([...this.load(), ev]);
     return ev;
   }
@@ -225,10 +224,13 @@ export class MockCalendar implements CalendarClient {
 }
 
 export function makeCalendar(cfg: Config): CalendarClient {
-  if (cfg.gmail.driver === "google") {
-    return new GoogleCalendar(new GoogleAuth({ clientId: cfg.gmail.clientId, clientSecret: cfg.gmail.clientSecret, tokenFile: cfg.gmail.tokenFile, address: cfg.gmail.address }));
-  }
-  return new MockCalendar(cfg.stateDir);
+  if (cfg.gmail.driver !== "google" && cfg.mode !== "live") return new MockCalendar(cfg.stateDir);
+  // On her Mac (live) it's always her real calendar, which says "not connected" until she runs Connect Gmail:
+  // practice events would look real on her dashboard. With Outlook connected, her Outlook calendar shows too.
+  const google = new GoogleCalendar(new GoogleAuth({ clientId: cfg.gmail.clientId, clientSecret: cfg.gmail.clientSecret, tokenFile: cfg.gmail.tokenFile, address: cfg.gmail.address }));
+  if (cfg.outlook.driver !== "microsoft") return google;
+  const o = cfg.outlook;
+  return new CombinedCalendar(google, new OutlookCalendar(new GraphMail({ clientId: o.clientId, tenant: o.tenant, tokenFile: o.tokenFile, mailboxes: o.mailboxes })));
 }
 
 /** Open slots of at least `minutes` between `dayStart` and `dayEnd` hours (local), on the days in range. */
@@ -243,7 +245,7 @@ export function freeSlots(busy: { start: string; end: string }[], o: { from: Dat
     start.setHours(o.dayStart ?? 7, 0, 0, 0);
     const end = new Date(day);
     end.setHours(o.dayEnd ?? 17, 0, 0, 0);
-    let t = Math.max(start.getTime(), d === 0 ? Date.now() : 0);
+    let t = Math.max(start.getTime(), d === 0 ? o.from.getTime() : 0); // not before "from" (callers pass now)
     for (const [bs, be] of blocks) {
       if (be <= t || bs >= end.getTime()) continue;
       if (bs - t >= o.minutes * 60000) out.push({ start: new Date(t).toISOString(), end: new Date(bs).toISOString() });

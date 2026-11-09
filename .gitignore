@@ -1,5 +1,7 @@
 node_modules/
 .env
+# her own data (client lists): stays on her Mac
+data/
 # OAuth tokens, Playwright login state, Homebase page snapshots (customer data)
 auth/
 snapshots/
@@ -8,6 +10,7 @@ snapshots/
 jobs/
 .claude/skills/forefront-estimate
 *.log
-# the hub's own copy of the estimating skill and its Python (setup.ps1)
+# the old estimating skill's copy and Python (Keystone setup; goes in PLAN step 4)
 estimator/
 .venv-py/
+.installed

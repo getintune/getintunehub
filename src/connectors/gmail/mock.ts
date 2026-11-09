@@ -24,7 +24,7 @@ interface Stored {
 export class MockGmail implements MailClient {
   readonly kind = "mock" as const;
   private file: string;
-  constructor(private stateDir: string, private from = "Hunter Patterson <hunter@forefrontteam.com>") {
+  constructor(private stateDir: string, private from = "Marlys Woods <getintunemusictherapy@gmail.com>") {
     this.file = path.join(stateDir, "mock-gmail.json");
   }
 
@@ -47,7 +47,7 @@ export class MockGmail implements MailClient {
     const outbox = path.join(this.stateDir, "outbox");
     mkdirSync(outbox, { recursive: true });
     const eml = path.join(outbox, `${ref.id}.eml`);
-    writeFileSync(eml, buildMime({ ...d, from: this.from, messageId: ref.messageId, signatureHtml: "Hunter Patterson<br>Estimator" }));
+    writeFileSync(eml, buildMime({ ...d, from: this.from, messageId: ref.messageId, signatureHtml: "Marlys Woods, MS, LMFT, MT-BC<br>Get In Tune" }));
     this.save([...this.load(), { ref, input: d, eml }]);
     return ref;
   }
@@ -155,8 +155,8 @@ export class MockGmail implements MailClient {
       { id: "DRAFT", name: "DRAFT", type: "system" },
       { id: "SPAM", name: "SPAM", type: "system" },
       { id: "TRASH", name: "TRASH", type: "system" },
-      // Two made-up labels of Hunter's own, so sorting by label can be tried without a real account.
-      { id: "Label_1", name: "Adjusters", type: "user" },
+      // Two made-up labels of her own, so sorting by label can be tried without a real account.
+      { id: "Label_1", name: "Workshop", type: "user" },
       { id: "Label_2", name: "Receipts", type: "user" },
     ];
   }

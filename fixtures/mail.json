@@ -3,22 +3,22 @@
     "id": "mock-thread-1",
     "labelIds": ["INBOX", "UNREAD"],
     "messages": [
-      { "id": "m1", "from": "Alex Adjuster <alex.adjuster@carrier.example>", "to": ["hunter@forefrontteam.com"], "cc": [], "date": "2026-11-05T21:10:00Z", "subject": "RE: Sample – 123 Main St – Repair Estimate – Claim EX-12345", "body": "Hi Hunter,\n\nThanks for the estimate. Can you send over a few more photos of the hallway flooring? I'd like to see the cupping before I approve the LVP.\n\nAlex", "attachments": [] }
+      { "id": "m1", "from": "Priya Example <priya@example.com>", "to": ["getintunemusictherapy@gmail.com"], "cc": [], "date": "2026-11-06T18:10:00Z", "subject": "Free consult on Tuesday", "body": "Hi Marlys,\n\nThanks for the workshop info! Is Tuesday at noon still good for our free consult? I'm in Lisbon, so that's 7pm for me.\n\nPriya", "attachments": [] }
     ]
   },
   {
     "id": "mock-thread-2",
     "labelIds": ["INBOX"],
     "messages": [
-      { "id": "m2", "from": "Hunter Patterson <hunter@forefrontteam.com>", "to": ["sam@example.com"], "cc": [], "date": "2026-10-20T16:00:00Z", "subject": "Your Reconstruction Estimate – 45 Pine Ave", "body": "Hi Sam,\n\nAttached is the reconstruction estimate for 45 Pine Ave.\n\nThanks again,", "attachments": [] },
-      { "id": "m3", "from": "Sam Example <sam@example.com>", "to": ["hunter@forefrontteam.com"], "cc": [], "date": "2026-11-04T14:22:00Z", "subject": "Re: Your Reconstruction Estimate – 45 Pine Ave", "body": "Hi Hunter, we're good to go. What do you need from us to get on the schedule?\n\nSam", "attachments": [] }
+      { "id": "m2", "from": "Marlys Woods <getintunemusictherapy@gmail.com>", "to": ["kristin@example.com"], "cc": [], "date": "2026-11-04T16:00:00Z", "subject": "Workshop emails", "body": "Hi Kristin,\n\nCan you check that the Eventbrite people get the Zoom link too?\n\nThanks,", "attachments": [] },
+      { "id": "m3", "from": "Kristin Example <kristin@example.com>", "to": ["getintunemusictherapy@gmail.com"], "cc": [], "date": "2026-11-05T14:22:00Z", "subject": "Re: Workshop emails", "body": "Hi Marlys, I'll add them to the Wix list today. Can you look at the comments on the workshop slides Google Doc when you get a chance?\n\nKristin", "attachments": [] }
     ]
   },
   {
     "id": "mock-thread-3",
     "labelIds": ["INBOX", "UNREAD"],
     "messages": [
-      { "id": "m4", "from": "DocuSketch <help@docusketch.com>", "to": ["hunter@forefrontteam.com"], "cc": [], "date": "2026-11-03T00:35:00Z", "subject": "Sketch request for the project 5600001 delivered", "body": "Interior sketch request for project 5600001 delivered.\n\nProject name\nSample - 123 Main St - Denver - Recon", "attachments": [] }
+      { "id": "m4", "from": "Eventbrite <noreply@eventbrite.com>", "to": ["getintunemusictherapy@gmail.com"], "cc": [], "date": "2026-11-07T00:35:00Z", "subject": "New registration: Suddenly Untethered", "body": "Leo Testperson registered for Suddenly Untethered: The Surprising Growing Pains of Living Your Dream (Nov 13, 2026).", "attachments": [] }
     ]
   }
 ]
