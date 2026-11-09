@@ -19,7 +19,13 @@ fi
 export GIT_TERMINAL_PROMPT=0 GCM_INTERACTIVE=never
 # (Only when the app came from GitHub and Apple's tools are installed: otherwise the Mac would pop up an install window.)
 if [ -d .git ] && xcode-select -p >/dev/null 2>&1; then
-  git checkout -- package-lock.json >/dev/null 2>&1; git pull --ff-only --quiet >/dev/null 2>&1 && npm install --no-audit --no-fund --loglevel=error >/dev/null 2>&1
+  echo "Checking for updates..."
+  git checkout -- package-lock.json >/dev/null 2>&1
+  before="$(git rev-parse HEAD 2>/dev/null)"
+  if git pull --ff-only --quiet origin main >/dev/null 2>&1 && [ "$(git rev-parse HEAD)" != "$before" ]; then
+    echo "Updated to the latest version."
+    npm install --no-audit --no-fund --loglevel=error >/dev/null 2>&1
+  fi
 fi
 
 (sleep 5; open "http://127.0.0.1:4317") &
