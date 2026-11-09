@@ -132,7 +132,7 @@ export async function connectOutlook() {
     const id = await ask('2. On the page that opened, copy the "Application (client) ID" and paste it here: ');
     const tenant = await ask('3. Copy the "Directory (tenant) ID" and paste it here: ');
     if (!/^[0-9a-f-]{36}$/i.test(id) || !/^[0-9a-f-]{36}$/i.test(tenant)) throw new Error("Those don't look like Microsoft IDs (they look like 1a2b3c4d-....). Run Connect Outlook again and copy them once more.");
-    step(4, 'In the menu on the left click "Authentication". Under "Advanced settings", set "Allow public client flows" to Yes, then Save.');
+    step(4, 'In the left menu under Manage, click "Authentication" (maybe "Authentication (Preview)"). Newer page: open the "Settings" tab and turn on "Allow public client flows". Older page: at the bottom, under "Advanced settings", set "Enable the following mobile and desktop flows" to Yes. Click Save. (Not there? Left menu "Manifest": set "allowPublicClient": true, Save.)');
     await ask("   Press Enter when saved... ");
     step(5, 'Click "API permissions" > "+ Add a permission" > Microsoft Graph > Delegated permissions. Tick Mail.Read and Mail.Read.Shared, then "Add permissions". Then click "Grant admin consent for ..." and Yes.');
     await ask("   Press Enter when the permissions show a green tick... ");
