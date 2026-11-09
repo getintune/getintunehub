@@ -1,28 +1,49 @@
-import { createSdkMcpServer, tool } from "@anthropic-ai/claude-agent-sdk";
 import { z } from "zod";
+import type { FunctionDeclaration } from "../connectors/gemini/index.js";
 import { createGeneratedDraft } from "../workflows/generated.js";
 import type { Entry } from "../connectors/lists/index.js";
 import type { Hub } from "../hub.js";
 import { findContacts } from "../workflows/contacts.js";
 import { TIME_ZONE } from "../core/config.js";
 
-export const SERVER = "hub";
+/** One tool the agent can call: its name, what it's for, its arguments (zod) and what it does. */
+export interface AgentTool {
+  name: string;
+  description: string;
+  schema: z.ZodObject<z.ZodRawShape>;
+  run(args: Record<string, unknown>): Promise<unknown>;
+}
 
-const ok = (data: unknown) => ({ content: [{ type: "text" as const, text: typeof data === "string" ? data : JSON.stringify(data, null, 2) }] });
-const fail = (e: unknown) => ({ content: [{ type: "text" as const, text: `Error: ${(e as Error).message ?? e}` }], isError: true });
-const wrap = <A>(fn: (a: A) => Promise<unknown>) => async (a: A) => {
+const wrap = <A>(fn: (a: A) => Promise<unknown>) => async (a: A): Promise<unknown> => {
   try {
-    return ok(await fn(a));
+    return await fn(a);
   } catch (e) {
-    return fail(e);
+    return { error: (e as Error).message ?? String(e) };
   }
 };
+function tool<S extends z.ZodRawShape>(name: string, description: string, shape: S, run: (a: z.infer<z.ZodObject<S>>) => Promise<unknown>): AgentTool {
+  const schema = z.object(shape);
+  return { name, description, schema: schema as unknown as z.ZodObject<z.ZodRawShape>, run: async (raw) => {
+    const parsed = schema.safeParse(raw ?? {});
+    if (!parsed.success) return { error: `Wrong arguments for ${name}: ${parsed.error.issues.map((i) => `${i.path.join(".")} ${i.message}`).join("; ")}` };
+    return run(parsed.data);
+  } };
+}
+
+/** The tools as Gemini function declarations (JSON Schema from the zod shapes). */
+export function functionDeclarations(tools: AgentTool[]): FunctionDeclaration[] {
+  return tools.map((t) => {
+    const js = z.toJSONSchema(t.schema, { io: "input" }) as Record<string, unknown>;
+    delete js.$schema;
+    return { name: t.name, description: t.description, parametersJsonSchema: js };
+  });
+}
 
 /**
- * What Claude sees of a person on her lists. On an initials-only list (therapy clients) Claude gets the initials,
+ * What the agent sees of a person on her lists. On an initials-only list (therapy clients) the agent gets the initials,
  * stage and next step only: never notes, which could hold health information.
  */
-export function entryForClaude(hub: Hub, e: Entry) {
+export function entryForAgent(hub: Hub, e: Entry) {
   const p = hub.lists.program(e.program);
   const base = { id: e.id, list: p.name, program: e.program, name: e.name, stage: e.stage, stageSince: e.stageSince.slice(0, 10), nextStep: e.nextStep || undefined, nextDate: e.nextDate || undefined };
   if (p.initialsOnly) return { ...base, note: "Initials only (therapy client). Clinical details stay in Grow Therapy." };
@@ -30,11 +51,11 @@ export function entryForClaude(hub: Hub, e: Entry) {
 }
 
 /**
- * The app's tools for Claude. Every one that changes something (her lists, calendar, tasks) asks her first through
- * hub.approver inside the handler, so they're safe no matter how Claude calls them. There is no "send email" tool:
- * Claude only makes drafts.
+ * The app's tools for the agent (Gemini). Every one that changes something (her lists, calendar, tasks) asks her first through
+ * hub.approver inside the handler, so they're safe no matter how the agent calls them. There is no "send email" tool:
+ * the agent only makes drafts.
  */
-export function hubTools(hub: Hub) {
+export function hubTools(hub: Hub): AgentTool[] {
   const me = hub.cfg.profile.first;
   const programIds = hub.lists.programs().map((p) => p.id) as [string, ...string[]];
   const program = z.enum(programIds).describe(hub.lists.programs().map((p) => `${p.id} = ${p.name}`).join("; "));
@@ -48,7 +69,7 @@ export function hubTools(hub: Hub) {
       { query: z.string().default(""), program: program.optional() },
       wrap(async ({ query, program: p }) => {
         const found = hub.lists.find(query, p);
-        return found.length ? found.slice(0, 40).map((e) => entryForClaude(hub, e)) : { found: 0, note: "Nobody on the lists matches." };
+        return found.length ? found.slice(0, 40).map((e) => entryForAgent(hub, e)) : { found: 0, note: "Nobody on the lists matches." };
       }),
     ),
     tool(
@@ -67,7 +88,7 @@ export function hubTools(hub: Hub) {
       wrap(async ({ program: p, ...d }) => {
         const prog = hub.lists.program(p);
         if (!(await hub.approver.confirm(`Add ${d.name} to ${prog.name}?`, [d.stage ? `Stage: ${d.stage}` : `Stage: ${prog.stages[0]}`, d.email ?? "", d.nextStep ? `Next: ${d.nextStep}${d.nextDate ? ` (${d.nextDate})` : ""}` : ""].filter(Boolean)))) return `${me} declined; nothing added.`;
-        return entryForClaude(hub, hub.lists.add(p, d));
+        return entryForAgent(hub, hub.lists.add(p, d));
       }),
     ),
     tool(
@@ -78,7 +99,7 @@ export function hubTools(hub: Hub) {
         const cur = hub.lists.get(id);
         const lines = Object.entries(patch).filter(([, v]) => v !== undefined).map(([k, v]) => `${k}: ${typeof v === "object" ? JSON.stringify(v) : v}`);
         if (!(await hub.approver.confirm(`Change ${cur.name} on ${hub.lists.program(cur.program).name}?`, lines))) return `${me} declined; nothing changed.`;
-        return entryForClaude(hub, hub.lists.update(id, patch));
+        return entryForAgent(hub, hub.lists.update(id, patch));
       }),
     ),
     tool(
@@ -89,7 +110,7 @@ export function hubTools(hub: Hub) {
         const cur = hub.lists.get(id);
         if (hub.lists.program(cur.program).initialsOnly) return "Notes on therapy clients stay in Grow Therapy, not here. Nothing added.";
         if (!(await hub.approver.confirm(`Add this note to ${cur.name}?`, [text]))) return `${me} declined; nothing added.`;
-        return entryForClaude(hub, hub.lists.addNote(id, text));
+        return entryForAgent(hub, hub.lists.addNote(id, text));
       }),
     ),
 
@@ -206,5 +227,5 @@ export function hubTools(hub: Hub) {
       wrap(async () => (await import("../workflows/needs.js")).needs(hub)),
     ),
   ];
-  return createSdkMcpServer({ name: SERVER, version: "0.1.0", tools });
+  return tools;
 }

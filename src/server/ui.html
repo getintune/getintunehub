@@ -988,7 +988,7 @@ async function loadStatus() {
     chip("Lists", status.lists !== "mock", status.lists === "mock" ? "Practice lists (made-up people)" : "Your lists, saved on this computer"),
     chip("Outlook", status.outlook === "microsoft" && status.outlookConnected, status.outlook === "microsoft" ? (status.outlookConnected ? `Reading ${status.mailboxes.join(" and ")}` : "Not signed in: double-click Connect Outlook") : "Not connected (practice mail)"),
     chip("Gmail", status.gmail === "google", status.gmail === "google" ? (status.gmailFull ? "Connected" : "Connected for drafts only; reconnect to send from {{APP_NAME}}") : "Not connected (practice inbox)"),
-    chip("Claude", true, status.agent ? `In the app · requests go to ${(status.claude?.endpoint || "").replace(/^https?:\/\//, "")}${status.claude?.ignored?.length ? `. Ignored a setting on this computer that tried to send them elsewhere: ${status.claude.ignored.map((r) => r.name + (r.host ? " → " + r.host : "")).join(", ")}` : ""}` : "Opens in your Claude app (your subscription, no extra cost)"),
+    chip(status.agent ? "Gemini" : "Claude", true, status.agent ? `The app's agent runs on Google Gemini (free tier) · requests go to ${(status.agentEndpoint || "").replace(/^https?:\/\//, "")}` : "Opens in your Claude app (your subscription, no extra cost)"),
   ].join("");
 }
 
@@ -1003,7 +1003,7 @@ async function loadToday() {
   let d;
   try { d = await api("/api/dashboard"); } catch (e) { $("#today").innerHTML = `<div class="empty">${esc(e.message)}</div>`; return; }
   if (!lists.programs.length) lists = await api("/api/lists").catch(() => lists);
-  const cl = await api("/api/settings/claude").catch(() => null);
+  const cl = await api("/api/settings/agent").catch(() => null);
   const urgent = d.needs.filter((n) => n.kind === "next").length;
   $("#todaycount").textContent = urgent; $("#todaycount").hidden = !urgent;
   const longDate = new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
@@ -1012,7 +1012,7 @@ async function loadToday() {
   const open = (id) => d.lists.find((l) => l.id === id)?.open ?? 0;
   $("#today").innerHTML = `
     <div class="todayhead"><div style="flex:1;min-width:240px"><h2>Good ${new Date().getHours() < 12 ? "morning" : new Date().getHours() < 17 ? "afternoon" : "evening"}, {{FIRST}}</h2><div class="dateline">${esc(longDate)}</div></div>
-      <button class="btn primary" id="plan">Plan my day with Claude</button></div>
+      <button class="btn primary" id="plan">${status.agent ? `Plan my day with ${AGENT()}` : "Plan my day in Claude"}</button></div>
     <div id="brief"></div>
     <div class="strip">
       ${w ? tile("workshop", w.total, `signed up · ${w.event}${w.newToday ? ` · ${w.newToday} new today` : ""}`, false) : tile("workshop", 0, "workshop sign-ups")}
@@ -1071,16 +1071,18 @@ $("#today").addEventListener("click", async (e) => {
 const money = (n) => "$" + (n < 1 && n > 0 ? n.toFixed(2) : n.toFixed(2));
 function claudeCard(c) {
   if (!c.hasKey) return `<div class="card"><h3>Claude</h3><p style="margin:0">The <b>Do this in Claude</b> buttons open your own Claude app with the request written out. Your subscription covers it: <b>no extra cost</b>.</p><p class="small muted" style="margin:8px 0 0">Nothing runs in the background and nothing is charged here.</p></div>`;
-  return `<div class="card" id="claudecard"><h3>Claude</h3>
-    <div class="wsbig"><b>${money(c.costs.month)}</b> this month · ${money(c.costs.today)} today</div>
-    ${c.costs.byUse.length ? `<table class="tbl"><tbody>${c.costs.byUse.map((x) => `<tr><td>${esc(x.label)} <span class="small muted">${x.runs} run${x.runs === 1 ? "" : "s"}</span></td><td class="num">${money(x.usd)}</td></tr>`).join("")}</tbody></table>` : `<p class="small muted">No Claude runs yet this month.</p>`}
-    <div class="small muted" style="margin:12px 0 6px">Claude on its own (switch off to save money)</div>
+  const k = (n) => (n >= 1e6 ? (n / 1e6).toFixed(1) + "M" : n >= 1e3 ? Math.round(n / 1e3) + "k" : String(n));
+  return `<div class="card" id="claudecard"><h3>Gemini</h3>
+    <div class="wsbig"><b>${money(c.costs.month)}</b> this month · free tier</div>
+    <div class="small muted" style="margin:-4px 0 8px">${c.costs.runs} run${c.costs.runs === 1 ? "" : "s"} this month (${c.costs.runsToday} today) · ${k(c.costs.tokens)} tokens of text</div>
+    ${c.costs.byUse.length ? `<table class="tbl"><tbody>${c.costs.byUse.map((x) => `<tr><td>${esc(x.label)}</td><td class="num">${x.runs} run${x.runs === 1 ? "" : "s"}</td></tr>`).join("")}</tbody></table>` : `<p class="small muted">No Gemini runs yet this month.</p>`}
+    <div class="small muted" style="margin:12px 0 6px">Gemini on its own (all start off)</div>
     ${c.features.map((f) => `<label class="row sw" title="${esc(f.hint)}" style="gap:8px;padding:3px 0;cursor:pointer"><input type="checkbox" data-feature="${esc(f.id)}" ${f.on ? "checked" : ""} style="width:auto"><span style="flex:1">${esc(f.label)}<div class="small muted">${esc(f.hint)}</div></span></label>`).join("")}
-    <p class="small muted" style="margin:10px 0 0">Your spending cap is set at console.anthropic.com → Limits.</p></div>`;
+    <p class="small muted" style="margin:10px 0 0">On Gemini's free tier, Google may use what's sent to improve its products. Grow Therapy email and therapy clients' details are never sent.</p></div>`;
 }
 document.addEventListener("change", async (e) => {
   const c = e.target.closest("[data-feature]"); if (!c) return;
-  try { await api("/api/settings/claude", { method: "POST", body: { feature: c.dataset.feature, on: c.checked } }); log(`${c.closest("label").querySelector("span").firstChild.textContent.trim()}: ${c.checked ? "on" : "off"}.`); } catch (err) { log(err.message, "t-err"); c.checked = !c.checked; }
+  try { await api("/api/settings/agent", { method: "POST", body: { feature: c.dataset.feature, on: c.checked } }); log(`${c.closest("label").querySelector("span").firstChild.textContent.trim()}: ${c.checked ? "on" : "off"}.`); } catch (err) { log(err.message, "t-err"); c.checked = !c.checked; }
 });
 // Where her day starts, for "leave by" times (dashboard box, and Calendar's side panel to change it).
 async function saveStart(addr) {
@@ -1168,7 +1170,7 @@ function renderPerson() {
       <div class="jobmeta">${esc(p.name)} · ${esc(e.stage)} for ${daysSince(e.stageSince) ?? 0} days · added ${fmtDate(e.createdAt)}</div>
       <div class="actions">
         ${e.email ? `<button class="btn" data-pact="email">Email…</button><button class="btn" data-pact="mails">Their emails</button>` : ""}
-        ${!p.initialsOnly ? `<button class="btn" data-do="claude" data-id="${esc(e.id)}" data-p="${esc(`Look at ${e.name} on my ${p.name} list (id ${e.id}) and my recent email with them, then tell me the next step and draft any email that's needed (draft only).`)}">What's next? ${status.agent ? "(Claude)" : "(opens Claude)"}</button>` : ""}
+        ${!p.initialsOnly ? `<button class="btn" data-do="claude" data-id="${esc(e.id)}" data-p="${esc(`Look at ${e.name} on my ${p.name} list (id ${e.id}) and my recent email with them, then tell me the next step and draft any email that's needed (draft only).`)}">What's next? ${status.agent ? `(${AGENT()})` : "(opens Claude)"}</button>` : ""}
         ${e.nextStep ? `<button class="btn" data-motion="${esc(`${e.nextStep}: ${e.name}`)}" data-due="${esc(e.nextDate || "")}">Next step to Motion</button>` : ""}
         <button class="btn" data-pact="remove" style="margin-left:auto">Remove…</button>
       </div>
@@ -1257,7 +1259,7 @@ $("#wlist").addEventListener("click", async (e) => {
       <h2 style="margin-top:0">${esc(m.subject || "(no subject)")}</h2>
       <div class="small muted">From <b>${esc(m.from.name)}</b> &lt;${esc(m.from.address)}&gt; · ${new Date(m.receivedAt).toLocaleString("en-US", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} · in ${esc(m.mailbox)}</div>
       ${on.map((x) => `<a href="#" class="chip" data-do="person" data-id="${esc(x.id)}">${esc(program(x.program)?.name || x.program)} · ${esc(x.stage)}</a>`).join(" ")}
-      <div class="actions" style="margin:12px 0"><button class="btn primary" id="wclaude">${status.agent ? "Draft reply with Claude" : "Draft reply in Claude"}</button><a class="btn" href="${esc(m.webLink)}" target="_blank" rel="noopener">Open in Outlook</a><button class="btn" data-motion="${esc(`Reply to ${m.from.name || m.from.address}: ${m.subject}`.slice(0, 120))}" data-due="">Add to Motion</button></div>
+      <div class="actions" style="margin:12px 0"><button class="btn primary" id="wclaude">${status.agent ? `Draft reply with ${AGENT()}` : "Draft reply in Claude"}</button><a class="btn" href="${esc(m.webLink)}" target="_blank" rel="noopener">Open in Outlook</a><button class="btn" data-motion="${esc(`Reply to ${m.from.name || m.from.address}: ${m.subject}`.slice(0, 120))}" data-due="">Add to Motion</button></div>
       <div style="white-space:pre-wrap;line-height:1.55">${esc(m.body || m.preview)}</div></div>`;
   $("#wclaude")?.addEventListener("click", () => handoff({ kind: "workreply", mailbox: workBox, id: m.id }));
 });
@@ -1520,7 +1522,7 @@ async function openThread(id) {
           ${m.draft ? `<div class="gm-draftacts"><button class="gm-pill send" type="button" data-dsend="${esc(m.id)}">${msI("send")}Send…</button><button class="gm-pill" type="button" data-dedit="${i}">${msI("edit")}Edit</button><button class="gm-pill" type="button" data-ddel="${esc(m.id)}">${msI("delete")}Delete draft</button></div>` : ""}
           ${m.attachments.length ? `<div class="gm-atts">${m.attachments.map((a) => `<a class="gm-att" href="/api/mail/attachment/${esc(m.id)}/${esc(a.id)}?name=${encodeURIComponent(a.filename)}" target="_blank">${msI(/\.pdf$/i.test(a.filename) ? "picture_as_pdf" : /\.(jpe?g|png|gif|heic)$/i.test(a.filename) ? "image" : "attach_file")}<span>${esc(a.filename)}</span></a>`).join("")}</div>` : ""}
         </div></div>`).join("")}
-      <div class="gm-replies"><button class="gm-pill" id="replybtn" type="button">${msI("reply")}Reply</button><button class="gm-pill" id="replyall" type="button">${msI("reply_all")}Reply all</button><button class="gm-pill" id="fwd" type="button">${msI("forward")}Forward</button><button class="gm-pill ai" id="claudereply" type="button">${msI("auto_awesome")}${status.agent ? "Draft reply with Claude" : "Draft reply in Claude"}</button></div>
+      <div class="gm-replies"><button class="gm-pill" id="replybtn" type="button">${msI("reply")}Reply</button><button class="gm-pill" id="replyall" type="button">${msI("reply_all")}Reply all</button><button class="gm-pill" id="fwd" type="button">${msI("forward")}Forward</button><button class="gm-pill ai" id="claudereply" type="button">${msI("auto_awesome")}${status.agent ? `Draft reply with ${AGENT()}` : "Draft reply in Claude"}</button></div>
     </div>`;
   $("#gm-back").onclick = () => { showList(); loadThreads(); };
   $$("#reader .gm-msg.col").forEach((el) => el.addEventListener("click", () => el.classList.remove("col"), { once: true }));
@@ -2150,7 +2152,8 @@ setInterval(() => { if (spState?.is_playing && spState.item) { spState.progress_
 const asking = new Map();
 // ---- "Do this in Claude": with no API key in the app (the normal setup), requests open in her own Claude app,
 // written out and ready; her subscription covers them. The request is also copied, in case it needs pasting.
-const CLAUDE_LABEL = () => (status.agent ? "Help with Claude" : "Do this in Claude");
+const AGENT = () => status.agentName || "Gemini";
+const CLAUDE_LABEL = () => (status.agent ? `Help with ${AGENT()}` : "Do this in Claude");
 async function handoff(req) {
   let prompt;
   try { prompt = (await api("/api/handoff", { method: "POST", body: req })).prompt; } catch (e) { log(e.message, "t-err"); return; }
@@ -2171,7 +2174,7 @@ async function askClaude(prompt) {
 function renderAskCard() {
   let el = $("#askcard"); if (!el) { el = document.createElement("div"); el.id = "askcard"; el.className = "askcard"; document.body.appendChild(el); }
   el.hidden = !asking.size;
-  el.innerHTML = [...asking.values()].map((p) => `<div><span class="spin"></span><span><b>Claude is working on it</b><small>${esc(p.length > 90 ? p.slice(0, 90) + "…" : p)}</small></span></div>`).join("");
+  el.innerHTML = [...asking.values()].map((p) => `<div><span class="spin"></span><span><b>${AGENT()} is working on it</b><small>${esc(p.length > 90 ? p.slice(0, 90) + "…" : p)}</small></span></div>`).join("");
 }
 async function onAnswer(e) {
   if (!asking.has(e.id)) return; // asked from another window
@@ -2307,7 +2310,7 @@ async function renderBrief() {
   const page = $("#briefpage"), line = $("#brief");
   const today = p.startedAt && new Date().toDateString() === new Date(p.startedAt).toDateString();
   const sch = p.schedule && /^\d/.test(p.schedule.at) ? `Runs on its own at ${new Date(`2000-01-01T${p.schedule.at.padStart(5, "0")}`).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}${p.schedule.days === "1-5" ? " on weekdays" : p.schedule.days === "0-6" ? " every day" : ""}` : "";
-  const planBtn = !status.agent ? `<button class="btn primary" id="briefplan">Plan my day in Claude</button>` : `<button class="btn ${p.state === "none" ? "primary" : ""}" id="briefplan" ${p.state === "running" ? "disabled" : ""}>${p.state === "running" ? "Planning your day…" : p.state === "none" ? "Plan my day with Claude" : "Plan again"}</button>`;
+  const planBtn = !status.agent ? `<button class="btn primary" id="briefplan">Plan my day in Claude</button>` : `<button class="btn ${p.state === "none" ? "primary" : ""}" id="briefplan" ${p.state === "running" ? "disabled" : ""}>${p.state === "running" ? "Planning your day…" : p.state === "none" ? `Plan my day with ${AGENT()}` : "Plan again"}</button>`;
   // The checklist: every list item in the brief gets a box.
   let total = 0, doneN = 0, html = "";
   if (p.state === "done") {
@@ -2330,8 +2333,8 @@ async function renderBrief() {
     const stamp = p.startedAt ? `${p.trigger === "morning" ? "Made on its own · " : ""}${today ? "Today" : when.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}, ${when.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}` : "";
     page.innerHTML = `<div class="bhead"><div style="flex:1;min-width:220px"><h2>Today's brief</h2><div class="dateline">${esc(stamp)}${stamp && sch ? " · " : ""}${esc(sch)}${p.startedAt && !today ? ` · <b>from an earlier day</b>` : ""}</div></div>${planBtn}</div>
       ${p.state === "done" && total ? `<div class="bprog"><div class="bar"><span style="width:${Math.round((doneN / total) * 100)}%"></span></div><b>${doneN} of ${total} done</b>${doneN ? `<button class="linkbtn" data-do="briefclear">Untick all</button>` : ""}</div>` : ""}
-      <div class="card brief ${p.state}">${p.state === "none" ? `<p class="muted" style="margin:0">No brief yet. ${status.agent ? "Press <b>Plan my day with Claude</b>, or wait for the morning one." : "Press <b>Plan my day in Claude</b>: it opens your Claude app with today's lists, sign-ups and calendar, and Claude writes your brief there."}</p>`
-        : p.state === "running" ? `<div class="bwork"><span class="spin"></span>Claude is going through your lists, inbox, calendar and tasks…</div>${p.steps.length ? `<div class="bsteps">${p.steps.slice(-5).map((x) => `<div>${esc(x)}</div>`).join("")}</div>` : ""}`
+      <div class="card brief ${p.state}">${p.state === "none" ? `<p class="muted" style="margin:0">No brief yet. ${status.agent ? `Press <b>Plan my day with ${AGENT()}</b>, or wait for the morning one.` : "Press <b>Plan my day in Claude</b>: it opens your Claude app with today's lists, sign-ups and calendar, and Claude writes your brief there."}</p>`
+        : p.state === "running" ? `<div class="bwork"><span class="spin"></span>${AGENT()} is going through your lists, inbox, calendar and tasks…</div>${p.steps.length ? `<div class="bsteps">${p.steps.slice(-5).map((x) => `<div>${esc(x)}</div>`).join("")}</div>` : ""}`
         : p.state === "error" ? `<div class="small" style="color:var(--bad)">${esc(p.error || "Claude couldn't finish the plan.")}</div>`
         : `<div class="btext">${html}</div>`}</div>`;
     $("#briefplan")?.addEventListener("click", startPlan);
@@ -2341,7 +2344,7 @@ async function renderBrief() {
   }
   const btn = $("#plan");
   if (btn && !status.agent) btn.textContent = "Plan my day in Claude";
-  if (btn && status.agent) { btn.disabled = p.state === "running"; btn.textContent = p.state === "running" ? "Planning your day…" : p.state === "none" ? "Plan my day with Claude" : "Plan again"; }
+  if (btn && status.agent) { btn.disabled = p.state === "running"; btn.textContent = p.state === "running" ? "Planning your day…" : p.state === "none" ? `Plan my day with ${AGENT()}` : "Plan again"; }
 }
 document.addEventListener("change", async (e) => {
   const c = e.target.closest(".bchk"); if (!c) return;

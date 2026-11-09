@@ -42,6 +42,7 @@ const connect = program.command("connect").description("Guided set-up for a conn
 connect.command("gmail").description("Connect Gmail and Google Calendar step by step").action(async () => (await import("./connect.js")).connectGmail());
 connect.command("outlook").description("Connect your work email (Outlook, read-only) step by step").action(async () => (await import("./connect.js")).connectOutlook());
 connect.command("motion").description("Connect Motion with an API key").action(async () => (await import("./connect.js")).connectMotion());
+connect.command("gemini").description("Connect Google Gemini (free tier) for the app's own agent").action(async () => (await import("./connect.js")).connectGemini());
 
 program.parseAsync().catch((e) => {
   console.error(`\n${e.message ?? e}`);

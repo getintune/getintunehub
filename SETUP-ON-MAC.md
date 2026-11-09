@@ -57,6 +57,10 @@ Your morning brief: we'll set it up together as a scheduled task in the Claude a
   **Open**, and follow the steps.
 - **Drive times** to in-person appointments: tell Claude your start address and it will add it.
 - **Music**: open the **Music** tab and follow the steps there.
+- **The app's own assistant (Gemini, free):** lets "Ask" and Plan my day run inside the app instead of opening
+  Claude. In the **Get In Tune Hub** folder, right-click **Connect Gemini** → **Open** → **Open**: it opens Google AI
+  Studio, where you click **Create API key** and copy it, then paste it into the window.
+  Note: on the free tier Google may use what's sent to improve its products.
 
 ---
 

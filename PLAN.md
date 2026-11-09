@@ -163,6 +163,17 @@ Outlook** (the Gmail tab becomes Outlook; Gmail stays only to catch team request
       API key + cost meter stay as an option she can turn on later. In step 7: set up her **morning brief as a
       scheduled task in the Claude app** (on her subscription), and check her Claude account's Gmail, Google
       Calendar and Microsoft 365 connectors are connected.
+      **Then (2026-11-09) Marlys switched the app's own agent to Google Gemini** (free tier), so Ask and
+      background work cost nothing per use. `@google/genai` replaces `@anthropic-ai/claude-agent-sdk`;
+      `src/connectors/gemini` (LiveGemini / NoGemini / MockGemini) is `hub.gemini`; `src/agent/run.ts` is a
+      function-calling loop (max 12 turns) over `hubTools(hub)` (zod → `parametersJsonSchema`); email summaries and
+      tasks-from-email use JSON output on `gemini-2.5-flash-lite`. `GEMINI_API_KEY` in .env (`Connect Gemini.command`);
+      models `HUB_MODEL=gemini-2.5-flash`, `HUB_FAST_MODEL=gemini-2.5-flash-lite`. The meter records runs and tokens
+      at $0.00 (`/api/settings/agent`; `/api/settings/claude` still answers). The Agent SDK's built-in file and
+      shell tools (and `guard.ts`) are gone: the agent only has the app's tools. **Privacy:** Google's free tier
+      may use what's sent to improve its products (people may read it); she was told. Grow email and therapy notes
+      never go to Gemini (tested), client sessions go as "Client session", and all three background features now
+      start OFF. Without a key everything still hands off to her Claude app.
 - [ ] **6. Her tools.** One at a time, each as a connector with a mock and tests: booking/scheduling, invoicing/
       payments, files/photos. Turn what they know into dashboard reminders and lines in the daily brief.
       - [x] **Outlook (2026-11-08):** info@ gets Grow Therapy, Wix and Eventbrite email; Marlys set up her Microsoft

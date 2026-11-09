@@ -1,5 +1,3 @@
-import { query } from "@anthropic-ai/claude-agent-sdk";
-import { claudeEnv } from "./env.js";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import type { Message } from "../connectors/gmail/types.js";
@@ -87,25 +85,15 @@ Subject: ${m.subject}
 
 ${m.body.slice(0, 8000)}`;
   let out: ProposedTask[] = [];
-  for await (const msg of query({
-    prompt,
-    options: {
-      model: hub.cfg.fastModel,
-      maxTurns: 2,
-      allowedTools: [],
-      settingSources: [],
-      outputFormat: { type: "json_schema", schema: SCHEMA },
-      canUseTool: async () => ({ behavior: "deny", message: "No tools needed." }),
-      systemPrompt: `You extract action items from email into short to-do titles. Be strict: no task unless the email needs ${p.first} to act.`,
-      env: claudeEnv(hub),
-    },
-  })) {
-    if (msg.type === "result") recordCost(hub, "emailTasks", msg, hub.cfg.fastModel);
-    if (msg.type === "result" && msg.subtype === "success") {
-      const so = (msg as any).structured_output ?? JSON.parse(msg.result.match(/\{[\s\S]*\}/)?.[0] ?? '{"tasks":[]}');
-      out = (so.tasks ?? []).slice(0, 3);
-    }
+  const r = await hub.gemini.generate({ model: hub.cfg.fastModel, system: `You extract action items from email into short to-do titles. Be strict: no task unless the email needs ${p.first} to act.`, contents: [{ role: "user", parts: [{ text: prompt }] }], json: SCHEMA });
+  recordCost(hub, "emailTasks", { tokens: r.usage }, hub.cfg.fastModel);
+  try {
+    const so = JSON.parse(r.text.match(/\{[\s\S]*\}/)?.[0] ?? '{"tasks":[]}');
+    out = (so.tasks ?? []).slice(0, 3);
+  } catch {
+    out = [];
   }
+
   return out.filter((t) => t.title?.trim());
 }
 

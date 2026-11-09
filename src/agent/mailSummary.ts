@@ -1,5 +1,3 @@
-import { query } from "@anthropic-ai/claude-agent-sdk";
-import { claudeEnv } from "./env.js";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { featureOn, recordCost } from "./costs.js";
@@ -97,25 +95,15 @@ async function summarizeBatch(hub: Hub, batch: { id: string; historyId?: string;
 
 ${items.map((x, i) => `#${i + 1}\n${x.text}`).join("\n\n---\n\n")}`;
   let out: { n: number; summary: string }[] = [];
-  for await (const m of query({
-    prompt,
-    options: {
-      model: hub.cfg.fastModel,
-      maxTurns: 2,
-      allowedTools: [],
-      settingSources: [],
-      outputFormat: { type: "json_schema", schema: SCHEMA },
-      canUseTool: async () => ({ behavior: "deny", message: "No tools needed." }),
-      systemPrompt: "You write very short, specific one-line email summaries.",
-      env: claudeEnv(hub),
-    },
-  })) {
-    if (m.type === "result") recordCost(hub, "summaries", m, hub.cfg.fastModel);
-    if (m.type === "result" && m.subtype === "success") {
-      const so = (m as any).structured_output ?? JSON.parse(m.result.match(/\{[\s\S]*\}/)?.[0] ?? '{"items":[]}');
-      out = so.items ?? [];
-    }
+  const r = await hub.gemini.generate({ model: hub.cfg.fastModel, system: "You write very short, specific one-line email summaries.", contents: [{ role: "user", parts: [{ text: prompt }] }], json: SCHEMA });
+  recordCost(hub, "summaries", { tokens: r.usage }, hub.cfg.fastModel);
+  try {
+    const so = JSON.parse(r.text.match(/\{[\s\S]*\}/)?.[0] ?? '{"items":[]}');
+    out = so.items ?? [];
+  } catch {
+    out = [];
   }
+
   const c = load(hub);
   let n = 0;
   for (const r of out) {

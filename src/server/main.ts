@@ -98,7 +98,8 @@ const server = http.createServer(async (req, res) => {
       const ce = await import("../agent/env.js");
       return send(res, 200, {
         profile: { owner: cfg.profile.owner, first: cfg.profile.first, business: cfg.profile.business, appName: cfg.profile.appName, email: cfg.profile.email, timeZone: cfg.profile.timeZone },
-        claude: { endpoint: ce.claudeEndpoint(), ignored: ce.ignoredRedirects() },
+        agentName: "Gemini",
+        agentEndpoint: ce.agentEndpoint(),
         lines: describe(hub),
         lists: hub.lists.kind,
         outlook: hub.outlook.kind,
@@ -110,7 +111,7 @@ const server = http.createServer(async (req, res) => {
         calendarConnected: hub.calendar.connected(),
         tasksConnected: hub.tasks.connected(),
         emailTasks: (await import("../agent/emailTasks.js")).enabled(hub),
-        agent: !!cfg.anthropicApiKey,
+        agent: hub.gemini.connected(),
         me: cfg.profile.owner,
       });
     }
@@ -184,19 +185,20 @@ const server = http.createServer(async (req, res) => {
       }
       return send(res, 200, { prompt: h.askPrompt(hub, String(b.text ?? "")) });
     }
-    // ---- Claude: on/off switches for the background features, and what Claude has cost today and this month
-    if (p === "/api/settings/claude" && req.method === "GET") {
+    // ---- the agent (Gemini): on/off switches for the background features, and its use today and this month
+    if ((p === "/api/settings/agent" || p === "/api/settings/claude") && req.method === "GET") {
       const c = await import("../agent/costs.js");
       const on = c.featureSettings(hub);
       return send(res, 200, {
-        hasKey: !!cfg.anthropicApiKey,
+        hasKey: hub.gemini.connected(),
+        provider: "Google Gemini (free tier)",
         model: cfg.model,
         fastModel: cfg.fastModel,
         features: (Object.keys(c.FEATURES) as (keyof typeof c.FEATURES)[]).map((f) => ({ id: f, label: c.FEATURES[f].label, hint: c.FEATURES[f].hint, on: on[f], running: c.featureOn(hub, f) })),
         costs: c.costSummary(hub),
       });
     }
-    if (p === "/api/settings/claude" && req.method === "POST") {
+    if ((p === "/api/settings/agent" || p === "/api/settings/claude") && req.method === "POST") {
       const b = await body(req);
       const c = await import("../agent/costs.js");
       c.setFeature(hub, b.feature, !!b.on);
@@ -509,9 +511,9 @@ const server = http.createServer(async (req, res) => {
 
     if (p === "/api/ask" && req.method === "POST") {
       const b = await body(req);
-      if (!cfg.anthropicApiKey) return send(res, 400, { error: "Claude is off on this computer (no Anthropic API key). Add ANTHROPIC_API_KEY to the .env file in the app's folder." });
+      if (!hub.gemini.connected()) return send(res, 400, { error: "The app's agent is off (no GEMINI_API_KEY in the .env file). The Claude buttons open your Claude app instead." });
       // The answer comes back as an "answer" event with what the page should show: the drafts made (to open in Gmail),
-      // the people on her lists and contacts Claude looked at (for buttons on the popup), and Claude's reply.
+      // the people on her lists and contacts the agent looked at (for buttons on the popup), and its reply.
       const id = crypto.randomUUID();
       const prompt = String(b.prompt);
       const made: import("../workflows/generated.js").GeneratedDraft[] = [];
@@ -520,15 +522,11 @@ const server = http.createServer(async (req, res) => {
         const { withDraftSource } = await import("../workflows/generated.js");
         let text = "", error: string | undefined;
         try {
-          text = await withDraftSource("Claude", async () => (await import("../agent/run.js")).ask(hub, prompt, {
+          text = await withDraftSource("Gemini", async () => (await import("../agent/run.js")).ask(hub, prompt, {
             onMessage: (m) => {
-              if (m.type !== "assistant") return;
-              for (const c of m.message.content) {
-                if (c.type !== "tool_use") continue;
-                const inp = c.input as Record<string, unknown>;
-                if (typeof inp.id === "string") seen.add(inp.id);
-                if (c.name.endsWith("contacts_find") && typeof inp.query === "string") contacts.add(inp.query);
-              }
+              if (m.type !== "tool") return;
+              if (typeof m.input.id === "string") seen.add(m.input.id);
+              if (m.name === "contacts_find" && typeof m.input.query === "string") contacts.add(m.input.query);
             },
           }), made);
         } catch (e) {
@@ -580,17 +578,16 @@ server.listen(port, host, () => {
   console.log(`${cfg.profile.appName} running at http://${host === "0.0.0.0" ? "localhost" : host}:${port}`);
   for (const l of describe(hub)) console.log(`  ${l}`);
   void import("../agent/env.js").then((ce) => {
-    console.log(`  claude      requests go to ${ce.claudeEndpoint()}`);
-    for (const r of ce.ignoredRedirects()) console.log(`  NOTE: ignored ${r.name}${r.host ? ` (${r.host})` : ""} set on this PC; it would send the app's Claude requests somewhere else. Set HUB_CLAUDE_BASE_URL in .env if you really want that.`);
+    console.log(`  agent       ${hub.gemini.connected() ? `Gemini, requests go to ${ce.agentEndpoint()}` : "off (no GEMINI_API_KEY)"}`);
   });
 });
 
-// ---- Plan my day: the last brief Claude wrote, shown on the dashboard
+// ---- Plan my day: the last brief the agent wrote, shown on the dashboard
 interface Plan { state: "running" | "done" | "error"; startedAt: string; finishedAt?: string; text: string; steps: string[]; error?: string; trigger?: "button" | "morning"; /** Items ticked off on the Brief tab, by item key. */ done?: Record<string, boolean> }
 
 function startPlan(trigger: "button" | "morning"): { taskId: string } | { error: string; code: number } {
-  if (!cfg.anthropicApiKey) return { error: "Claude is off on this machine (no Anthropic API key).", code: 400 };
-  if (readPlan().state === "running") return { error: "Claude is already planning your day.", code: 409 };
+  if (!hub.gemini.connected()) return { error: "The app's agent is off (no GEMINI_API_KEY): use Plan my day in Claude.", code: 400 };
+  if (readPlan().state === "running") return { error: "Already planning your day.", code: 409 };
   const buildPrompt = (myDayNote: string) => {
     const p = cfg.profile;
     const { workshops } = listCounts(hub);
@@ -636,8 +633,10 @@ Your final reply is my brief for the day, shown at the top of my dashboard. Writ
       plan.text = await withDraftSource(trigger === "morning" ? "Morning brief" : "Plan my day", async () => (await import("../agent/run.js")).ask(hub, prompt + note, {
         use: "brief",
         onMessage: (m) => {
-          if (m.type !== "assistant") return;
-          for (const b of m.message.content) if (b.type === "tool_use") { plan.steps.push(describeTool(b.name, b.input as Record<string, unknown>)); savePlan(plan); bus.emit({ type: "changed", what: "plan" }); }
+          if (m.type !== "tool") return;
+          plan.steps.push(describeTool(m.name, m.input));
+          savePlan(plan);
+          bus.emit({ type: "changed", what: "plan" });
         },
       }));
       plan.state = "done";

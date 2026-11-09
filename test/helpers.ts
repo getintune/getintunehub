@@ -10,6 +10,7 @@ import { MockTasks } from "../src/connectors/tasks/index.js";
 import { MockTravel } from "../src/connectors/travel/index.js";
 import { MockWorkMail } from "../src/connectors/outlook/index.js";
 import { MockMotion } from "../src/connectors/motion/index.js";
+import { NoGemini } from "../src/connectors/gemini/index.js";
 import type { Hub } from "../src/hub.js";
 
 /** A whole Hub on mocks and practice data, in a fresh temp folder. `answer` is how every Yes/No card is answered. */
@@ -28,6 +29,7 @@ export function testHub(answer = true) {
     motion: new MockMotion(path.join(HUB_ROOT, "fixtures", "motion.json"), cfg.profile.owner),
     tasks: new MockTasks(cfg.stateDir),
     travel: new MockTravel(),
+    gemini: new NoGemini(),
     approver,
     say: (m) => said.push(m),
   };

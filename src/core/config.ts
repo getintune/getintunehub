@@ -51,9 +51,10 @@ export interface Config {
   hubRoot: string;
   mode: Mode;
   profile: Profile;
-  anthropicApiKey: string;
+  /** Google Gemini key for the app's own agent (GEMINI_API_KEY). Blank = agent off; Claude buttons hand off instead. */
+  geminiApiKey: string;
   model: string;
-  /** A fast, cheaper model for small jobs like one-line email summaries. */
+  /** A fast, lighter model for small jobs like one-line email summaries. */
   fastModel: string;
   gmail: { driver: "mock" | "google"; clientId: string; clientSecret: string; address: string; tokenFile: string };
   /** Work email in Microsoft 365 (read-only): marlys@ and the shared info@ mailbox. */
@@ -91,16 +92,16 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env, root = HUB_ROOT
 
   const stateDir = path.join(root, ".hub");
 
-  const anthropicApiKey = e("ANTHROPIC_API_KEY");
+  const geminiApiKey = e("GEMINI_API_KEY");
   const gmailReady = !!(e("GOOGLE_CLIENT_ID") && e("GOOGLE_CLIENT_SECRET"));
 
   return {
     hubRoot: root,
     mode,
     profile,
-    anthropicApiKey,
-    model: e("HUB_MODEL", "claude-opus-5-5"),
-    fastModel: e("HUB_FAST_MODEL", "claude-haiku-5-5"),
+    geminiApiKey,
+    model: e("HUB_MODEL", "gemini-2.5-flash"),
+    fastModel: e("HUB_FAST_MODEL", "gemini-2.5-flash-lite"),
     gmail: {
       driver: live && gmailReady ? "google" : "mock",
       clientId: e("GOOGLE_CLIENT_ID"),

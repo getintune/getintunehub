@@ -183,3 +183,19 @@ export async function connectMotion() {
   console.log(`\nMotion is connected: you have ${tasks.length} open task${tasks.length === 1 ? "" : "s"}.`);
   console.log(`Restart ${app} (close its window, open it again) to use it.`);
 }
+
+/** Gemini (the app's own agent, free tier): paste the key from Google AI Studio; it's tested, then saved to .env. */
+export async function connectGemini() {
+  const cfg = loadConfig();
+  console.log(`Connecting Google Gemini to ${cfg.profile.appName} (free tier), so Ask and Plan my day run inside the app.`);
+  console.log("Note: on Gemini's free tier Google may use what's sent to improve its products. Grow Therapy email and therapy clients' notes are never sent, and background features start off.");
+  step(1, 'In the page that opens (sign in with your Google account), click "Create API key", then copy it.');
+  openBrowser("https://aistudio.google.com/apikey");
+  const key = await ask("\n2. Paste the key here and press Enter: ");
+  if (!key) throw new Error("No key; double-click Connect Gemini again when you have it.");
+  const { LiveGemini } = await import("../connectors/gemini/index.js");
+  const r = await new LiveGemini(key).generate({ model: cfg.fastModel, system: "Reply with one word.", contents: [{ role: "user", parts: [{ text: "Say ready." }] }] });
+  setEnv({ GEMINI_API_KEY: key });
+  console.log(`\nGemini is connected (it said: "${r.text.trim().slice(0, 40)}").`);
+  console.log(`Restart ${cfg.profile.appName} (close its window, open it again) to use it.`);
+}

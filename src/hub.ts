@@ -1,4 +1,5 @@
-import { claudeEndpoint, ignoredRedirects } from "./agent/env.js";
+import { agentEndpoint } from "./agent/env.js";
+import { makeGemini, type GeminiClient } from "./connectors/gemini/index.js";
 import { makeTravel, type TravelClient } from "./connectors/travel/index.js";
 import path from "node:path";
 import { CliApprover, type Approver } from "./core/approval.js";
@@ -23,6 +24,8 @@ export interface Hub {
   motion: MotionClient;
   tasks: TasksClient;
   travel: TravelClient;
+  /** Google Gemini, behind the app's own agent (off without GEMINI_API_KEY). */
+  gemini: GeminiClient;
   approver: Approver;
   say: (msg: string) => void;
 }
@@ -37,6 +40,7 @@ export function makeHub(cfg: Config = loadConfig(), approver: Approver = new Cli
     motion: makeMotion(cfg),
     tasks: makeTasks(cfg),
     travel: makeTravel(cfg),
+    gemini: makeGemini(cfg),
     approver,
     say: (m) => console.log(m),
   };
@@ -48,7 +52,7 @@ export function describe(hub: Hub): string[] {
     `mode        ${c.mode}`,
     `for         ${c.profile.owner}, ${c.profile.business} (${c.profile.timeZone})`,
     `lists       ${hub.lists.kind === "mock" ? "practice data" : path.join(c.dataDir, "lists.json")}`,
-    `claude      ${c.anthropicApiKey ? `on (${c.model}), requests go to ${claudeEndpoint()}` : "off (no Anthropic API key in .env)"}${ignoredRedirects().length ? `  (ignoring ${ignoredRedirects().map((r) => r.name).join(", ")} set on this computer)` : ""}`,
+    `agent       ${c.geminiApiKey ? `Gemini on (${c.model}), requests go to ${agentEndpoint()}` : "off (no GEMINI_API_KEY in .env): Claude buttons open the Claude app"}`,
     `outlook     ${hub.outlook.kind === "mock" ? "practice mail" : `${hub.cfg.outlook.mailboxes.join(", ")}${hub.outlook.connected() ? "" : "  (!) not signed in: Connect Outlook"}`}`,
     `gmail       ${hub.gmail.kind}${hub.gmail.kind === "mock" ? `  (drafts go to ${path.join(c.stateDir, "outbox")})` : ` ${c.gmail.address}`}`,
     `calendar    ${hub.calendar.kind}${hub.calendar.kind === "google" && !hub.calendar.connected() ? "  (!) reconnect Google to add Calendar" : ""}`,
