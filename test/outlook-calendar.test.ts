@@ -59,3 +59,22 @@ describe("her Outlook calendar (read-only)", () => {
     expect(p).not.toContain("Jordan");
   });
 });
+
+import { looksLikeClientSession } from "../src/connectors/outlook/calendar.js";
+
+describe("which calendar events are client sessions", () => {
+  const me = "marlys@getintunemusictherapy.com Marlys Woods (Get In Tune Music Therapy)";
+  it("doesn't count her own business name as a client sign", () => {
+    expect(looksLikeClientSession({ subject: "Team check-in with Kristin and Frankie", organizer: me })).toBe(false);
+    expect(looksLikeClientSession({ subject: "Coffee with Kris", location: "Corner cafe", organizer: me })).toBe(false);
+    expect(looksLikeClientSession({ subject: "Get In Tune Music Therapy: workshop prep", organizer: me })).toBe(false);
+    expect(looksLikeClientSession({ subject: "Group supervision", location: "https://zoom.us/j/1", organizer: me })).toBe(false);
+  });
+  it("still catches Grow sessions and client appointments", () => {
+    expect(looksLikeClientSession({ subject: "Session", organizer: "noreply@growtherapy.com Grow Therapy" })).toBe(true);
+    expect(looksLikeClientSession({ subject: "Grow: J.R.", organizer: me })).toBe(true);
+    expect(looksLikeClientSession({ subject: "Session with Jordan R.", organizer: me })).toBe(true);
+    expect(looksLikeClientSession({ subject: "Intake call", organizer: me })).toBe(true);
+    expect(looksLikeClientSession({ subject: "Telehealth appointment", organizer: me })).toBe(true);
+  });
+});

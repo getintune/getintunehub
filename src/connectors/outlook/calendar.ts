@@ -8,7 +8,19 @@ import type { GraphMail } from "./index.js";
  */
 const READ_ONLY = "Your Outlook calendar is read-only here: add or change Outlook events in Outlook.";
 export const OUTLOOK_PREFIX = "outlook:";
-const SENSITIVE = /grow|therap|session|client|telehealth|intake|counsel/i;
+/**
+ * Looks like a client session: it came from Grow, or its title or place says client / intake / telehealth /
+ * counseling / therapy session / "session with ...". Her own business name ("Get In Tune Music Therapy",
+ * getintunemusictherapy.com) is taken out first: it's on most of her events and isn't a sign of a client.
+ */
+const FROM_GROW = /growtherapy|grow therapy|\bgrow\b/i;
+const CLIENTISH = /\bclients?\b|\bintake\b|tele-?health|counsel+ing|therapy session|\bsession with\b|\bappointment with\b/i;
+const HER_BUSINESS = /get\s*in\s*tune(\s*music\s*therapy)?|getintunemusictherapy(\.com)?/gi;
+export function looksLikeClientSession(e: { subject?: string; location?: string; organizer?: string }): boolean {
+  const clean = (t?: string) => String(t ?? "").replace(HER_BUSINESS, " ");
+  const title = clean(e.subject), place = clean(e.location), org = clean(e.organizer);
+  return FROM_GROW.test(`${title} ${place} ${org}`) || CLIENTISH.test(`${title} ${place}`);
+}
 
 export class OutlookCalendar implements CalendarClient {
   readonly kind = "outlook" as const;
@@ -59,7 +71,6 @@ export function toEvent(c: CalendarInfo, e: any): CalEvent {
   const allDay = !!e.isAllDay;
   const title = String(e.subject ?? "(no title)");
   const location = e.location?.displayName || undefined;
-  const text = `${title} ${location ?? ""} ${e.organizer?.emailAddress?.address ?? ""} ${e.organizer?.emailAddress?.name ?? ""} ${e.bodyPreview ?? ""}`;
   return {
     id: String(e.id),
     calendarId: c.id,
@@ -73,7 +84,7 @@ export function toEvent(c: CalendarInfo, e: any): CalEvent {
     meet: e.onlineMeeting?.joinUrl || undefined,
     recurringId: e.seriesMasterId || undefined,
     myResponse: ({ accepted: "accepted", declined: "declined", tentativelyAccepted: "tentative", notResponded: "needsAction" } as Record<string, string>)[e.responseStatus?.response] ?? undefined,
-    private: SENSITIVE.test(text),
+    private: looksLikeClientSession({ subject: title, location, organizer: `${e.organizer?.emailAddress?.address ?? ""} ${e.organizer?.emailAddress?.name ?? ""}` }),
     source: "outlook",
   };
 }
