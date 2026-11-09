@@ -4,6 +4,8 @@ import { google, type calendar_v3 } from "googleapis";
 import type { Config } from "../../core/config.js";
 import { GoogleAuth, SCOPES } from "../google/auth.js";
 import { TIME_ZONE } from "../../core/config.js";
+import { CombinedCalendar, OutlookCalendar } from "../outlook/calendar.js";
+import { GraphMail } from "../outlook/index.js";
 
 /** Google Calendar: the owner's calendars and events, read and write. */
 export interface CalendarInfo {
@@ -31,6 +33,10 @@ export interface CalEvent {
   recurringId?: string;
   /** Her own answer when she's an invitee: "accepted", "declined", "tentative", "needsAction". */
   myResponse?: string;
+  /** Looks like a client session (e.g. from Grow): shown to her, but never put into Claude requests. */
+  private?: boolean;
+  /** Where it lives: Google Calendar or her Outlook calendar (read-only here). */
+  source?: "google" | "outlook";
 }
 
 export interface EventInput {
@@ -47,7 +53,7 @@ export interface EventInput {
 }
 
 export interface CalendarClient {
-  readonly kind: "mock" | "google";
+  readonly kind: "mock" | "google" | "outlook" | "combined";
   connected(): boolean;
   calendars(): Promise<CalendarInfo[]>;
   events(o: { start: string; end: string; calendarIds?: string[]; q?: string }): Promise<CalEvent[]>;
@@ -218,12 +224,13 @@ export class MockCalendar implements CalendarClient {
 }
 
 export function makeCalendar(cfg: Config): CalendarClient {
+  if (cfg.gmail.driver !== "google" && cfg.mode !== "live") return new MockCalendar(cfg.stateDir);
   // On her Mac (live) it's always her real calendar, which says "not connected" until she runs Connect Gmail:
-  // practice events would look real on her dashboard.
-  if (cfg.gmail.driver === "google" || cfg.mode === "live") {
-    return new GoogleCalendar(new GoogleAuth({ clientId: cfg.gmail.clientId, clientSecret: cfg.gmail.clientSecret, tokenFile: cfg.gmail.tokenFile, address: cfg.gmail.address }));
-  }
-  return new MockCalendar(cfg.stateDir);
+  // practice events would look real on her dashboard. With Outlook connected, her Outlook calendar shows too.
+  const google = new GoogleCalendar(new GoogleAuth({ clientId: cfg.gmail.clientId, clientSecret: cfg.gmail.clientSecret, tokenFile: cfg.gmail.tokenFile, address: cfg.gmail.address }));
+  if (cfg.outlook.driver !== "microsoft") return google;
+  const o = cfg.outlook;
+  return new CombinedCalendar(google, new OutlookCalendar(new GraphMail({ clientId: o.clientId, tenant: o.tenant, tokenFile: o.tokenFile, mailboxes: o.mailboxes })));
 }
 
 /** Open slots of at least `minutes` between `dayStart` and `dayEnd` hours (local), on the days in range. */

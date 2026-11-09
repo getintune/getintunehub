@@ -175,6 +175,13 @@ Outlook** (the Gmail tab becomes Outlook; Gmail stays only to catch team request
         "Open in Outlook"). Sign-up suggestions from Wix/Eventbrite emails, added to the workshop list when she clicks
         Add. Plan my day in Claude includes the Grow alerts. Calendar stays on Google for now (she says all her
         calendars are synced).
+      - [x] **Outlook calendar (2026-11-09):** her Outlook calendar wasn't showing (Grow puts sessions there). Added
+        read-only via Graph (Calendars.Read; `src/connectors/outlook/calendar.ts`), shown together with Google Calendar
+        (`CombinedCalendar`; new events go to Google, Outlook events are changed in Outlook). Events that look like
+        client sessions are `private`: shown to her, but sent to Claude only as "Client session (details private)".
+        She re-runs Connect Outlook to add the Calendars.Read permission and sign in again.
+      - [ ] **Google Chat** (she said yes, later): a "Team messages" card from Kristin and Frankie. Check first whether
+        her Chat is on Google Workspace; the Chat API doesn't serve personal @gmail.com accounts.
       - [x] **Motion (2026-11-08):** Marlys loves that Motion fits tasks into her schedule and moves them, so Motion
         keeps doing that; the app never moves, edits or deletes Motion tasks. `src/connectors/motion` (Motion API,
         MOTION_API_KEY; practice tasks in `fixtures/motion.json`), `src/workflows/motion.ts`. Dashboard "Today" shows

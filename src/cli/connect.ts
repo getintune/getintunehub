@@ -134,9 +134,14 @@ export async function connectOutlook() {
     if (!/^[0-9a-f-]{36}$/i.test(id) || !/^[0-9a-f-]{36}$/i.test(tenant)) throw new Error("Those don't look like Microsoft IDs (they look like 1a2b3c4d-....). Run Connect Outlook again and copy them once more.");
     step(4, 'In the left menu under Manage, click "Authentication" (maybe "Authentication (Preview)"). Newer page: open the "Settings" tab and turn on "Allow public client flows". Older page: at the bottom, under "Advanced settings", set "Enable the following mobile and desktop flows" to Yes. Click Save. (Not there? Left menu "Manifest": set "allowPublicClient": true, Save.)');
     await ask("   Press Enter when saved... ");
-    step(5, 'Click "API permissions" > "+ Add a permission" > Microsoft Graph > Delegated permissions. Tick Mail.Read and Mail.Read.Shared, then "Add permissions". Then click "Grant admin consent for ..." and Yes.');
+    step(5, 'Click "API permissions" > "+ Add a permission" > Microsoft Graph > Delegated permissions. Tick Mail.Read, Mail.Read.Shared and Calendars.Read, then "Add permissions". Then click "Grant admin consent for ..." and Yes.');
     await ask("   Press Enter when the permissions show a green tick... ");
     setEnv({ MS_CLIENT_ID: id, MS_TENANT: tenant });
+  } else {
+    console.log("\nYour app registration is already there. One check first (your Outlook calendar needs it):");
+    step(1, `In ${app}'s page (opening now): "API permissions" > "+ Add a permission" > Microsoft Graph > Delegated permissions. Make sure Mail.Read, Mail.Read.Shared and Calendars.Read are all listed (add any that aren't), then click "Grant admin consent for ..." and Yes.`);
+    openBrowser(`https://entra.microsoft.com/#view/Microsoft_AAD_RegisteredApps/ApplicationMenuBlade/~/CallAnApi/appId/${cfg.outlook.clientId}`);
+    await ask("   Press Enter when all three show a green tick... ");
   }
   const c = loadConfig({ ...process.env, MS_CLIENT_ID: cfg.outlook.clientId || loadEnvValue("MS_CLIENT_ID"), MS_TENANT: loadEnvValue("MS_TENANT") || cfg.outlook.tenant, HUB_MODE: "live" });
   const { GraphMail } = await import("../connectors/outlook/index.js");

@@ -709,7 +709,7 @@ async function myDay(): Promise<string> {
     const ev = (await hub.calendar.events({ start: d0.toISOString(), end: d1.toISOString() }).catch(() => []))
       .filter((e) => mine.has(e.calendarId) && e.myResponse !== "declined")
       .sort((a, b) => a.start.localeCompare(b.start));
-    lines.push("My calendar (my own calendar only), today and the next 3 days:", ...(ev.length ? ev.map((e) => `- ${day(e.start)} ${e.allDay ? "all day" : `${hm(e.start)}-${hm(e.end)}`}: ${e.title}${e.location ? ` @ ${e.location}` : ""}${e.myResponse === "tentative" ? " (maybe)" : ""}`) : ["- nothing booked"]));
+    lines.push("My calendar (my own calendar only), today and the next 3 days:", ...(ev.length ? ev.map((e) => `- ${day(e.start)} ${e.allDay ? "all day" : `${hm(e.start)}-${hm(e.end)}`}: ${e.private ? "Client session (details private)" : `${e.title}${e.location ? ` @ ${e.location}` : ""}`}${e.myResponse === "tentative" ? " (maybe)" : ""}`) : ["- nothing booked"]));
   } else lines.push("My calendar: not connected.");
   if (hub.tasks.connected()) {
     const today = new Date().toLocaleDateString("en-CA", { timeZone: TIME_ZONE });

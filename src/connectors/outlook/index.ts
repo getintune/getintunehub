@@ -38,7 +38,7 @@ export interface WorkMailClient {
   since(mailbox: string, since: string, max?: number): Promise<WorkMessage[]>;
 }
 
-export const SCOPES = ["offline_access", "User.Read", "Mail.Read", "Mail.Read.Shared"];
+export const SCOPES = ["offline_access", "User.Read", "Mail.Read", "Mail.Read.Shared", "Calendars.Read"];
 
 // ---------------------------------------------------------------- Microsoft Graph
 
@@ -109,6 +109,11 @@ export class GraphMail implements WorkMailClient {
     if (!r.ok) throw new Error(`Outlook needs signing in again: double-click Connect Outlook. (${j.error_description ?? j.error ?? r.status})`);
     this.save({ ...j, refresh_token: j.refresh_token ?? t.refresh_token });
     return j.access_token;
+  }
+
+  /** A read-only Microsoft Graph request (for the Outlook calendar). */
+  api(p: string, headers: Record<string, string> = {}): Promise<any> {
+    return this.graph(p, headers);
   }
 
   private async graph(p: string, headers: Record<string, string> = {}): Promise<any> {

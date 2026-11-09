@@ -40,7 +40,7 @@ export async function planPrompt(hub: Hub, now = new Date()): Promise<string> {
     d1.setHours(24, 0, 0, 0);
     const ev = await hub.calendar.events({ start: d0.toISOString(), end: d1.toISOString() }).catch(() => []);
     const hm = (iso: string) => new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: TIME_ZONE });
-    lines.push("", "Today's calendar:", ...(ev.length ? ev.map((e) => `- ${e.allDay ? "all day" : hm(e.start)}: ${e.title}`) : ["- nothing booked"]));
+    lines.push("", "Today's calendar:", ...(ev.length ? ev.map((e) => `- ${e.allDay ? "all day" : hm(e.start)}: ${e.private ? "Client session (details private)" : e.title}`) : ["- nothing booked"]));
   } else lines.push("", "Check my calendar for today.");
   try {
     const { motionToday } = await import("./motion.js");
