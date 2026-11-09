@@ -204,5 +204,10 @@ Outlook** (the Gmail tab becomes Outlook; Gmail stays only to catch team request
       password, clones to ~/Get In Tune Hub, sets up, adds the Desktop icon. The Start file pulls updates each time
       (resetting package-lock.json first). GitHub Desktop is plan B in SETUP-ON-MAC.md. Not testable here: the GCM
       asset lookup (api.github.com is blocked in this workspace) and the clone; the rest was dry-run. Claude merged
-      the PR into main itself (fast-forward push), at her request.
+      the PR into main itself (fast-forward push), at her request. **That push never happened:** on 2026-11-09
+      her GitHub account was suspended ("violation of our Terms of Service"; she can't sign in), so pushes fail
+      with 403. Commits since then are only in this session's container and in the zip download. So for now the app
+      is delivered as **Get In Tune Hub.zip** (a git clone, with full history in .git, sent in chat): Setup copies
+      it to ~/Get In Tune Hub keeping .env, auth/, data/, .hub/, node_modules/. Updates = a new zip. When GitHub is
+      back: push the branch from her Mac's copy (or this session), merge, and the GitHub sign-in path works again.
 - [ ] **8. Tidy up.** Remove anything left from Keystone that she doesn't use. README in plain words for her.

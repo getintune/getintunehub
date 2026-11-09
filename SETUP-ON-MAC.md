@@ -7,28 +7,21 @@ If anything shows an error, copy the message to Claude (in Claude Code) and ask 
 
 ---
 
-## 1. Install the app: one file (15–30 minutes, mostly waiting)
+## 1. Install the app (10–20 minutes, mostly waiting)
 
-1. Download **Setup Get In Tune Hub.command**: Claude sent it to you in the chat (click it to save it). It goes
-   to your **Downloads** folder.
-2. In Finder, open **Downloads**, **right-click** (or Control-click) **Setup Get In Tune Hub** → **Open** →
-   **Open**. (Your Mac asks this once because the file is new to it.) A Terminal window opens and talks you
-   through the rest:
-   - If a window offers to install **Command Line Tools**, click **Install**, then **Agree**. The setup waits
-     for it (often 5–15 minutes).
-   - When it asks for your **password**, type your Mac login password and press Enter. Nothing shows while you
-     type; that's normal.
-   - When a **GitHub** sign-in appears, choose **Sign in with your browser**, sign in, and click **Authorize**.
-3. When it says **All set**, the app opens in your browser, and there's a **Get In Tune Hub** icon on your
-   Desktop. The app itself lives in your home folder, in **Get In Tune Hub**.
+1. In the chat, Claude sent you **Get In Tune Hub.zip**. Click it to download it (it goes to **Downloads**).
+2. In Finder, open **Downloads** and double-click **Get In Tune Hub.zip**. A folder appears:
+   **Get In Tune Hub (download)**. Open it.
+3. **Right-click** (or Control-click) **Setup Get In Tune Hub** → **Open** → **Open**. (Your Mac asks this once
+   because the file is new to it.) A Terminal window opens and talks you through the rest:
+   - If it asks for your **password**, type your Mac login password and press Enter. Nothing shows while you
+     type; that's normal. (It's installing Node.js, the free program the app runs on.)
+4. When it says **All set**, the app opens in your browser, and there's a **Get In Tune Hub** icon on your
+   Desktop. The app now lives in your home folder, in **Get In Tune Hub**. You can delete the download and
+   the zip from Downloads.
 
 From now on: double-click **Get In Tune Hub** on your Desktop. A small Terminal window opens: leave it open
-while you use the app (closing it stops the app). Each time it opens, it picks up Claude's latest changes on its
-own.
-
-**Plan B** (only if step 2 says the download didn't work): install **GitHub Desktop** from
-desktop.github.com, sign in, then **File → Clone Repository… → getintune/getintunehub** into your home folder.
-Then open that folder and right-click **Setup Get In Tune Hub** → **Open**.
+while you use the app (closing it stops the app).
 
 The helper files below (Connect Outlook, Connect Motion, ...) are in the **Get In Tune Hub** folder in your
 home folder. (In Finder: **Go → Home**.)
@@ -69,8 +62,9 @@ Your morning brief: we'll set it up together as a scheduled task in the Claude a
 
 ## Getting updates
 
-Nothing to do: each time you open the app from the Desktop icon, it picks up Claude's latest changes. (If you
-used plan B, open GitHub Desktop and click **Fetch origin**, then **Pull origin**, first.)
+When Claude changes the app, it sends you a new **Get In Tune Hub.zip**. Do steps 1–3 above again with the new
+one, after closing the app's Terminal window. Your lists, settings and logins are kept: only the app's own files
+are replaced.
 
 ## Where your things are
 
