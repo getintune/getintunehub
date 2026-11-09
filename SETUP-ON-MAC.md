@@ -66,9 +66,12 @@ Your morning brief: we'll set it up together as a scheduled task in the Claude a
 
 ## Getting updates
 
-When Claude changes the app, it sends you a new **Get In Tune Hub.zip**. Do steps 1–3 above again with the new
-one, after closing the app's Terminal window. Your lists, settings and logins are kept: only the app's own files
-are replaced.
+**Automatic (once switched on):** in the **Get In Tune Hub** folder, right-click **Turn On Automatic Updates** →
+**Open** → **Open**, once. It installs Apple's Command Line Tools if needed, asks for your Mac password once, and has
+you sign in to GitHub in your browser. After that, each time you open the app from the Desktop icon it says
+"Checking for updates..." and picks up Claude's latest changes. Your lists, settings and logins are never touched.
+
+**Before that (or if GitHub isn't available):** Claude sends a new **Get In Tune Hub.zip**; do steps 1–3 above again.
 
 ## Where your things are
 
