@@ -245,7 +245,7 @@ export function freeSlots(busy: { start: string; end: string }[], o: { from: Dat
     start.setHours(o.dayStart ?? 7, 0, 0, 0);
     const end = new Date(day);
     end.setHours(o.dayEnd ?? 17, 0, 0, 0);
-    let t = Math.max(start.getTime(), d === 0 ? Date.now() : 0);
+    let t = Math.max(start.getTime(), d === 0 ? o.from.getTime() : 0); // not before "from" (callers pass now)
     for (const [bs, be] of blocks) {
       if (be <= t || bs >= end.getTime()) continue;
       if (bs - t >= o.minutes * 60000) out.push({ start: new Date(t).toISOString(), end: new Date(bs).toISOString() });
