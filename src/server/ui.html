@@ -1038,6 +1038,8 @@ async function loadToday() {
       <div class="side">
         <div class="card"><h3>Today <button class="btn small" data-do="gocal">Calendar</button></h3>
           ${d.travelStart ? "" : `<form class="row" id="startform" style="gap:6px;margin:0 0 10px"><input type="text" id="startaddr" placeholder="Where your day starts (home address)" style="flex:1"><button class="btn small primary">Save</button></form><div class="small muted" style="margin:-6px 0 10px">Then each appointment with an address shows when to leave. Saved on your Mac only.</div>`}
+          ${d.workout ? `<div class="row workout" style="gap:8px;margin:0 0 10px"><span style="flex:1;min-width:0">🏃 <b>Workout:</b> ${esc(d.workout.text)}${d.workout.minutes && !/\bmin|\bh(ou)?r/i.test(d.workout.text) ? ` <span class="small muted">· ${d.workout.minutes} min</span>` : ""}</span><button class="btn small" data-motion="${esc("Workout: " + d.workout.text)}" data-duration="${d.workout.minutes || 45}" data-due="${ymd(new Date())}" title="Motion finds a time for it today">Add to Motion</button><button class="btn small" type="button" data-workout-edit="1" title="Change or clear">✎</button></div>`
+            : `<form class="row" id="workoutform" style="gap:6px;margin:0 0 10px"><input type="text" id="workouttext" placeholder="Today's workout from Bevel (e.g. Zone 2 walk, 40 min)" style="flex:1"><button class="btn small">Save</button></form>`}
           ${(d.schedule = (d.schedule || []).filter((e) => !isHiddenEv(e))) && ""}${d.calendarConnected ? (d.schedule.length ? `<ul class="items">${d.schedule.map((e) => `<li><span class="sw" style="display:inline-block;width:9px;height:9px;border-radius:2px;background:${esc(calColor(e))}"></span> <b>${e.allDay ? "All day" : hm(e.start)}</b> ${esc(e.title)}${e.location ? `<div class="small muted">${esc(e.location)}</div>` : ""}${d.travel?.[e.id] ? `<div class="small ${d.travel[e.id].late ? "" : "muted"}">${d.travel[e.id].late ? `<span style="color:var(--bad)">⚠ ${d.travel[e.id].late} min short from ${esc(d.travel[e.id].fromLabel)}</span>` : `🚗 Leave by <b>${hm(d.travel[e.id].leaveBy)}</b> · ${d.travel[e.id].minutes} min from ${esc(d.travel[e.id].fromLabel)}`} · <a href="${esc(d.travel[e.id].mapsUrl)}" target="_blank" rel="noopener">Directions</a></div>` : ""}</li>`).join("")}</ul>` : `<p class="muted" style="margin:0">Nothing on the calendar today.</p>`) : `<p class="muted" style="margin:0">Connect your calendar to see today here.</p>`}
           <div class="small muted" style="margin:12px 0 4px">Motion today${d.motionKind === "mock" ? " (practice tasks)" : ""} <a href="https://app.usemotion.com/" target="_blank" rel="noopener" class="small">Open Motion</a></div>
           ${d.motionError ? `<p class="small" style="${/isn't connected yet/.test(d.motionError) ? "" : "color:var(--bad);"}margin:0">${esc(d.motionError)}</p>` : d.motion ? `${d.motion.scheduled.map((t) => `<div class="row" style="gap:8px;padding:3px 0"><b class="small" style="min-width:58px">${hm(t.scheduledStart)}</b><span style="flex:1;min-width:0">${esc(t.name)}</span><span class="small muted">${t.duration ? t.duration + " min" : ""}</span></div>`).join("") || `<p class="small muted" style="margin:0">Nothing scheduled in Motion today.</p>`}${d.motion.overdue.map((t) => `<div class="row" style="gap:8px;padding:3px 0"><b class="small" style="min-width:58px;color:var(--bad)">overdue</b><span style="flex:1;min-width:0">${esc(t.name)}</span></div>`).join("")}` : ""}
@@ -1088,6 +1090,17 @@ document.addEventListener("change", async (e) => {
 async function saveStart(addr) {
   try { await api("/api/settings/travel", { method: "POST", body: { start: addr } }); log(addr ? "Saved where your day starts. Drive times will show for appointments with an address." : "Removed your start address."); loadToday(); if (store.get("tab") === "cal") renderCal(); renderStartSetting(); } catch (e) { log(e.message, "t-err"); }
 }
+document.addEventListener("submit", async (e) => {
+  if (e.target.id !== "workoutform") return; e.preventDefault();
+  const v = $("#workouttext").value.trim(); if (!v) return;
+  try { await api("/api/workout", { method: "POST", body: { text: v } }); log("Saved today's workout. It's in Plan my day now."); loadToday(); } catch (err) { log(err.message, "t-err"); }
+});
+document.addEventListener("click", async (e) => {
+  if (!e.target.closest("[data-workout-edit]")) return; e.preventDefault();
+  const cur = e.target.closest(".workout")?.querySelector("span")?.textContent.replace(/^🏃\s*Workout:\s*/, "").replace(/\s*·\s*\d+ min$/, "") || "";
+  const v = prompt("Today's workout (leave empty to clear it):", cur); if (v === null) return;
+  try { await api("/api/workout", { method: "POST", body: { text: v } }); loadToday(); } catch (err) { log(err.message, "t-err"); }
+});
 document.addEventListener("submit", (e) => { if (e.target.id !== "startform") return; e.preventDefault(); const v = $("#startaddr").value.trim(); if (v) saveStart(v); });
 async function renderStartSetting() {
   const el = $("#cal-start"); if (!el) return;
@@ -1112,10 +1125,10 @@ document.addEventListener("click", async (e) => {
 });
 
 // ---- Motion: Motion schedules; the app hands it tasks. A Yes/No card (with the name to edit) comes first.
-async function addMotion(name, due) {
-  try { await api("/api/motion/add", { method: "POST", body: { name, dueDate: due || undefined } }); } catch (e) { log(e.message, "t-err"); }
+async function addMotion(name, due, duration) {
+  try { await api("/api/motion/add", { method: "POST", body: { name, dueDate: due || undefined, duration: duration || undefined } }); } catch (e) { log(e.message, "t-err"); }
 }
-document.addEventListener("click", (e) => { const b = e.target.closest("[data-motion]"); if (!b) return; e.preventDefault(); addMotion(b.dataset.motion, b.dataset.due); });
+document.addEventListener("click", (e) => { const b = e.target.closest("[data-motion]"); if (!b) return; e.preventDefault(); addMotion(b.dataset.motion, b.dataset.due, Number(b.dataset.duration) || undefined); });
 document.addEventListener("submit", (e) => {
   if (e.target.id !== "motionadd") return; e.preventDefault();
   const n = $("#motionname").value.trim(); if (!n) return;

@@ -13,6 +13,7 @@ import { listCounts, needs } from "../workflows/needs.js";
 import { renderPage } from "./page.js";
 import { requestAllowed } from "./guard.js";
 import { featureOn } from "../agent/costs.js";
+import { saveWorkout, todaysWorkout } from "../workflows/workout.js";
 
 /**
  * The app's screen: a local web app on 127.0.0.1, opened in her browser. Anything that sends an email or changes her
@@ -205,6 +206,11 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, { ok: true });
     }
     if (p === "/api/settings/spotify" && req.method === "GET") return send(res, 200, { clientId: cfg.spotify.clientId });
+    // ---- today's workout (from Bevel, typed or pasted by her)
+    if (p === "/api/workout" && req.method === "POST") {
+      const b = await body(req);
+      return send(res, 200, { workout: saveWorkout(hub, String(b.text ?? ""), Number(b.minutes) || undefined) });
+    }
     // ---- drive times: where her day starts (typed by her in the app, saved to .env on her Mac only)
     if (p === "/api/settings/travel" && req.method === "GET") return send(res, 200, { start: cfg.travel.start });
     if (p === "/api/settings/travel" && req.method === "POST") {
@@ -269,6 +275,7 @@ const server = http.createServer(async (req, res) => {
         calendarConnected: hub.calendar.connected(),
         recent,
         travelStart: !!cfg.travel.start,
+        workout: todaysWorkout(hub),
       });
     }
     if (p === "/api/plan" && req.method === "GET") return send(res, 200, { ...readPlan(), schedule: BRIEF });
@@ -590,11 +597,12 @@ function startPlan(trigger: "button" | "morning"): { taskId: string } | { error:
   if (readPlan().state === "running") return { error: "Already planning your day.", code: 409 };
   const buildPrompt = (myDayNote: string) => {
     const p = cfg.profile;
+    const w = todaysWorkout(hub);
     const { workshops } = listCounts(hub);
     return `Plan my day. Here is what my lists say needs me, as JSON (kind, list, name, stage, title, days):
 ${JSON.stringify(needs(hub).slice(0, 40))}
 
-Workshop sign-ups so far: ${workshops.length ? workshops.map((w) => `${w.event}: ${w.total} (${w.newToday} new in the last day; ${w.bySource.map((x) => `${x.source} ${x.count}`).join(", ")})`).join("; ") : "none"}.
+${w ? `Today's workout (planned in Bevel): ${w.text}${w.minutes ? ` (about ${w.minutes} min)` : ""}. Fit it into the day around my appointments.\n\n` : ""}Workshop sign-ups so far: ${workshops.length ? workshops.map((w) => `${w.event}: ${w.total} (${w.newToday} new in the last day; ${w.bySource.map((x) => `${x.source} ${x.count}`).join(", ")})`).join("; ") : "none"}.
 
 ${myDayNote}
 

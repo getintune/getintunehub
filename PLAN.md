@@ -191,6 +191,12 @@ Outlook** (the Gmail tab becomes Outlook; Gmail stays only to catch team request
         (`CombinedCalendar`; new events go to Google, Outlook events are changed in Outlook). Events that look like
         client sessions are `private`: shown to her, but sent to Claude only as "Client session (details private)".
         She re-runs Connect Outlook to add the Calendars.Read permission and sign in again.
+      - [x] **Bevel workouts (2026-11-09):** she wants the workouts Bevel plans for her in her daily plan. Bevel
+        has no public API (Bevel team, feedback board) and its calendar support reads her calendar rather than
+        writing workouts to it, as far as we could tell. So: a "Today's workout" box on the dashboard (she types or
+        pastes Bevel's plan; `src/workflows/workout.ts`, one per day), included in Plan my day (Claude and Gemini),
+        with Add to Motion (length read from the text). Asked her to check Bevel → Settings for a calendar option
+        that writes workouts; if it exists, they'd show up on their own.
       - [ ] **Google Chat** (she said yes, later): a "Team messages" card from Kristin and Frankie. Check first whether
         her Chat is on Google Workspace; the Chat API doesn't serve personal @gmail.com accounts.
       - [x] **Motion (2026-11-08):** Marlys loves that Motion fits tasks into her schedule and moves them, so Motion

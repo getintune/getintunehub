@@ -30,6 +30,9 @@ export async function planPrompt(hub: Hub, now = new Date()): Promise<string> {
   lines.push("From my app, things on my lists that need me:");
   lines.push(...(n.length ? n.map((x) => `- ${x.name} (${x.list}, ${x.stage}): ${x.title}${x.kind === "next" ? (x.days > 0 ? `, ${x.days} day${x.days === 1 ? "" : "s"} overdue` : ", due today") : `, waiting ${x.days} days`}`) : ["- nothing"]));
   if (therapy) lines.push(`- plus ${therapy} therapy admin item${therapy === 1 ? "" : "s"} (check Grow Therapy)`);
+  const { todaysWorkout } = await import("./workout.js");
+  const w = todaysWorkout(hub, now);
+  if (w) lines.push("", `Today's workout (planned in Bevel): ${w.text}${w.minutes ? ` (about ${w.minutes} min)` : ""}. Fit it into the day around my appointments.`);
   const { growAlerts } = await import("./grow.js");
   const grow = await growAlerts(hub, 3, now).catch(() => []);
   if (grow.length) lines.push("", "Grow Therapy (from info@, initials only; details stay in Grow):", ...grow.map((g) => `- ${g.title}`));
