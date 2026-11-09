@@ -126,7 +126,7 @@ export async function connectOutlook() {
   console.log(`Connecting your work email (${cfg.outlook.mailboxes.join(" and ")}) to ${app}. It only READS mail: it can't send, move or delete anything.`);
   if (!cfg.outlook.clientId) {
     console.log("\nMicrosoft needs a one-time 'app registration'. Each page opens in your browser; sign in with your Microsoft 365 admin account.");
-    step(1, `Click "+ New registration". Name: ${app}. Who can use it: "Accounts in this organizational directory only". Leave Redirect URI empty. Click Register.`);
+    step(1, `Click "+ New registration". Name: ${app}. Supported account types: "Single tenant only - <your organization>" (older screens call it "Accounts in this organizational directory only"). Leave Redirect URI empty. Click Register.`);
     openBrowser("https://entra.microsoft.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade");
     await ask("   Press Enter when it's registered... ");
     const id = await ask('2. On the page that opened, copy the "Application (client) ID" and paste it here: ');
