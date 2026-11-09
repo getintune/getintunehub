@@ -30,6 +30,26 @@ export interface GenerateRequest {
   tools?: FunctionDeclaration[];
   /** Ask for JSON matching this schema (no tools). */
   json?: unknown;
+  /** Told when the app is waiting out Gemini's per-minute free limit (seconds), so the page can say so. */
+  onWait?: (seconds: number) => void;
+}
+
+/** Gemini's free limit was hit: `daily` when it's the per-day one (resets overnight), else the per-minute one. */
+export class GeminiLimitError extends Error {
+  constructor(public daily: boolean) {
+    super(
+      daily
+        ? "Gemini's free daily limit is used up (it resets overnight). For today, use Plan my day in Claude: it's free on your Claude subscription."
+        : "Gemini's free per-minute limit is busy. Wait a minute and try again.",
+    );
+  }
+}
+
+/** Which free limit a 429 is about, and how long Google asks to wait. */
+export function quotaInfo(msg: string): { daily: boolean; retrySeconds?: number } {
+  const daily = /PerDay|per[ _-]?day|daily/i.test(msg);
+  const m = msg.match(/retryDelay"?\s*[:=]\s*"?(\d+(?:\.\d+)?)s/i) ?? msg.match(/retry in (\d+(?:\.\d+)?)\s*s/i);
+  return { daily, retrySeconds: m ? Math.ceil(parseFloat(m[1])) : undefined };
 }
 export interface GenerateResult {
   text: string;
@@ -75,7 +95,7 @@ export class LiveGemini implements GeminiClient {
   readonly kind = "gemini" as const;
   /** Models Google retired, and what's used instead (for the rest of this run). */
   private swaps: Record<string, string> = {};
-  constructor(private apiKey: string, private baseUrl = "", private sdk?: GenAiSdk) {}
+  constructor(private apiKey: string, private baseUrl = "", private sdk?: GenAiSdk, private sleep = (ms: number) => new Promise<void>((ok) => setTimeout(ok, ms))) {}
   connected() {
     return !!this.apiKey;
   }
@@ -98,6 +118,7 @@ export class LiveGemini implements GeminiClient {
   async generate(r: GenerateRequest): Promise<GenerateResult> {
     const ai = await this.client();
     let model = this.swaps[r.model] ?? r.model;
+    let waits = 0;
     for (let attempt = 0; ; attempt++) {
       try {
         return { ...(await this.call(ai, model, r)), model };
@@ -111,7 +132,19 @@ export class LiveGemini implements GeminiClient {
             continue;
           }
         }
-        if (/429|RESOURCE_EXHAUSTED|quota/i.test(msg)) throw new Error("Gemini's free tier limit is used up for now. Try again in a minute (or tomorrow, for the daily limit).");
+        if (/429|RESOURCE_EXHAUSTED|quota|rate limit/i.test(msg)) {
+          const q = quotaInfo(msg);
+          // The per-minute limit: wait as long as Google asks (a few times), then carry on.
+          if (!q.daily && waits < 4) {
+            const secs = Math.min(Math.max(q.retrySeconds ?? 20, 5), 70);
+            waits++;
+            r.onWait?.(secs);
+            await this.sleep(secs * 1000);
+            attempt--; // a wait isn't a model change
+            continue;
+          }
+          throw new GeminiLimitError(q.daily);
+        }
         if (/API key|401|403|PERMISSION_DENIED/i.test(msg)) throw new Error("Gemini didn't accept the key. Check GEMINI_API_KEY in the .env file (from aistudio.google.com → Get API key).");
         throw new Error(`Gemini: ${msg}`);
       }
@@ -162,7 +195,8 @@ export class MockGemini implements GeminiClient {
     return true;
   }
   async generate(r: GenerateRequest): Promise<GenerateResult> {
-    this.requests.push(structuredClone(r));
+    const { onWait: _onWait, ...plain } = r;
+    this.requests.push(structuredClone(plain));
     const next = this.script.shift();
     const out = next ? next(r) : { text: "OK" };
     const calls = out.calls ?? [];

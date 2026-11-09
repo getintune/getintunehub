@@ -2233,12 +2233,13 @@ async function onAnswer(e) {
   }
   $("#ans-q").textContent = e.prompt;
   $("#ans-body").innerHTML = e.error ? `<p style="color:var(--bad)">${esc(e.error)}</p>` : md(e.text || "(no answer)");
-  $("#ans-acts").innerHTML = [...(e.people || []).map((x) => `<button class="btn small" data-do="person" data-id="${esc(x.id)}">Open ${esc(x.name)}</button>`), ...e.contacts.map((q) => `<button class="btn small" data-ans-people="${esc(q)}">${msI("contacts")} ${esc(q)} in Contacts</button>`), e.drafts.length ? `<button class="btn small" data-label-go="HUB_DRAFTS">Claude drafts</button>` : ""].join("");
+  $("#ans-acts").innerHTML = [...(/daily limit/i.test(e.error || "") ? [`<button class="btn small primary" data-ans-claude="${esc(e.prompt)}">Ask in Claude instead</button>`] : []), ...(e.people || []).map((x) => `<button class="btn small" data-do="person" data-id="${esc(x.id)}">Open ${esc(x.name)}</button>`), ...e.contacts.map((q) => `<button class="btn small" data-ans-people="${esc(q)}">${msI("contacts")} ${esc(q)} in Contacts</button>`), e.drafts.length ? `<button class="btn small" data-label-go="HUB_DRAFTS">Claude drafts</button>` : ""].join("");
   if (!$("#answerdlg").open) $("#answerdlg").showModal();
 }
 $("#answerdlg").addEventListener("click", (e) => {
   if (e.target === $("#answerdlg")) { $("#answerdlg").close(); return; }
   const o = e.target.closest("[data-do=person]"); if (o) { $("#answerdlg").close(); return; } // the global handler opens them
+  const ac = e.target.closest("[data-ans-claude]"); if (ac) { $("#answerdlg").close(); handoff({ kind: "ask", text: ac.dataset.ansClaude }); return; }
   const pq = e.target.closest("[data-ans-people]"); if (pq) { $("#answerdlg").close(); showTab("people"); $("#ppl-q").value = pq.dataset.ansPeople; loadPeople(pq.dataset.ansPeople, true); return; }
   const lg = e.target.closest("[data-label-go]"); if (lg) { $("#answerdlg").close(); showTab("mail"); setTimeout(() => $(`#labels [data-label="${lg.dataset.labelGo}"]`)?.click(), 400); }
 });
@@ -2338,6 +2339,7 @@ zgrips(); for (const k of Object.keys(ZONES)) zapply(k);
 // ============================================================= Today's brief: its own tab, every item a checkbox
 // The dashboard keeps one line ("Today's brief: 3 of 11 done · Open"). Ticks are saved with the brief, so a new
 // brief (the 7 AM one, or Plan again) starts with nothing ticked.
+document.addEventListener("click", (e) => { if (e.target.closest("[data-plan-claude]")) { e.preventDefault(); handoff({ kind: "plan" }); } });
 async function startPlan() {
   if (!status.agent) return handoff({ kind: "plan" });
   try { await api("/api/plan", { method: "POST" }); } catch (e) { log(e.message, "t-err"); }
@@ -2376,7 +2378,7 @@ async function renderBrief() {
       ${p.state === "done" && total ? `<div class="bprog"><div class="bar"><span style="width:${Math.round((doneN / total) * 100)}%"></span></div><b>${doneN} of ${total} done</b>${doneN ? `<button class="linkbtn" data-do="briefclear">Untick all</button>` : ""}</div>` : ""}
       <div class="card brief ${p.state}">${p.state === "none" ? `<p class="muted" style="margin:0">No brief yet. ${status.agent ? `Press <b>Plan my day with ${AGENT()}</b>, or wait for the morning one.` : "Press <b>Plan my day in Claude</b>: it opens your Claude app with today's lists, sign-ups and calendar, and Claude writes your brief there."}</p>`
         : p.state === "running" ? `<div class="bwork"><span class="spin"></span>${AGENT()} is going through your lists, inbox, calendar and tasks…</div>${p.steps.length ? `<div class="bsteps">${p.steps.slice(-5).map((x) => `<div>${esc(x)}</div>`).join("")}</div>` : ""}`
-        : p.state === "error" ? `<div class="small" style="color:var(--bad)">${esc(p.error || "Claude couldn't finish the plan.")}</div>`
+        : p.state === "error" ? `<div class="small" style="color:var(--bad)">${esc(p.error || "The plan didn't finish.")}</div>${/daily limit/i.test(p.error || "") ? `<button class="btn primary" type="button" data-plan-claude="1" style="margin-top:10px">Plan my day in Claude instead</button>` : ""}`
         : `<div class="btext">${html}</div>`}</div>`;
     $("#briefplan")?.addEventListener("click", startPlan);
   }

@@ -5,7 +5,7 @@ import { recordCost } from "./costs.js";
 import { functionDeclarations, hubTools } from "./tools.js";
 
 /** What the agent is doing, for the page's live progress (each tool call, and its text as it goes). */
-export type AgentEvent = { type: "tool"; name: string; input: Record<string, unknown> } | { type: "text"; text: string };
+export type AgentEvent = { type: "tool"; name: string; input: Record<string, unknown> } | { type: "text"; text: string } | { type: "wait"; seconds: number };
 
 export function systemPrompt(hub: Hub): string {
   const p = hub.cfg.profile;
@@ -24,7 +24,7 @@ ${lists}
 
 Privacy: ${me} is a licensed therapist. Therapy clients (Grow Therapy) are kept by initials only, and their clinical details stay in Grow. Never write a therapy client's full name, diagnosis or session content anywhere, and don't put therapy clients in emails. Coaching and workshops are coaching, not therapy.
 
-Ask before anything that changes something; the app's tools also ask ${me} themselves. Keep replies short and plain: ${me} reads them between client sessions.`;
+Ask before anything that changes something; the app's tools also ask ${me} themselves. Keep replies short and plain: ${me} reads them between client sessions. Use as few tool calls as you can (they count against a small free limit): use what you're given first, and look things up only when you need to.`;
 }
 
 /** The most model turns one request may take (each turn can call several tools). */
@@ -45,7 +45,16 @@ export async function ask(hub: Hub, prompt: string, opts: { onMessage?: (e: Agen
   const usage = { input: 0, output: 0 };
   try {
     for (let turn = 0; turn < MAX_TURNS; turn++) {
-      const r = await hub.gemini.generate({ model: hub.cfg.model, system: systemPrompt(hub), contents, tools: decls });
+      const r = await hub.gemini.generate({
+        model: hub.cfg.model,
+        system: systemPrompt(hub),
+        contents,
+        tools: decls,
+        onWait: (seconds) => {
+          hub.say(`  … waiting ${seconds} s for Gemini's free per-minute limit`);
+          opts.onMessage?.({ type: "wait", seconds });
+        },
+      });
       usage.input += r.usage.input;
       usage.output += r.usage.output;
       contents.push(r.content);
