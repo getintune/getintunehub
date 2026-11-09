@@ -332,6 +332,7 @@
   .calside { border-right: 1px solid var(--line); padding: 14px 12px; overflow: auto; display: grid; gap: 14px; align-content: start; background: var(--panel); }
   .calside label { display: flex; gap: 8px; align-items: center; font-size: 14px; cursor: pointer; }
   .calside .sw { width: 12px; height: 12px; border-radius: 3px; flex: none; }
+  .calside .swbtn { width: 18px; height: 18px; border-radius: 50%; }
   .calmain { display: flex; flex-direction: column; min-height: 0; }
   .caltool { display: flex; gap: 8px; align-items: center; padding: 12px 18px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
   .caltool h2 { margin: 0 8px; font-size: 20px; font-weight: 500; flex: 1; min-width: 160px; }
@@ -349,7 +350,12 @@
   .wk .col { position: relative; border-left: 1px solid var(--line); cursor: copy; }
   .wk .col .hr { position: absolute; left: 0; right: 0; border-top: 1px solid var(--line); opacity: .55; }
   .wk .col .now { position: absolute; left: 0; right: 0; border-top: 2px solid var(--bad); z-index: 2; }
-  .ev { position: absolute; border-radius: 5px; padding: 2px 6px; font-size: 12px; line-height: 1.3; overflow: hidden; cursor: pointer; color: #0e1526; border: 1px solid var(--bg); z-index: 1; }
+  .ev { position: absolute; border-radius: 5px; padding: 2px 6px; font-size: 12px; line-height: 1.3; overflow: hidden; cursor: pointer; color: #1d1b3a; border: 1px solid var(--bg); z-index: 1; }
+  .swbtn { border: 1px solid color-mix(in srgb, var(--ink) 25%, transparent); cursor: pointer; padding: 0; flex: none; }
+  .colorpop { position: fixed; z-index: 60; display: grid; grid-template-columns: repeat(5, 26px); gap: 6px; padding: 10px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 6px 20px rgba(0,0,0,.18); }
+  .colorpop button { width: 26px; height: 26px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; }
+  .colorpop button.on { border-color: var(--ink); }
+  .colorpop .reset { grid-column: 1 / -1; width: auto; height: auto; border-radius: 6px; background: var(--soft); color: var(--ink); font-size: 12px; padding: 4px; border: 1px solid var(--line); }
   .ev b { font-weight: 600; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .ev.chip { position: static; white-space: nowrap; text-overflow: ellipsis; }
   .mo { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
@@ -1032,7 +1038,7 @@ async function loadToday() {
       <div class="side">
         <div class="card"><h3>Today <button class="btn small" data-do="gocal">Calendar</button></h3>
           ${d.travelStart ? "" : `<form class="row" id="startform" style="gap:6px;margin:0 0 10px"><input type="text" id="startaddr" placeholder="Where your day starts (home address)" style="flex:1"><button class="btn small primary">Save</button></form><div class="small muted" style="margin:-6px 0 10px">Then each appointment with an address shows when to leave. Saved on your Mac only.</div>`}
-          ${(d.schedule = (d.schedule || []).filter((e) => !isHiddenEv(e))) && ""}${d.calendarConnected ? (d.schedule.length ? `<ul class="items">${d.schedule.map((e) => `<li><span class="sw" style="display:inline-block;width:9px;height:9px;border-radius:2px;background:${esc(e.color || "#7aa7ff")}"></span> <b>${e.allDay ? "All day" : hm(e.start)}</b> ${esc(e.title)}${e.location ? `<div class="small muted">${esc(e.location)}</div>` : ""}${d.travel?.[e.id] ? `<div class="small ${d.travel[e.id].late ? "" : "muted"}">${d.travel[e.id].late ? `<span style="color:var(--bad)">⚠ ${d.travel[e.id].late} min short from ${esc(d.travel[e.id].fromLabel)}</span>` : `🚗 Leave by <b>${hm(d.travel[e.id].leaveBy)}</b> · ${d.travel[e.id].minutes} min from ${esc(d.travel[e.id].fromLabel)}`} · <a href="${esc(d.travel[e.id].mapsUrl)}" target="_blank" rel="noopener">Directions</a></div>` : ""}</li>`).join("")}</ul>` : `<p class="muted" style="margin:0">Nothing on the calendar today.</p>`) : `<p class="muted" style="margin:0">Connect your calendar to see today here.</p>`}
+          ${(d.schedule = (d.schedule || []).filter((e) => !isHiddenEv(e))) && ""}${d.calendarConnected ? (d.schedule.length ? `<ul class="items">${d.schedule.map((e) => `<li><span class="sw" style="display:inline-block;width:9px;height:9px;border-radius:2px;background:${esc(calColor(e))}"></span> <b>${e.allDay ? "All day" : hm(e.start)}</b> ${esc(e.title)}${e.location ? `<div class="small muted">${esc(e.location)}</div>` : ""}${d.travel?.[e.id] ? `<div class="small ${d.travel[e.id].late ? "" : "muted"}">${d.travel[e.id].late ? `<span style="color:var(--bad)">⚠ ${d.travel[e.id].late} min short from ${esc(d.travel[e.id].fromLabel)}</span>` : `🚗 Leave by <b>${hm(d.travel[e.id].leaveBy)}</b> · ${d.travel[e.id].minutes} min from ${esc(d.travel[e.id].fromLabel)}`} · <a href="${esc(d.travel[e.id].mapsUrl)}" target="_blank" rel="noopener">Directions</a></div>` : ""}</li>`).join("")}</ul>` : `<p class="muted" style="margin:0">Nothing on the calendar today.</p>`) : `<p class="muted" style="margin:0">Connect your calendar to see today here.</p>`}
           <div class="small muted" style="margin:12px 0 4px">Motion today${d.motionKind === "mock" ? " (practice tasks)" : ""} <a href="https://app.usemotion.com/" target="_blank" rel="noopener" class="small">Open Motion</a></div>
           ${d.motionError ? `<p class="small" style="${/isn't connected yet/.test(d.motionError) ? "" : "color:var(--bad);"}margin:0">${esc(d.motionError)}</p>` : d.motion ? `${d.motion.scheduled.map((t) => `<div class="row" style="gap:8px;padding:3px 0"><b class="small" style="min-width:58px">${hm(t.scheduledStart)}</b><span style="flex:1;min-width:0">${esc(t.name)}</span><span class="small muted">${t.duration ? t.duration + " min" : ""}</span></div>`).join("") || `<p class="small muted" style="margin:0">Nothing scheduled in Motion today.</p>`}${d.motion.overdue.map((t) => `<div class="row" style="gap:8px;padding:3px 0"><b class="small" style="min-width:58px;color:var(--bad)">overdue</b><span style="flex:1;min-width:0">${esc(t.name)}</span></div>`).join("")}` : ""}
           <form class="row" id="motionadd" style="margin-top:8px;gap:6px"><input type="text" id="motionname" placeholder="Add a task to Motion…" style="flex:1"><input type="date" id="motiondue" style="width:auto" title="Deadline (optional)"><button class="btn small">Add</button></form>
@@ -1631,6 +1637,35 @@ $("#pl-audible").addEventListener("click", () => {
 
 // ============================================================= Calendar + Google Tasks
 const HOUR_H = 46, H0 = 6, H1 = 21;
+// ---- calendar colors: her own pick per calendar (remembered on this computer), from colors that suit her brand,
+// and event text that's always readable (dark text on light colors, white on dark ones).
+const CAL_COLORS = [["Lavender", "#ada9d3"], ["Light indigo", "#c5c2ee"], ["Indigo", "#4241a0"], ["Sky", "#a9d2f2"], ["Teal", "#57bbbf"], ["Sage", "#b5dcc0"], ["Peach", "#f4c0af"], ["Gold", "#efe19a"], ["Rose", "#f2b3cc"], ["Stone", "#dcd9d2"]];
+const calColor = (e) => (store.get("calcolors", {})[e.calendarId] || e.color || "#ada9d3");
+function inkOn(bg) {
+  const m = String(bg).match(/^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i);
+  if (!m) return "#1d1b3a";
+  const lin = (h) => { const c = parseInt(h, 16) / 255; return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; };
+  const L = 0.2126 * lin(m[1]) + 0.7152 * lin(m[2]) + 0.0722 * lin(m[3]);
+  return L > 0.36 ? "#1d1b3a" : "#ffffff";
+}
+document.addEventListener("click", (e) => {
+  const b = e.target.closest("[data-colorcal]");
+  const pop = $("#colorpop");
+  if (!b) { if (pop && !e.target.closest("#colorpop")) pop.remove(); return; }
+  e.preventDefault(); e.stopPropagation();
+  pop?.remove();
+  const id = b.dataset.colorcal, cur = calColor({ calendarId: id });
+  const el = document.createElement("div"); el.id = "colorpop"; el.className = "colorpop";
+  el.innerHTML = CAL_COLORS.map(([n, c]) => `<button type="button" data-pick="${c}" title="${n}" class="${c === cur ? "on" : ""}" style="background:${c}"></button>`).join("") + `<button type="button" class="reset" data-pick="">Original</button>`;
+  document.body.appendChild(el);
+  const r = b.getBoundingClientRect(), z = ZOOM();
+  el.style.left = r.left / z + "px"; el.style.top = (r.bottom + 6) / z + "px";
+  el.addEventListener("click", (ev) => {
+    const p = ev.target.closest("[data-pick]"); if (!p) return;
+    const all = store.get("calcolors", {}); if (p.dataset.pick) all[id] = p.dataset.pick; else delete all[id];
+    store.set("calcolors", all); el.remove(); loadCal(); if (store.get("tab") === "today") loadToday();
+  });
+});
 let calView = store.get("calview", "week"), calDate = new Date(), cals = [], taskLists = [], calEvents = [], calTasks = [], openTasks = [];
 let hiddenCals = new Set(store.get("hiddencals", [])), showTasks = store.get("showtasks", true);
 const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -1647,7 +1682,7 @@ async function loadCal() {
   try { cals = await api("/api/cal/calendars"); } catch (e) { cals = []; }
   try { taskLists = status.tasksConnected === false ? [] : await api("/api/tasks/lists"); } catch { taskLists = []; }
   $("#ev-cal").innerHTML = cals.filter((c) => c.writable).map((c) => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join("");
-  $("#cal-list").innerHTML = cals.map((c) => `<label><input type="checkbox" data-cal="${esc(c.id)}" ${hiddenCals.has(c.id) ? "" : "checked"} style="width:auto"><span class="sw" style="background:${esc(c.color)}"></span>${esc(c.name)}</label>`).join("") +
+  $("#cal-list").innerHTML = cals.map((c) => `<label><input type="checkbox" data-cal="${esc(c.id)}" ${hiddenCals.has(c.id) ? "" : "checked"} style="width:auto"><button type="button" class="sw swbtn" data-colorcal="${esc(c.id)}" title="Change this calendar's color" style="background:${esc(calColor({ calendarId: c.id, color: c.color }))}"></button>${esc(c.name)}</label>`).join("") +
     `<label><input type="checkbox" id="cal-showtasks" ${showTasks ? "checked" : ""} style="width:auto"><span class="sw" style="background:var(--ink)"></span>Google Tasks</label>`;
   renderTaskPanel();
   renderCal();
@@ -1699,7 +1734,7 @@ function legLine(g) {
   return `${g.late ? `<b style="color:var(--bad)">⚠ ${g.late} min short</b> coming from ${esc(g.fromLabel)}. ` : ""}About <b>${g.minutes} min</b> (${g.miles} mi) from ${esc(g.fromLabel)}${g.rush ? " at rush hour" : ""} · leave by <b>${t}</b> · <a href="${esc(g.mapsUrl)}" target="_blank" rel="noopener">Directions ↗</a>`;
 }
 const taskChip = (k) => `<div class="ev chip" style="background:var(--panel-2);color:var(--ink);border-color:var(--line)" data-task="${esc(k.id)}" data-list="${esc(k.listId)}" title="${esc(k.title)}"><span data-check="1" style="cursor:pointer">${k.completed ? "☑" : "☐"}</span> <span style="${k.completed ? "text-decoration:line-through;opacity:.6" : ""}">${esc(k.title)}</span></div>`;
-const evChip = (e) => `<div class="ev chip" style="background:${esc(e.color || "#7aa7ff")}" data-ev="${esc(e.id)}" data-cal="${esc(e.calendarId)}" title="${esc(e.title)}${calLegs[e.id] ? ` · ${calLegs[e.id].minutes} min drive` : ""}">${e.allDay ? "" : hm(e.start) + " "}${esc(e.title)}${calLegs[e.id] ? ` <span class="evdrive">🚗${calLegs[e.id].minutes}m</span>` : ""}</div>`;
+const evChip = (e) => `<div class="ev chip" style="background:${esc(calColor(e))};color:${inkOn(calColor(e))}" data-ev="${esc(e.id)}" data-cal="${esc(e.calendarId)}" title="${esc(e.title)}${calLegs[e.id] ? ` · ${calLegs[e.id].minutes} min drive` : ""}">${e.allDay ? "" : hm(e.start) + " "}${esc(e.title)}${calLegs[e.id] ? ` <span class="evdrive">🚗${calLegs[e.id].minutes}m</span>` : ""}</div>`;
 function renderWeek(start, days) {
   const today = new Date();
   const dates = Array.from({ length: days }, (_, i) => new Date(start.getTime() + i * 864e5));
@@ -1715,7 +1750,7 @@ function renderWeek(start, days) {
     html += `<div class="col" data-day="${ymd(d)}" style="height:${hours.length * HOUR_H}px">${hours.map((_, i) => `<div class="hr" style="top:${i * HOUR_H}px"></div>`).join("")}
       ${sameDay(d, today) ? `<div class="now" style="top:${pos(today.toISOString())}px"></div>` : ""}
       ${placed.map(({ e, l }) => { const g = calLegs[e.id]; if (!g) return ""; const top = Math.max(0, pos(g.leaveBy)), bot = pos(e.start); return bot - top < 6 ? "" : `<div class="drive ${g.late ? "late" : ""}" data-ev="${esc(e.id)}" data-cal="${esc(e.calendarId)}" style="top:${top}px;height:${bot - top - 1}px;left:calc(${(l / n) * 100}% + 2px);width:calc(${100 / n}% - 4px)" title="Leave by ${hm(g.leaveBy)}: ${g.minutes} min from ${esc(g.fromLabel)}"><span>🚗 ${g.late ? `${g.late} min short` : `leave ${hm(g.leaveBy)} · ${g.minutes} min`}</span></div>`; }).join("")}
-      ${placed.map(({ e, l }) => { const top = Math.max(0, pos(e.start)); const h = Math.max(20, pos(e.end) - top - 2); return `<div class="ev" data-ev="${esc(e.id)}" data-cal="${esc(e.calendarId)}" style="top:${top}px;height:${h}px;left:calc(${(l / n) * 100}% + 2px);width:calc(${100 / n}% - 4px);background:${esc(e.color || "#7aa7ff")}"><b>${esc(e.title)}</b>${hm(e.start)}${e.location ? ` · ${esc(e.location.split(",")[0])}` : ""}</div>`; }).join("")}</div>`;
+      ${placed.map(({ e, l }) => { const top = Math.max(0, pos(e.start)); const h = Math.max(20, pos(e.end) - top - 2); return `<div class="ev" data-ev="${esc(e.id)}" data-cal="${esc(e.calendarId)}" style="top:${top}px;height:${h}px;left:calc(${(l / n) * 100}% + 2px);width:calc(${100 / n}% - 4px);background:${esc(calColor(e))};color:${inkOn(calColor(e))}"><b>${esc(e.title)}</b>${hm(e.start)}${e.location ? ` · ${esc(e.location.split(",")[0])}` : ""}</div>`; }).join("")}</div>`;
   }
   $("#cal-body").innerHTML = html + "</div>";
   const nowTop = (Math.max(H0, Math.min(H1 - 2, new Date().getHours() - 1)) - H0) * HOUR_H;
