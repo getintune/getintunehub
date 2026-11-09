@@ -806,6 +806,7 @@
         <button class="btn primary" id="cal-new" type="button">New event</button>
         <div><div class="small muted" style="margin-bottom:6px">My calendars</div><div id="cal-list" style="display:grid;gap:6px"></div></div>
         <div id="cal-hidden" hidden></div>
+        <div id="cal-start"></div>
         <div><div class="small muted" style="margin-bottom:6px">Free time (next 5 workdays)</div><div class="row" style="margin-bottom:6px"><select id="cal-dur" style="width:auto"><option value="30">30 min</option><option value="60" selected>1 hour</option><option value="120">2 hours</option></select><button class="btn small" id="cal-free" type="button">Find</button></div><div class="slots" id="cal-slots"></div></div>
       </div>
       <div class="calmain">
@@ -955,7 +956,7 @@ function showTab(t) {
   if (t === "brief") renderBrief();
   if (t === "lists") loadLists();
   if (t === "work") loadWork();
-  if (t === "cal") loadCal();
+  if (t === "cal") { loadCal(); renderStartSetting(); }
   if (t === "music" && !$("#sp-bar")) renderMusic();
   setCrumbs(`<b>${TAB_NAMES[t]}</b>`);
   if (t === "today") loadToday();
@@ -1030,6 +1031,7 @@ async function loadToday() {
       </div>
       <div class="side">
         <div class="card"><h3>Today <button class="btn small" data-do="gocal">Calendar</button></h3>
+          ${d.travelStart ? "" : `<form class="row" id="startform" style="gap:6px;margin:0 0 10px"><input type="text" id="startaddr" placeholder="Where your day starts (home address)" style="flex:1"><button class="btn small primary">Save</button></form><div class="small muted" style="margin:-6px 0 10px">Then each appointment with an address shows when to leave. Saved on your Mac only.</div>`}
           ${(d.schedule = (d.schedule || []).filter((e) => !isHiddenEv(e))) && ""}${d.calendarConnected ? (d.schedule.length ? `<ul class="items">${d.schedule.map((e) => `<li><span class="sw" style="display:inline-block;width:9px;height:9px;border-radius:2px;background:${esc(e.color || "#7aa7ff")}"></span> <b>${e.allDay ? "All day" : hm(e.start)}</b> ${esc(e.title)}${e.location ? `<div class="small muted">${esc(e.location)}</div>` : ""}${d.travel?.[e.id] ? `<div class="small ${d.travel[e.id].late ? "" : "muted"}">${d.travel[e.id].late ? `<span style="color:var(--bad)">⚠ ${d.travel[e.id].late} min short from ${esc(d.travel[e.id].fromLabel)}</span>` : `🚗 Leave by <b>${hm(d.travel[e.id].leaveBy)}</b> · ${d.travel[e.id].minutes} min from ${esc(d.travel[e.id].fromLabel)}`} · <a href="${esc(d.travel[e.id].mapsUrl)}" target="_blank" rel="noopener">Directions</a></div>` : ""}</li>`).join("")}</ul>` : `<p class="muted" style="margin:0">Nothing on the calendar today.</p>`) : `<p class="muted" style="margin:0">Connect your calendar to see today here.</p>`}
           <div class="small muted" style="margin:12px 0 4px">Motion today${d.motionKind === "mock" ? " (practice tasks)" : ""} <a href="https://app.usemotion.com/" target="_blank" rel="noopener" class="small">Open Motion</a></div>
           ${d.motionError ? `<p class="small" style="${/isn't connected yet/.test(d.motionError) ? "" : "color:var(--bad);"}margin:0">${esc(d.motionError)}</p>` : d.motion ? `${d.motion.scheduled.map((t) => `<div class="row" style="gap:8px;padding:3px 0"><b class="small" style="min-width:58px">${hm(t.scheduledStart)}</b><span style="flex:1;min-width:0">${esc(t.name)}</span><span class="small muted">${t.duration ? t.duration + " min" : ""}</span></div>`).join("") || `<p class="small muted" style="margin:0">Nothing scheduled in Motion today.</p>`}${d.motion.overdue.map((t) => `<div class="row" style="gap:8px;padding:3px 0"><b class="small" style="min-width:58px;color:var(--bad)">overdue</b><span style="flex:1;min-width:0">${esc(t.name)}</span></div>`).join("")}` : ""}
@@ -1074,6 +1076,17 @@ document.addEventListener("change", async (e) => {
   const c = e.target.closest("[data-feature]"); if (!c) return;
   try { await api("/api/settings/claude", { method: "POST", body: { feature: c.dataset.feature, on: c.checked } }); log(`${c.closest("label").querySelector("span").firstChild.textContent.trim()}: ${c.checked ? "on" : "off"}.`); } catch (err) { log(err.message, "t-err"); c.checked = !c.checked; }
 });
+// Where her day starts, for "leave by" times (dashboard box, and Calendar's side panel to change it).
+async function saveStart(addr) {
+  try { await api("/api/settings/travel", { method: "POST", body: { start: addr } }); log(addr ? "Saved where your day starts. Drive times will show for appointments with an address." : "Removed your start address."); loadToday(); if (store.get("tab") === "cal") renderCal(); renderStartSetting(); } catch (e) { log(e.message, "t-err"); }
+}
+document.addEventListener("submit", (e) => { if (e.target.id !== "startform") return; e.preventDefault(); const v = $("#startaddr").value.trim(); if (v) saveStart(v); });
+async function renderStartSetting() {
+  const el = $("#cal-start"); if (!el) return;
+  let r; try { r = await api("/api/settings/travel"); } catch { return; }
+  el.innerHTML = `<div class="small muted" style="margin-bottom:6px">Drive times start from</div><div class="small" style="margin-bottom:6px">${r.start ? esc(r.start) : `<span class="muted">not set</span>`}</div><button class="btn small" type="button" id="cal-start-btn">${r.start ? "Change" : "Add address"}</button>`;
+  $("#cal-start-btn").onclick = () => { const v = prompt("Where does your day start? (full address, e.g. 123 Main St, Denver, CO 80202)", r.start || ""); if (v !== null) saveStart(v.trim()); };
+}
 $("#today").addEventListener("click", (e) => {
   const f = e.target.closest("[data-prog]"); if (!f) return;
   curProg = f.dataset.prog; store.set("prog", curProg); $("#lstage").value = ""; showTab("lists");

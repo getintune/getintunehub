@@ -203,6 +203,21 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, { ok: true });
     }
     if (p === "/api/settings/spotify" && req.method === "GET") return send(res, 200, { clientId: cfg.spotify.clientId });
+    // ---- drive times: where her day starts (typed by her in the app, saved to .env on her Mac only)
+    if (p === "/api/settings/travel" && req.method === "GET") return send(res, 200, { start: cfg.travel.start });
+    if (p === "/api/settings/travel" && req.method === "POST") {
+      const start = String((await body(req)).start ?? "").replace(/[\r\n]+/g, " ").trim();
+      if (start && start.length < 6) return send(res, 400, { error: "Type the full address, e.g. 123 Main St, Denver, CO 80202." });
+      if (start) {
+        // null = the map couldn't find it; a failed look-up (no internet) still saves.
+        const found = await hub.travel.drive(start, start).catch(() => undefined);
+        if (found === null && hub.travel.kind !== "mock") return send(res, 400, { error: `The map couldn't find "${start}". Check the address (street, city, state).` });
+      }
+      const { setEnv } = await import("../cli/connect.js");
+      setEnv({ HUB_DAY_START_ADDRESS: start });
+      cfg.travel.start = start;
+      return send(res, 200, { ok: true, start });
+    }
     if (p === "/api/settings/spotify" && req.method === "POST") {
       const b = await body(req);
       const id = String(b.clientId ?? "").trim();
@@ -251,6 +266,7 @@ const server = http.createServer(async (req, res) => {
         motionKind: hub.motion.kind,
         calendarConnected: hub.calendar.connected(),
         recent,
+        travelStart: !!cfg.travel.start,
       });
     }
     if (p === "/api/plan" && req.method === "GET") return send(res, 200, { ...readPlan(), schedule: BRIEF });
