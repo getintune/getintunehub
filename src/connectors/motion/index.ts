@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
-import type { Config } from "../../core/config.js";
+import { TIME_ZONE, type Config } from "../../core/config.js";
 
 /**
  * Motion (usemotion.com): her tasks and her team's (Kristin, Frankie). Motion keeps the schedule: it fits each task
@@ -147,8 +147,7 @@ export class MockMotion implements MotionClient {
   private list: MotionTask[];
   constructor(fixture: string, private me = "Marlys Woods") {
     const raw: any[] = existsSync(fixture) ? JSON.parse(readFileSync(fixture, "utf8")).tasks : [];
-    const day0 = new Date();
-    day0.setHours(0, 0, 0, 0);
+    const day0 = startOfTodayIn(TIME_ZONE);
     const at = (h: number | undefined) => (h === undefined ? undefined : new Date(day0.getTime() + h * 3600e3).toISOString());
     this.list = raw.map((t, i) => ({
       id: t.id ?? `m${i + 1}`,
@@ -194,4 +193,12 @@ export class NotConnectedMotion implements MotionClient {
 export function makeMotion(cfg: Config): MotionClient {
   if (cfg.mode === "live" && cfg.motion.driver !== "motion") return new NotConnectedMotion();
   return cfg.motion.driver === "motion" ? new LiveMotion({ apiKey: cfg.motion.apiKey, workspaceId: cfg.motion.workspaceId }) : new MockMotion(path.join(cfg.hubRoot, "fixtures", "motion.json"), cfg.profile.owner);
+}
+
+/** Midnight today in her time zone (so practice tasks land on her today, whatever the computer's clock zone). */
+function startOfTodayIn(tz: string, now = new Date()): Date {
+  const p = Object.fromEntries(new Intl.DateTimeFormat("en-US", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false }).formatToParts(now).map((x) => [x.type, x.value]));
+  const asUtc = Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour % 24, +p.minute);
+  const offset = asUtc - Math.floor(now.getTime() / 60000) * 60000;
+  return new Date(Date.UTC(+p.year, +p.month - 1, +p.day) - offset);
 }

@@ -6,9 +6,7 @@ import { testHub } from "./helpers.js";
 describe("Motion", () => {
   it("shows what Motion scheduled for her today, in order, plus anything overdue", async () => {
     const { hub } = testHub();
-    const now = new Date();
-    now.setHours(8, 0, 0, 0);
-    const t = await motionToday(hub, now);
+    const t = await motionToday(hub); // practice tasks are placed on today in her time zone
     expect(t.scheduled.map((x) => x.name)).toEqual(["Post the workshop reminder on Instagram", "Review Frankie's countdown posts", "Workshop slides: final run-through", "Send Tom the coaching program details"]);
     expect(t.scheduled.every((x) => x.mine)).toBe(true);
   });

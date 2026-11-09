@@ -13,3 +13,4 @@ jobs/
 # the old estimating skill's copy and Python (Keystone setup; goes in PLAN step 4)
 estimator/
 .venv-py/
+.installed

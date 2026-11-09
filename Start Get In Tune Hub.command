@@ -17,7 +17,10 @@ fi
 
 # Get the latest version (skipped quietly when offline).
 export GIT_TERMINAL_PROMPT=0 GCM_INTERACTIVE=never
-git checkout -- package-lock.json >/dev/null 2>&1; git pull --ff-only --quiet >/dev/null 2>&1 && npm install --no-audit --no-fund --loglevel=error >/dev/null 2>&1
+# (Only when the app came from GitHub and Apple's tools are installed: otherwise the Mac would pop up an install window.)
+if [ -d .git ] && xcode-select -p >/dev/null 2>&1; then
+  git checkout -- package-lock.json >/dev/null 2>&1; git pull --ff-only --quiet >/dev/null 2>&1 && npm install --no-audit --no-fund --loglevel=error >/dev/null 2>&1
+fi
 
 (sleep 5; open "http://127.0.0.1:4317") &
 echo "Get In Tune Hub is running at http://127.0.0.1:4317"

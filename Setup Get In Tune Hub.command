@@ -1,11 +1,19 @@
 #!/bin/bash
-# Get In Tune Hub setup for Mac: the one file to download and open (right-click > Open > Open the first time).
-# It installs what the app needs (Apple's Command Line Tools, Node.js, GitHub's sign-in helper), signs you in to
-# GitHub in your browser, downloads the app to your home folder under "Get In Tune Hub", sets it up, and puts a
-# "Get In Tune Hub" icon on your Desktop. Run from inside an app folder, it sets up that folder. Safe to run again.
+# Get In Tune Hub setup for Mac (right-click > Open > Open the first time).
+# Usually it's inside the app download Claude sent you: it installs Node.js if needed (asks for your Mac password),
+# copies the app to your home folder under "Get In Tune Hub" (an update keeps your lists, settings and logins),
+# sets it up, and puts a "Get In Tune Hub" icon on your Desktop. On its own, it downloads the app from GitHub
+# instead. Safe to run again.
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
-if [ -f "$HERE/package.json" ] && [ -d "$HERE/src" ]; then HUB="$HERE"; else HUB="$HOME/Get In Tune Hub"; fi
+HUB="$HOME/Get In Tune Hub"
+# How the app gets here: "copy" from a download Claude sent (the usual way), "inplace" when this file is already
+# in the installed app, or "clone" from GitHub when this file is on its own.
+if [ -f "$HERE/package.json" ] && [ -d "$HERE/src" ]; then
+  if [ "$HERE" = "$HUB" ] || [ -f "$HERE/.installed" ]; then mode=inplace; HUB="$HERE"; else mode=copy; fi
+else
+  mode=clone
+fi
 REPO="https://github.com/getintune/getintunehub.git"
 
 say_step() { printf '\n== %s\n' "$1"; }
@@ -13,17 +21,17 @@ stop() { printf '\n%s\n\nCopy the message above to Claude if you need help. Pres
 
 # ---- 1. Git (comes with Apple's Command Line Tools): waits while the Mac installs them
 say_step "Apple's Command Line Tools (for downloading updates)"
-if ! xcode-select -p >/dev/null 2>&1; then
+if [ $mode = clone ] && ! xcode-select -p >/dev/null 2>&1; then
   xcode-select --install >/dev/null 2>&1
   echo "A window asks to install Apple's Command Line Tools: click Install, then Agree."
   echo "Waiting for it to finish (often 5-15 minutes)..."
   for _ in $(seq 1 180); do xcode-select -p >/dev/null 2>&1 && break; sleep 10; done
 fi
-git --version || stop "Git isn't ready yet. When the Command Line Tools install has finished, open this file again."
+if [ $mode = clone ]; then git --version || stop "Git isn't ready yet. When the Command Line Tools install has finished, open this file again."; else echo "Not needed for this install."; fi
 
 # ---- 2. Node.js (runs the app) and GitHub sign-in (downloads it): installed for you, with your Mac password
 need_node=0; command -v node >/dev/null 2>&1 || need_node=1
-cloning=0; [ "$HUB" != "$HERE" ] && [ ! -d "$HUB/.git" ] && cloning=1
+cloning=0; [ $mode = clone ] && [ ! -d "$HUB/.git" ] && cloning=1
 need_gcm=0
 if [ $cloning = 1 ] && [ ! -x /usr/local/share/gcm-core/git-credential-manager ]; then need_gcm=1; fi
 if [ $need_node = 1 ] || [ $need_gcm = 1 ]; then
@@ -55,9 +63,14 @@ if [ $need_gcm = 1 ]; then
 fi
 rm -rf "$TMPD"
 
-# ---- 3. Download (first time) or update the app
+# ---- 3. Put the app in place (your lists, settings and logins are never touched)
 say_step "Get In Tune Hub"
-if [ "$HUB" = "$HERE" ]; then
+if [ $mode = copy ]; then
+  echo "Installing the app to $HUB (keeping your lists, settings and logins)..."
+  mkdir -p "$HUB"
+  rsync -a --delete --exclude ".env" --exclude "auth/" --exclude "data/" --exclude ".hub/" --exclude "node_modules/" "$HERE/" "$HUB/" || stop "Couldn't copy the app into $HUB."
+  touch "$HUB/.installed"
+elif [ $mode = inplace ]; then
   echo "Setting up the app in $HUB"
 elif [ -d "$HUB/.git" ]; then
   echo "Updating $HUB..."
@@ -65,8 +78,11 @@ elif [ -d "$HUB/.git" ]; then
 else
   echo "Downloading the app to $HUB."
   echo "A GitHub sign-in opens: choose \"Sign in with your browser\", sign in, and click Authorize."
-  git clone "$REPO" "$HUB" || stop "The download didn't work. Check your internet connection and GitHub sign-in and open this file again, or use plan B (GitHub Desktop) in SETUP-ON-MAC.md."
+  git clone "$REPO" "$HUB" || stop "The download didn't work. Ask Claude to send you the app as a download instead."
+  touch "$HUB/.installed"
 fi
+# Files from a download are marked "from the internet": clear that so the Desktop icon opens with a double-click.
+xattr -dr com.apple.quarantine "$HUB" 2>/dev/null || true
 cd "$HUB" || stop "Couldn't open $HUB."
 
 # ---- 4. The app's packages
