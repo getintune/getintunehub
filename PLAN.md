@@ -92,6 +92,10 @@ Owner: Marlys. Fill in as you learn it:
   findahelpline.com (in the US, call or text 988)."* Also suggest she asks her liability insurer what wording they
   recommend for an LMFT offering coaching.
 
+- **Remind her (asked 2026-11-09):** decide on iPhone access. Recommended Option 1, Tailscale (free; private link
+  between her Mac and iPhone, works anywhere) plus a PIN screen and phone layout; Option 2 is home Wi-Fi only.
+  Nothing built yet.
+
 ## Steps
 
 Changes to the steps from what we learned (2026-11-07): her work email and calendar are **Microsoft 365 /

@@ -35,6 +35,8 @@ export interface CalEvent {
   myResponse?: string;
   /** Looks like a client session (e.g. from Grow): shown to her, but never put into Claude requests. */
   private?: boolean;
+  /** Why it counts as a client session (e.g. 'the title says "intake"'), for her to check. */
+  privateWhy?: string;
   /** Where it lives: Google Calendar or her Outlook calendar (read-only here). */
   source?: "google" | "outlook";
 }

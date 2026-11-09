@@ -17,9 +17,22 @@ const FROM_GROW = /growtherapy|grow therapy|\bgrow\b/i;
 const CLIENTISH = /\bclients?\b|\bintake\b|tele-?health|counsel+ing|therapy session|\bsession with\b|\bappointment with\b/i;
 const HER_BUSINESS = /get\s*in\s*tune(\s*music\s*therapy)?|getintunemusictherapy(\.com)?/gi;
 export function looksLikeClientSession(e: { subject?: string; location?: string; organizer?: string }): boolean {
+  return clientSessionReason(e) !== null;
+}
+
+/** Why an event counts as a client session (shown when she hovers over it), or null when it doesn't. */
+export function clientSessionReason(e: { subject?: string; location?: string; organizer?: string }): string | null {
   const clean = (t?: string) => String(t ?? "").replace(HER_BUSINESS, " ");
-  const title = clean(e.subject), place = clean(e.location), org = clean(e.organizer);
-  return FROM_GROW.test(`${title} ${place} ${org}`) || CLIENTISH.test(`${title} ${place}`);
+  const parts: [string, string][] = [["title", clean(e.subject)], ["place", clean(e.location)], ["organizer", clean(e.organizer)]];
+  for (const [where, text] of parts) {
+    const m = text.match(FROM_GROW);
+    if (m) return `the ${where} says "${m[0]}"`;
+  }
+  for (const [where, text] of parts.slice(0, 2)) {
+    const m = text.match(CLIENTISH);
+    if (m) return `the ${where} says "${m[0]}"`;
+  }
+  return null;
 }
 
 export class OutlookCalendar implements CalendarClient {
@@ -84,7 +97,10 @@ export function toEvent(c: CalendarInfo, e: any): CalEvent {
     meet: e.onlineMeeting?.joinUrl || undefined,
     recurringId: e.seriesMasterId || undefined,
     myResponse: ({ accepted: "accepted", declined: "declined", tentativelyAccepted: "tentative", notResponded: "needsAction" } as Record<string, string>)[e.responseStatus?.response] ?? undefined,
-    private: looksLikeClientSession({ subject: title, location, organizer: `${e.organizer?.emailAddress?.address ?? ""} ${e.organizer?.emailAddress?.name ?? ""}` }),
+    ...(() => {
+      const why = clientSessionReason({ subject: title, location, organizer: `${e.organizer?.emailAddress?.address ?? ""} ${e.organizer?.emailAddress?.name ?? ""}` });
+      return { private: why !== null, privateWhy: why ?? undefined };
+    })(),
     source: "outlook",
   };
 }

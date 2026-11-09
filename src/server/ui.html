@@ -1800,7 +1800,7 @@ function evTipHtml(e) {
   const cal = cals.find((c) => c.id === e.calendarId)?.name || "";
   const g = calLegs[e.id];
   const place = e.location && !/^https?:/i.test(e.location) ? e.location : e.location || e.meet ? "Online" : "";
-  return `<b>${esc(e.title || "(no title)")}</b><div>${esc(when)}</div>${place ? `<div class="muted">📍 ${esc(place)}</div>` : ""}${g ? `<div>🚗 Leave by ${hm(g.leaveBy)} · ${g.minutes} min${g.late ? ` <span style="color:var(--bad)">(${g.late} min short)</span>` : ""}</div>` : ""}${cal ? `<div class="muted">${esc(cal)}</div>` : ""}${e.private ? `<div class="muted">Client session: kept private in Claude and Gemini requests</div>` : ""}<div class="muted" style="margin-top:4px">Click to open</div>`;
+  return `<b>${esc(e.title || "(no title)")}</b><div>${esc(when)}</div>${place ? `<div class="muted">📍 ${esc(place)}</div>` : ""}${g ? `<div>🚗 Leave by ${hm(g.leaveBy)} · ${g.minutes} min${g.late ? ` <span style="color:var(--bad)">(${g.late} min short)</span>` : ""}</div>` : ""}${cal ? `<div class="muted">${esc(cal)}</div>` : ""}${e.private ? `<div class="muted">Treated as a client session${e.privateWhy ? ` because ${esc(e.privateWhy)}` : ""}: kept private in Claude and Gemini requests</div>` : ""}<div class="muted" style="margin-top:4px">Click to open</div>`;
 }
 $("#cal-body").addEventListener("mousemove", (ev) => {
   const tip = $("#evtip"), el = ev.target.closest("[data-ev]");
