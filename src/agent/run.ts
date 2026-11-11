@@ -51,7 +51,7 @@ export async function ask(hub: Hub, prompt: string, opts: { onMessage?: (e: Agen
         contents,
         tools: decls,
         onWait: (seconds) => {
-          hub.say(`  … waiting ${seconds} s for Gemini's free per-minute limit`);
+          hub.say(`  … Gemini is busy or at its free per-minute limit: trying again in ${seconds} s`);
           opts.onMessage?.({ type: "wait", seconds });
         },
       });

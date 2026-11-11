@@ -642,7 +642,7 @@ Your final reply is my brief for the day, shown at the top of my dashboard. Writ
         use: "brief",
         onMessage: (m) => {
           if (m.type === "wait") {
-            plan.steps.push(`Waiting ${m.seconds} s for Gemini's free per-minute limit…`);
+            plan.steps.push(`Gemini is busy: trying again in ${m.seconds} s…`);
             savePlan(plan);
             bus.emit({ type: "changed", what: "plan" });
             return;
