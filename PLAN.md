@@ -239,3 +239,5 @@ Outlook** (the Gmail tab becomes Outlook; Gmail stays only to catch team request
       it to ~/Get In Tune Hub keeping .env, auth/, data/, .hub/, node_modules/. Updates = a new zip. When GitHub is
       back: push the branch from her Mac's copy (or this session), merge, and the GitHub sign-in path works again.
 - [ ] **8. Tidy up.** Remove anything left from Keystone that she doesn't use. README in plain words for her.
+
+- 2026-11-11: Gemini kept returning 503 "high demand". Added a **Model** menu in the Gemini box on the Today page: she picks another Gemini model (e.g. Flash-Lite or an older Flash) and it's used right away and saved to `.env` (HUB_MODEL).

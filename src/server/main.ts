@@ -195,6 +195,7 @@ const server = http.createServer(async (req, res) => {
         provider: "Google Gemini (free tier)",
         model: cfg.model,
         fastModel: cfg.fastModel,
+        models: hub.gemini.connected() ? await (await import("../agent/models.js")).modelChoices(hub) : [],
         features: (Object.keys(c.FEATURES) as (keyof typeof c.FEATURES)[]).map((f) => ({ id: f, label: c.FEATURES[f].label, hint: c.FEATURES[f].hint, on: on[f], running: c.featureOn(hub, f) })),
         costs: c.costSummary(hub),
       });
@@ -202,6 +203,15 @@ const server = http.createServer(async (req, res) => {
     if ((p === "/api/settings/agent" || p === "/api/settings/claude") && req.method === "POST") {
       const b = await body(req);
       const c = await import("../agent/costs.js");
+      if (b.model !== undefined) {
+        const { setModel } = await import("../agent/models.js");
+        const { setEnv } = await import("../cli/connect.js");
+        try {
+          return send(res, 200, { ok: true, model: await setModel(hub, b.model, setEnv) });
+        } catch (e) {
+          return send(res, 400, { error: (e as Error).message });
+        }
+      }
       c.setFeature(hub, b.feature, !!b.on);
       return send(res, 200, { ok: true });
     }

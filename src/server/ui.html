@@ -1082,11 +1082,18 @@ function claudeCard(c) {
     <div class="wsbig"><b>${money(c.costs.month)}</b> this month · free tier</div>
     <div class="small muted" style="margin:-4px 0 8px">${c.costs.runs} run${c.costs.runs === 1 ? "" : "s"} this month (${c.costs.runsToday} today) · ${k(c.costs.tokens)} tokens of text</div>
     ${c.costs.byUse.length ? `<table class="tbl"><tbody>${c.costs.byUse.map((x) => `<tr><td>${esc(x.label)}</td><td class="num">${x.runs} run${x.runs === 1 ? "" : "s"}</td></tr>`).join("")}</tbody></table>` : `<p class="small muted">No Gemini runs yet this month.</p>`}
+    <label class="small muted" style="display:block;margin:12px 0 4px">Model for Ask and Plan my day (if one is busy, pick another)</label>
+    <select id="gemini-model">${(c.models || []).map((m) => `<option value="${esc(m.id)}" ${m.id === c.model ? "selected" : ""}>${esc(m.label)}</option>`).join("")}</select>
     <div class="small muted" style="margin:12px 0 6px">Gemini on its own (all start off)</div>
     ${c.features.map((f) => `<label class="row sw" title="${esc(f.hint)}" style="gap:8px;padding:3px 0;cursor:pointer"><input type="checkbox" data-feature="${esc(f.id)}" ${f.on ? "checked" : ""} style="width:auto"><span style="flex:1">${esc(f.label)}<div class="small muted">${esc(f.hint)}</div></span></label>`).join("")}
     <p class="small muted" style="margin:10px 0 0">On Gemini's free tier, Google may use what's sent to improve its products. Grow Therapy email and therapy clients' details are never sent.</p></div>`;
 }
 document.addEventListener("change", async (e) => {
+  if (e.target.id === "gemini-model") {
+    const sel = e.target, prev = [...sel.options].find((o) => o.defaultSelected)?.value;
+    try { await api("/api/settings/agent", { method: "POST", body: { model: sel.value } }); [...sel.options].forEach((o) => (o.defaultSelected = o.selected)); log(`Gemini now uses ${sel.selectedOptions[0].textContent}. Try Plan my day again.`); } catch (err) { log(err.message, "t-err"); if (prev) sel.value = prev; }
+    return;
+  }
   const c = e.target.closest("[data-feature]"); if (!c) return;
   try { await api("/api/settings/agent", { method: "POST", body: { feature: c.dataset.feature, on: c.checked } }); log(`${c.closest("label").querySelector("span").firstChild.textContent.trim()}: ${c.checked ? "on" : "off"}.`); } catch (err) { log(err.message, "t-err"); c.checked = !c.checked; }
 });

@@ -48,7 +48,7 @@ export class GeminiLimitError extends Error {
 /** Google's servers for the model are overloaded (503 "high demand"), and retrying and a lighter model didn't help. */
 export class GeminiBusyError extends Error {
   constructor() {
-    super("Gemini is very busy right now (Google says demand is high). Try again in a little while, or use Plan my day in Claude instead: it's free on your Claude subscription.");
+    super("Gemini is very busy right now (Google says demand is high). Try again in a little while, pick another model in the Gemini box on the Today page (Model), or use Plan my day in Claude instead: it's free on your Claude subscription.");
   }
 }
 
@@ -77,6 +77,8 @@ export interface GeminiClient {
   readonly kind: "gemini" | "mock" | "off";
   connected(): boolean;
   generate(r: GenerateRequest): Promise<GenerateResult>;
+  /** The models Google offers this key (for the model menu). */
+  models?(): Promise<string[]>;
 }
 
 /** The bit of Google's SDK the app uses (so tests can stand in for it). */
@@ -117,6 +119,9 @@ export class LiveGemini implements GeminiClient {
       this.sdk = new GoogleGenAI({ apiKey: this.apiKey, ...(this.baseUrl ? { httpOptions: { baseUrl: this.baseUrl } } : {}) }) as unknown as GenAiSdk;
     }
     return this.sdk;
+  }
+  async models(): Promise<string[]> {
+    return this.availableModels(await this.client());
   }
   private async availableModels(ai: GenAiSdk): Promise<string[]> {
     const out: string[] = [];
@@ -225,6 +230,9 @@ export class MockGemini implements GeminiClient {
   constructor(private script: ((r: GenerateRequest) => Partial<GenerateResult>)[] = []) {}
   connected() {
     return true;
+  }
+  async models() {
+    return ["models/gemini-3.5-flash", "models/gemini-3.5-flash-lite", "models/gemini-3.5-pro", "models/gemini-2.5-flash", "models/text-embedding-004"];
   }
   async generate(r: GenerateRequest): Promise<GenerateResult> {
     const { onWait: _onWait, ...plain } = r;
