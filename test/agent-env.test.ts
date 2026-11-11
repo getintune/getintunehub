@@ -103,3 +103,33 @@ describe("Gemini's free limits", () => {
     expect(err.message).toMatch(/Plan my day in Claude/);
   });
 });
+
+import { GeminiBusyError, lighterModel } from "../src/connectors/gemini/index.js";
+
+describe("when Gemini is overloaded (503 high demand)", () => {
+  const busyMsg = '{"error":{"code":503,"message":"This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.","status":"UNAVAILABLE"}}';
+  const ok = { text: "plan", candidates: [{ content: { role: "model", parts: [{ text: "plan" }] } }] };
+
+  it("retries, and gets through when the spike passes", async () => {
+    let n = 0;
+    const waited: number[] = [];
+    const sdk = { models: { async generateContent() { if (++n <= 2) throw new Error(busyMsg); return ok; }, async list() { return (async function* () {})(); } } };
+    const r = await new LiveGemini("k", "", sdk, async () => {}).generate({ model: "gemini-3.5-flash", system: "s", contents: [{ role: "user", parts: [{ text: "hi" }] }], onWait: (s) => waited.push(s) });
+    expect(r).toMatchObject({ text: "plan", model: "gemini-3.5-flash" });
+    expect(waited).toEqual([5, 15]);
+  });
+
+  it("then tries the lighter model, and finally says so kindly", async () => {
+    expect(lighterModel("gemini-3.5-flash")).toBe("gemini-3.5-flash-lite");
+    expect(lighterModel("gemini-3.5-flash-lite")).toBeNull();
+    const asked: string[] = [];
+    const lightOk = { models: { async generateContent(p: any) { asked.push(p.model); if (p.model === "gemini-3.5-flash") throw new Error(busyMsg); return ok; }, async list() { return (async function* () {})(); } } };
+    const r = await new LiveGemini("k", "", lightOk, async () => {}).generate({ model: "gemini-3.5-flash", system: "s", contents: [{ role: "user", parts: [{ text: "hi" }] }] });
+    expect(r.model).toBe("gemini-3.5-flash-lite");
+    expect(asked.at(-1)).toBe("gemini-3.5-flash-lite");
+    const allBusy = { models: { async generateContent() { throw new Error(busyMsg); }, async list() { return (async function* () {})(); } } };
+    const err = await new LiveGemini("k", "", allBusy, async () => {}).generate({ model: "gemini-3.5-flash", system: "s", contents: [{ role: "user", parts: [{ text: "hi" }] }] }).catch((e) => e);
+    expect(err).toBeInstanceOf(GeminiBusyError);
+    expect(err.message).toMatch(/Plan my day in Claude/);
+  });
+});

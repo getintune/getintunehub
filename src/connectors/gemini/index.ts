@@ -45,6 +45,18 @@ export class GeminiLimitError extends Error {
   }
 }
 
+/** Google's servers for the model are overloaded (503 "high demand"), and retrying and a lighter model didn't help. */
+export class GeminiBusyError extends Error {
+  constructor() {
+    super("Gemini is very busy right now (Google says demand is high). Try again in a little while, or use Plan my day in Claude instead: it's free on your Claude subscription.");
+  }
+}
+
+/** A lighter model to try when one is overloaded: gemini-x-flash -> gemini-x-flash-lite (null if already lite). */
+export function lighterModel(model: string): string | null {
+  return /-lite$/.test(model) ? null : /-flash$/.test(model) ? `${model}-lite` : null;
+}
+
 /** Which free limit a 429 is about, and how long Google asks to wait. */
 export function quotaInfo(msg: string): { daily: boolean; retrySeconds?: number } {
   const daily = /PerDay|per[ _-]?day|daily/i.test(msg);
@@ -118,7 +130,7 @@ export class LiveGemini implements GeminiClient {
   async generate(r: GenerateRequest): Promise<GenerateResult> {
     const ai = await this.client();
     let model = this.swaps[r.model] ?? r.model;
-    let waits = 0;
+    let waits = 0, busy = 0, triedLighter = false;
     for (let attempt = 0; ; attempt++) {
       try {
         return { ...(await this.call(ai, model, r)), model };
@@ -144,6 +156,26 @@ export class LiveGemini implements GeminiClient {
             continue;
           }
           throw new GeminiLimitError(q.daily);
+        }
+        // Overloaded ("high demand"): wait and retry twice, then try the lighter model once, then give up kindly.
+        if (/\b50[03]\b|UNAVAILABLE|overloaded|high demand|INTERNAL/i.test(msg)) {
+          if (busy < 2) {
+            const secs = busy === 0 ? 5 : 15;
+            busy++;
+            r.onWait?.(secs);
+            await this.sleep(secs * 1000);
+            attempt--;
+            continue;
+          }
+          const lighter = !triedLighter ? lighterModel(model) : null;
+          if (lighter) {
+            triedLighter = true;
+            busy = 0;
+            model = lighter;
+            attempt--;
+            continue;
+          }
+          throw new GeminiBusyError();
         }
         if (/API key|401|403|PERMISSION_DENIED/i.test(msg)) throw new Error("Gemini didn't accept the key. Check GEMINI_API_KEY in the .env file (from aistudio.google.com → Get API key).");
         throw new Error(`Gemini: ${msg}`);
