@@ -1008,6 +1008,7 @@ async function loadToday() {
   try { d = await api("/api/dashboard"); } catch (e) { $("#today").innerHTML = `<div class="empty">${esc(e.message)}</div>`; return; }
   if (!lists.programs.length) lists = await api("/api/lists").catch(() => lists);
   const cl = await api("/api/settings/agent").catch(() => null);
+  agentCfg = cl;
   const urgent = d.needs.filter((n) => n.kind === "next").length;
   $("#todaycount").textContent = urgent; $("#todaycount").hidden = !urgent;
   const longDate = new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
@@ -1075,6 +1076,9 @@ $("#today").addEventListener("click", async (e) => {
 });
 // Claude's costs and the switches for what it does on its own.
 const money = (n) => "$" + (n < 1 && n > 0 ? n.toFixed(2) : n.toFixed(2));
+// The Gemini model menu (in the Gemini box on Today, and under a "busy" error in the brief).
+let agentCfg = null;
+const modelMenu = (c) => `<select class="gemini-model" style="width:auto;max-width:100%">${(c?.models || []).map((m) => `<option value="${esc(m.id)}" ${m.id === c.model ? "selected" : ""}>${esc(m.label)}</option>`).join("")}</select>`;
 function claudeCard(c) {
   if (!c.hasKey) return `<div class="card"><h3>Claude</h3><p style="margin:0">The <b>Do this in Claude</b> buttons open your own Claude app with the request written out. Your subscription covers it: <b>no extra cost</b>.</p><p class="small muted" style="margin:8px 0 0">Nothing runs in the background and nothing is charged here.</p></div>`;
   const k = (n) => (n >= 1e6 ? (n / 1e6).toFixed(1) + "M" : n >= 1e3 ? Math.round(n / 1e3) + "k" : String(n));
@@ -1083,15 +1087,15 @@ function claudeCard(c) {
     <div class="small muted" style="margin:-4px 0 8px">${c.costs.runs} run${c.costs.runs === 1 ? "" : "s"} this month (${c.costs.runsToday} today) · ${k(c.costs.tokens)} tokens of text</div>
     ${c.costs.byUse.length ? `<table class="tbl"><tbody>${c.costs.byUse.map((x) => `<tr><td>${esc(x.label)}</td><td class="num">${x.runs} run${x.runs === 1 ? "" : "s"}</td></tr>`).join("")}</tbody></table>` : `<p class="small muted">No Gemini runs yet this month.</p>`}
     <label class="small muted" style="display:block;margin:12px 0 4px">Model for Ask and Plan my day (if one is busy, pick another)</label>
-    <select id="gemini-model">${(c.models || []).map((m) => `<option value="${esc(m.id)}" ${m.id === c.model ? "selected" : ""}>${esc(m.label)}</option>`).join("")}</select>
+    ${modelMenu(c)}
     <div class="small muted" style="margin:12px 0 6px">Gemini on its own (all start off)</div>
     ${c.features.map((f) => `<label class="row sw" title="${esc(f.hint)}" style="gap:8px;padding:3px 0;cursor:pointer"><input type="checkbox" data-feature="${esc(f.id)}" ${f.on ? "checked" : ""} style="width:auto"><span style="flex:1">${esc(f.label)}<div class="small muted">${esc(f.hint)}</div></span></label>`).join("")}
     <p class="small muted" style="margin:10px 0 0">On Gemini's free tier, Google may use what's sent to improve its products. Grow Therapy email and therapy clients' details are never sent.</p></div>`;
 }
 document.addEventListener("change", async (e) => {
-  if (e.target.id === "gemini-model") {
+  if (e.target.classList.contains("gemini-model")) {
     const sel = e.target, prev = [...sel.options].find((o) => o.defaultSelected)?.value;
-    try { await api("/api/settings/agent", { method: "POST", body: { model: sel.value } }); [...sel.options].forEach((o) => (o.defaultSelected = o.selected)); log(`Gemini now uses ${sel.selectedOptions[0].textContent}. Try Plan my day again.`); } catch (err) { log(err.message, "t-err"); if (prev) sel.value = prev; }
+    try { await api("/api/settings/agent", { method: "POST", body: { model: sel.value } }); [...sel.options].forEach((o) => (o.defaultSelected = o.selected)); if (agentCfg) agentCfg.model = sel.value; document.querySelectorAll(".gemini-model").forEach((o) => { if (o !== sel) o.value = sel.value; }); log(`Gemini now uses ${sel.selectedOptions[0].textContent}. Press Plan my day again.`); } catch (err) { log(err.message, "t-err"); if (prev) sel.value = prev; }
     return;
   }
   const c = e.target.closest("[data-feature]"); if (!c) return;
@@ -2357,6 +2361,7 @@ let briefPlan = null;
 async function renderBrief() {
   let p; try { p = await api("/api/plan"); } catch { return; }
   briefPlan = p;
+  if (p.state === "error" && !agentCfg) agentCfg = await api("/api/settings/agent").catch(() => null);
   const page = $("#briefpage"), line = $("#brief");
   const today = p.startedAt && new Date().toDateString() === new Date(p.startedAt).toDateString();
   const sch = p.schedule && /^\d/.test(p.schedule.at) ? `Runs on its own at ${new Date(`2000-01-01T${p.schedule.at.padStart(5, "0")}`).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}${p.schedule.days === "1-5" ? " on weekdays" : p.schedule.days === "0-6" ? " every day" : ""}` : "";
@@ -2385,7 +2390,7 @@ async function renderBrief() {
       ${p.state === "done" && total ? `<div class="bprog"><div class="bar"><span style="width:${Math.round((doneN / total) * 100)}%"></span></div><b>${doneN} of ${total} done</b>${doneN ? `<button class="linkbtn" data-do="briefclear">Untick all</button>` : ""}</div>` : ""}
       <div class="card brief ${p.state}">${p.state === "none" ? `<p class="muted" style="margin:0">No brief yet. ${status.agent ? `Press <b>Plan my day with ${AGENT()}</b>, or wait for the morning one.` : "Press <b>Plan my day in Claude</b>: it opens your Claude app with today's lists, sign-ups and calendar, and Claude writes your brief there."}</p>`
         : p.state === "running" ? `<div class="bwork"><span class="spin"></span>${AGENT()} is going through your lists, inbox, calendar and tasks…</div>${p.steps.length ? `<div class="bsteps">${p.steps.slice(-5).map((x) => `<div>${esc(x)}</div>`).join("")}</div>` : ""}`
-        : p.state === "error" ? `<div class="small" style="color:var(--bad)">${esc(p.error || "The plan didn't finish.")}</div>${/daily limit|very busy|high demand|UNAVAILABLE/i.test(p.error || "") ? `<button class="btn primary" type="button" data-plan-claude="1" style="margin-top:10px">Plan my day in Claude instead</button>` : ""}`
+        : p.state === "error" ? `<div class="small" style="color:var(--bad)">${esc(p.error || "The plan didn't finish.")}</div>${/daily limit|very busy|high demand|UNAVAILABLE/i.test(p.error || "") ? `<button class="btn primary" type="button" data-plan-claude="1" style="margin-top:10px">Plan my day in Claude instead</button>${agentCfg?.models?.length ? `<div class="small muted" style="margin:12px 0 4px">Or try another Gemini model, then press Plan my day again:</div>${modelMenu(agentCfg)}` : ""}` : ""}`
         : `<div class="btext">${html}</div>`}</div>`;
     $("#briefplan")?.addEventListener("click", startPlan);
   }
