@@ -2,6 +2,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import type { ThreadSummary } from "../connectors/gmail/index.js";
 import type { Hub } from "../hub.js";
+import { friendlyGoogleError } from "../connectors/google/auth.js";
 
 /**
  * Team messages from Google Chat. Marlys's Chat is on a personal @gmail.com account, which Google's Chat API doesn't
@@ -60,7 +61,11 @@ export function dismissTeamMessage(hub: Hub, id: string) {
 export async function teamMessages(hub: Hub): Promise<{ connected: boolean; messages: TeamMessage[] }> {
   const practice = hub.gmail.kind === "mock";
   if (practice && hub.cfg.mode !== "mock") return { connected: false, messages: [] };
-  const threads = practice ? PRACTICE : await hub.gmail.search("from:chat-noreply@google.com newer_than:7d", 15);
+  const threads = practice
+    ? PRACTICE
+    : await hub.gmail.search("from:chat-noreply@google.com newer_than:7d", 15).catch((e) => {
+        throw new Error(friendlyGoogleError(String((e as Error).message ?? e)));
+      });
   const gone = dismissed(hub);
   const messages = threads.map(chatNotice).filter((m): m is TeamMessage => !!m && !gone[m.id]);
   return { connected: true, messages: messages.sort((a, b) => Date.parse(b.at) - Date.parse(a.at)) };

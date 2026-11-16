@@ -67,7 +67,7 @@ export async function connectGmail() {
     openBrowser("https://console.cloud.google.com/apis/library/gmail.googleapis.com");
     await ask("   Press Enter when it says API enabled... ");
     step(3, `Click Get started: app name ${app}, your email, Audience = External (a personal Gmail can't pick Internal), your email again, agree, Create.`);
-    console.log(`   Then under Audience > Test users, add ${cfg.gmail.address}.`);
+    console.log(`   Then click Audience on the left, click Publish app, and Confirm. (Without this, Google signs the app out every 7 days.)`);
     openBrowser("https://console.cloud.google.com/auth/overview");
     await ask("   Press Enter when it's done... ");
     step(4, `Create client: Application type = Desktop app, name ${app}, Create. Then click Download JSON.`);
@@ -91,7 +91,11 @@ export async function connectGmail() {
   openBrowser("https://console.cloud.google.com/apis/library/tasks.googleapis.com");
   await ask("   Press Enter when both say API enabled (or Manage)... ");
 
+  console.log(`\n   Check ${app} is published: on the page that opens, it should say "In production". If it says "Testing", click Publish app → Confirm. (In Testing, Google signs you out every 7 days.)`);
+  openBrowser("https://console.cloud.google.com/auth/audience");
+  await ask("   Press Enter when it says In production... ");
   step(6, "Sign in to Google in the browser window that opens and click Allow (Gmail, Calendar and Tasks).");
+  console.log(`   If Google says "Google hasn't verified this app": that's expected for your own app. Click Advanced → Go to ${app} → Continue.`);
   const c = loadConfig();
   const gmail = new GoogleGmail({ clientId: c.gmail.clientId, clientSecret: c.gmail.clientSecret, tokenFile: c.gmail.tokenFile, address: c.gmail.address });
   await gmail.login();
