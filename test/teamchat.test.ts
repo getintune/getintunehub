@@ -57,3 +57,12 @@ describe("Workshop's over", () => {
     expect(listCounts(hub).workshops.map((x) => x.event)).toContain(w.event);
   });
 });
+
+describe("Expired Google sign-in", () => {
+  it("says what to do instead of invalid_grant", async () => {
+    const { GOOGLE_SIGNIN_EXPIRED } = await import("../src/connectors/google/auth.js");
+    const hub = hubIn({ HUB_MODE: "mock" });
+    (hub as any).gmail = { kind: "google", search: async () => { throw new Error("invalid_grant"); } };
+    await expect(teamMessages(hub)).rejects.toThrow(GOOGLE_SIGNIN_EXPIRED);
+  });
+});

@@ -577,7 +577,8 @@ const server = http.createServer(async (req, res) => {
     send(res, 404, { error: "not found" });
   } catch (e) {
     console.error(e);
-    send(res, 500, { error: (e as Error).message });
+    const { friendlyGoogleError } = await import("../connectors/google/auth.js");
+    send(res, 500, { error: friendlyGoogleError((e as Error).message) });
   }
 });
 

@@ -23,6 +23,16 @@ export interface GoogleOpts {
   address: string;
 }
 
+/**
+ * Google's "invalid_grant" means the saved sign-in no longer works: it was signed out, or (while the Google project is in
+ * "Testing") it ran out after 7 days. Said in plain words, with the fix.
+ */
+export const GOOGLE_SIGNIN_EXPIRED =
+  "Your Google sign-in has expired. In the Get In Tune Hub folder, right-click Connect Gmail → Open and sign in again (about 2 minutes).";
+export function friendlyGoogleError(msg: string): string {
+  return /invalid_grant|token has been expired or revoked/i.test(msg) ? GOOGLE_SIGNIN_EXPIRED : msg;
+}
+
 type OAuth = InstanceType<typeof google.auth.OAuth2>;
 const shared = new Map<string, OAuth>();
 
