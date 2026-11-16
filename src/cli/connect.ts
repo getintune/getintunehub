@@ -92,6 +92,7 @@ export async function connectGmail() {
   await ask("   Press Enter when both say API enabled (or Manage)... ");
 
   console.log(`\n   Check ${app} is published: on the page that opens, it should say "In production". If it says "Testing", click Publish app → Confirm. (In Testing, Google signs you out every 7 days.)`);
+  console.log(`   If Publish app is greyed out: click Branding on the left, fill in App name (${app}), User support email and, at the bottom, Developer contact email (your Gmail for both), leave the logo empty, and Save. Then Audience → Publish app → Confirm.`);
   openBrowser("https://console.cloud.google.com/auth/audience");
   await ask("   Press Enter when it says In production... ");
   step(6, "Sign in to Google in the browser window that opens and click Allow (Gmail, Calendar and Tasks).");
