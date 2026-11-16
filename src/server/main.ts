@@ -141,6 +141,16 @@ const server = http.createServer(async (req, res) => {
       (await import("../workflows/grow.js")).dismissGrow(hub, String((await body(req)).id));
       return send(res, 200, { ok: true });
     }
+    if (p === "/api/chat/dismiss" && req.method === "POST") {
+      (await import("../workflows/teamchat.js")).dismissTeamMessage(hub, String((await body(req)).id));
+      return send(res, 200, { ok: true });
+    }
+    if (p === "/api/workshops/over" && req.method === "POST") {
+      const b = await body(req);
+      const { setWorkshopOver } = await import("../workflows/needs.js");
+      setWorkshopOver(hub, String(b.event ?? ""), b.over !== false);
+      return send(res, 200, { ok: true });
+    }
     if (p === "/api/signups/accept" && req.method === "POST") {
       const b = await body(req);
       const e = (await import("../workflows/signups.js")).acceptSignup(hub, { messageId: String(b.messageId), name: String(b.name), email: String(b.email), source: b.source, event: String(b.event) });
@@ -270,9 +280,13 @@ const server = http.createServer(async (req, res) => {
       } catch (e) {
         workError = (e as Error).message;
       }
+      const chat = await import("../workflows/teamchat.js")
+        .then((t) => t.teamMessages(hub))
+        .catch((e) => ({ connected: true, messages: [], error: (e as Error).message }));
       return send(res, 200, {
         grow,
         signups,
+        chat,
         workError,
         needs: needs(hub),
         ...listCounts(hub),
