@@ -1,3 +1,5 @@
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import path from "node:path";
 import type { Entry } from "../connectors/lists/index.js";
 import { TIME_ZONE } from "../core/config.js";
 import type { Hub } from "../hub.js";
@@ -76,7 +78,27 @@ export interface WorkshopCount {
 }
 
 /** Counts per list and stage, and workshop sign-ups per workshop and by where they signed up. */
-export function listCounts(hub: Hub, now = new Date()): { lists: ListCount[]; workshops: WorkshopCount[] } {
+/**
+ * Workshops she marked as over ("Workshop's over" on Today): kept off the Today page and out of Plan my day. The people
+ * stay on her workshop list. A workshop with a new name shows up again on its own.
+ */
+const overFile = (hub: Hub) => path.join(hub.cfg.stateDir, "workshops-over.json");
+export function workshopsOver(hub: Hub): Record<string, string> {
+  try {
+    return existsSync(overFile(hub)) ? JSON.parse(readFileSync(overFile(hub), "utf8")) : {};
+  } catch {
+    return {};
+  }
+}
+export function setWorkshopOver(hub: Hub, event: string, over = true) {
+  const d = workshopsOver(hub);
+  if (over) d[event] = new Date().toISOString();
+  else delete d[event];
+  mkdirSync(hub.cfg.stateDir, { recursive: true });
+  writeFileSync(overFile(hub), JSON.stringify(d));
+}
+
+export function listCounts(hub: Hub, now = new Date()): { lists: ListCount[]; workshops: WorkshopCount[]; pastWorkshops: string[] } {
   const all = hub.lists.list();
   const lists = hub.lists.programs().map((p) => {
     const es = all.filter((e) => e.program === p.id);
@@ -97,5 +119,6 @@ export function listCounts(hub: Hub, now = new Date()): { lists: ListCount[]; wo
       bySource: [...src.entries()].map(([source, count]) => ({ source, count })).sort((a, b) => b.count - a.count),
     };
   });
-  return { lists, workshops: workshops.sort((a, b) => b.total - a.total) };
+  const over = workshopsOver(hub);
+  return { lists, workshops: workshops.filter((w) => !over[w.event]).sort((a, b) => b.total - a.total), pastWorkshops: workshops.filter((w) => over[w.event]).map((w) => w.event) };
 }

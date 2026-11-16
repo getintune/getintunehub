@@ -201,8 +201,11 @@ Outlook** (the Gmail tab becomes Outlook; Gmail stays only to catch team request
         pastes Bevel's plan; `src/workflows/workout.ts`, one per day), included in Plan my day (Claude and Gemini),
         with Add to Motion (length read from the text). Asked her to check Bevel → Settings for a calendar option
         that writes workouts; if it exists, they'd show up on their own.
-      - [ ] **Google Chat** (she said yes, later): a "Team messages" card from Kristin and Frankie. Check first whether
-        her Chat is on Google Workspace; the Chat API doesn't serve personal @gmail.com accounts.
+      - [x] **Google Chat (2026-11-16):** her Chat is on a personal @gmail.com account, which the Chat API doesn't
+        serve. She turned on Chat's email notifications, so `src/workflows/teamchat.ts` reads those emails from her
+        Gmail (from:chat-noreply@google.com, last 7 days) into a read-only **Team messages** box on Today (Open, Add to
+        Motion, Done) with an **Open Google Chat** button. It only sees messages she hasn't read in Chat. Not sent to
+        Gemini. Needs Connect Gmail. Later idea: task questions as comments in Motion.
       - [x] **Motion (2026-11-08):** Marlys loves that Motion fits tasks into her schedule and moves them, so Motion
         keeps doing that; the app never moves, edits or deletes Motion tasks. `src/connectors/motion` (Motion API,
         MOTION_API_KEY; practice tasks in `fixtures/motion.json`), `src/workflows/motion.ts`. Dashboard "Today" shows
@@ -241,3 +244,5 @@ Outlook** (the Gmail tab becomes Outlook; Gmail stays only to catch team request
 - [ ] **8. Tidy up.** Remove anything left from Keystone that she doesn't use. README in plain words for her.
 
 - 2026-11-11: Gemini kept returning 503 "high demand". Added a **Model** menu in the Gemini box on the Today page: she picks another Gemini model (e.g. Flash-Lite or an older Flash) and it's used right away and saved to `.env` (HUB_MODEL).
+- 2026-11-16: the Nov 13 workshop is done. Workshop boxes on Today now have a **Workshop's over** button (hides it from
+  Today and Plan my day; people stay on the list; a workshop with a new name shows up again).
