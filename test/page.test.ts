@@ -15,4 +15,11 @@ describe("the page", () => {
     expect(html).toContain("https://claude.ai/new?q=");
     expect(html).toContain('if (!status.agent) return handoff({ kind: "ask", text: prompt });');
   });
+
+  it("starts each day with no brief, keeping an earlier one folded away", () => {
+    expect(html).toContain('const stale = !!p.startedAt && !today && p.state !== "running";');
+    expect(html).toContain("Earlier brief, from");
+    // the 7 AM line shows only when the morning brief is switched on
+    expect(html).toContain("const sch = p.auto && p.schedule");
+  });
 });

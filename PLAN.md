@@ -247,3 +247,4 @@ Outlook** (the Gmail tab becomes Outlook; Gmail stays only to catch team request
 - 2026-11-16: the Nov 13 workshop is done. Workshop boxes on Today now have a **Workshop's over** button (hides it from
   Today and Plan my day; people stay on the list; a workshop with a new name shows up again).
 - 2026-11-16: Gmail showed "invalid_grant": her Google project was in Testing, which signs out every 7 days. Connect Gmail now has her publish it (Audience → Publish app) and the app explains an expired Google sign-in in plain words.
+- 2026-11-17: the Brief page showed yesterday's brief as today's. Now each day starts with "No brief yet today" and the earlier one is folded below; the 7 AM line shows only when the morning brief is on.

@@ -2373,8 +2373,11 @@ async function renderBrief() {
   if (p.state === "error" && !agentCfg) agentCfg = await api("/api/settings/agent").catch(() => null);
   const page = $("#briefpage"), line = $("#brief");
   const today = p.startedAt && new Date().toDateString() === new Date(p.startedAt).toDateString();
-  const sch = p.schedule && /^\d/.test(p.schedule.at) ? `Runs on its own at ${new Date(`2000-01-01T${p.schedule.at.padStart(5, "0")}`).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}${p.schedule.days === "1-5" ? " on weekdays" : p.schedule.days === "0-6" ? " every day" : ""}` : "";
-  const planBtn = !status.agent ? `<button class="btn primary" id="briefplan">Plan my day in Claude</button>` : `<button class="btn ${p.state === "none" ? "primary" : ""}" id="briefplan" ${p.state === "running" ? "disabled" : ""}>${p.state === "running" ? "Planning your day…" : p.state === "none" ? `Plan my day with ${AGENT()}` : "Plan again"}</button>`;
+  // A brief from an earlier day isn't today's: the page starts fresh ("No brief yet today") and keeps the old one folded below.
+  const stale = !!p.startedAt && !today && p.state !== "running";
+  const st = stale ? "none" : p.state;
+  const sch = p.auto && p.schedule && /^\d/.test(p.schedule.at) ? `Runs on its own at ${new Date(`2000-01-01T${p.schedule.at.padStart(5, "0")}`).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}${p.schedule.days === "1-5" ? " on weekdays" : p.schedule.days === "0-6" ? " every day" : ""}` : "";
+  const planBtn = !status.agent ? `<button class="btn primary" id="briefplan">Plan my day in Claude</button>` : `<button class="btn ${st === "none" ? "primary" : ""}" id="briefplan" ${st === "running" ? "disabled" : ""}>${st === "running" ? "Planning your day…" : st === "none" ? `Plan my day with ${AGENT()}` : "Plan again"}</button>`;
   // The checklist: every list item in the brief gets a box.
   let total = 0, doneN = 0, html = "";
   if (p.state === "done") {
@@ -2394,21 +2397,22 @@ async function renderBrief() {
   $("#briefcount").textContent = left; $("#briefcount").hidden = !(p.state === "done" && today && left);
   if (page) {
     const when = new Date(p.finishedAt || p.startedAt || Date.now());
-    const stamp = p.startedAt ? `${p.trigger === "morning" ? "Made on its own · " : ""}${today ? "Today" : when.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}, ${when.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}` : "";
-    page.innerHTML = `<div class="bhead"><div style="flex:1;min-width:220px"><h2>Today's brief</h2><div class="dateline">${esc(stamp)}${stamp && sch ? " · " : ""}${esc(sch)}${p.startedAt && !today ? ` · <b>from an earlier day</b>` : ""}</div></div>${planBtn}</div>
-      ${p.state === "done" && total ? `<div class="bprog"><div class="bar"><span style="width:${Math.round((doneN / total) * 100)}%"></span></div><b>${doneN} of ${total} done</b>${doneN ? `<button class="linkbtn" data-do="briefclear">Untick all</button>` : ""}</div>` : ""}
-      <div class="card brief ${p.state}">${p.state === "none" ? `<p class="muted" style="margin:0">No brief yet. ${status.agent ? `Press <b>Plan my day with ${AGENT()}</b>, or wait for the morning one.` : "Press <b>Plan my day in Claude</b>: it opens your Claude app with today's lists, sign-ups and calendar, and Claude writes your brief there."}</p>`
-        : p.state === "running" ? `<div class="bwork"><span class="spin"></span>${AGENT()} is going through your lists, inbox, calendar and tasks…</div>${p.steps.length ? `<div class="bsteps">${p.steps.slice(-5).map((x) => `<div>${esc(x)}</div>`).join("")}</div>` : ""}`
-        : p.state === "error" ? `<div class="small" style="color:var(--bad)">${esc(p.error || "The plan didn't finish.")}</div>${/daily limit|very busy|high demand|UNAVAILABLE/i.test(p.error || "") ? `<button class="btn primary" type="button" data-plan-claude="1" style="margin-top:10px">Plan my day in Claude instead</button>${agentCfg?.models?.length ? `<div class="small muted" style="margin:12px 0 4px">Or try another Gemini model, then press Plan my day again:</div>${modelMenu(agentCfg)}` : ""}` : ""}`
-        : `<div class="btext">${html}</div>`}</div>`;
+    const stamp = p.startedAt && !stale ? `${p.trigger === "morning" ? "Made on its own · " : ""}${today ? "Today" : when.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}, ${when.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}` : "";
+    page.innerHTML = `<div class="bhead"><div style="flex:1;min-width:220px"><h2>Today's brief</h2><div class="dateline">${esc(stamp)}${stamp && sch ? " · " : ""}${esc(sch)}</div></div>${planBtn}</div>
+      ${st === "done" && total ? `<div class="bprog"><div class="bar"><span style="width:${Math.round((doneN / total) * 100)}%"></span></div><b>${doneN} of ${total} done</b>${doneN ? `<button class="linkbtn" data-do="briefclear">Untick all</button>` : ""}</div>` : ""}
+      <div class="card brief ${st}">${st === "none" ? `<p class="muted" style="margin:0">No brief yet${stale ? " today" : ""}. ${status.agent ? `Press <b>Plan my day with ${AGENT()}</b>${p.auto ? ", or wait for the morning one" : ""}.` : "Press <b>Plan my day in Claude</b>: it opens your Claude app with today's lists, sign-ups and calendar, and Claude writes your brief there."}</p>`
+        : st === "running" ? `<div class="bwork"><span class="spin"></span>${AGENT()} is going through your lists, inbox, calendar and tasks…</div>${p.steps.length ? `<div class="bsteps">${p.steps.slice(-5).map((x) => `<div>${esc(x)}</div>`).join("")}</div>` : ""}`
+        : st === "error" ? `<div class="small" style="color:var(--bad)">${esc(p.error || "The plan didn't finish.")}</div>${/daily limit|very busy|high demand|UNAVAILABLE/i.test(p.error || "") ? `<button class="btn primary" type="button" data-plan-claude="1" style="margin-top:10px">Plan my day in Claude instead</button>${agentCfg?.models?.length ? `<div class="small muted" style="margin:12px 0 4px">Or try another Gemini model, then press Plan my day again:</div>${modelMenu(agentCfg)}` : ""}` : ""}`
+        : `<div class="btext">${html}</div>`}</div>
+      ${stale && p.state === "done" && html ? `<details class="card" style="margin-top:12px"><summary class="muted" style="cursor:pointer">Earlier brief, from ${esc(new Date(p.finishedAt || p.startedAt).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" }))}${total ? ` · ${doneN} of ${total} done` : ""}</summary><div class="btext" style="margin-top:10px">${html}</div></details>` : ""}`;
     $("#briefplan")?.addEventListener("click", startPlan);
   }
   if (line) {
-    line.innerHTML = p.state === "none" ? "" : `<button class="briefline" type="button" data-do="gobrief">${msI("checklist")}<span>Today's brief: ${p.state === "running" ? "Claude is working on it…" : p.state === "error" ? "didn't finish" : total ? `<b>${doneN} of ${total} done</b>${today ? "" : " (from an earlier day)"}` : "ready"}</span><span class="go">Open →</span></button>`;
+    line.innerHTML = st === "none" ? "" : `<button class="briefline" type="button" data-do="gobrief">${msI("checklist")}<span>Today's brief: ${p.state === "running" ? "Claude is working on it…" : p.state === "error" ? "didn't finish" : total ? `<b>${doneN} of ${total} done</b>` : "ready"}</span><span class="go">Open →</span></button>`;
   }
   const btn = $("#plan");
   if (btn && !status.agent) btn.textContent = "Plan my day in Claude";
-  if (btn && status.agent) { btn.disabled = p.state === "running"; btn.textContent = p.state === "running" ? "Planning your day…" : p.state === "none" ? `Plan my day with ${AGENT()}` : "Plan again"; }
+  if (btn && status.agent) { btn.disabled = st === "running"; btn.textContent = st === "running" ? "Planning your day…" : st === "none" ? `Plan my day with ${AGENT()}` : "Plan again"; }
 }
 document.addEventListener("change", async (e) => {
   const c = e.target.closest(".bchk"); if (!c) return;
