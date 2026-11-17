@@ -302,7 +302,7 @@ const server = http.createServer(async (req, res) => {
         workout: todaysWorkout(hub),
       });
     }
-    if (p === "/api/plan" && req.method === "GET") return send(res, 200, { ...readPlan(), schedule: BRIEF });
+    if (p === "/api/plan" && req.method === "GET") return send(res, 200, { ...readPlan(), schedule: BRIEF, auto: featureOn(hub, "morningBrief") });
     if (p === "/api/plan/check" && req.method === "POST") {
       // Tick an item of the brief off (or back on). Kept with the brief, so a new brief starts with none ticked.
       const b = await body(req);
